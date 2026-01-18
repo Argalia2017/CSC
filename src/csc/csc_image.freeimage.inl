@@ -164,7 +164,7 @@ public:
 
 	ImageLayout load_image (CR<String<Str>> file) const override {
 		auto rax = Box<UniqueRef<HFIBITMAP>>::make () ;
-		const auto r1x = StringProc::stra_from_strs (file) ;
+		const auto r1x = StringProc::stra_from (file) ;
 		const auto r2x = FreeImage_GetFIFFromFilename (r1x.ref) ;
 		assume (r2x != FIF_UNKNOWN) ;
 		rax.ref = UniqueRef<HFIBITMAP> ([&] (VR<HFIBITMAP> me) {
@@ -177,7 +177,7 @@ public:
 	}
 
 	void save_image (CR<String<Str>> file ,CR<ImageLayout> image) const override {
-		const auto r1x = StringProc::stra_from_strs (file) ;
+		const auto r1x = StringProc::stra_from (file) ;
 		const auto r2x = FreeImage_GetFIFFromFilename (r1x.ref) ;
 		assume (r2x != FIF_UNKNOWN) ;
 		const auto r3x = ImageHolder::hold (image)->bx () ;

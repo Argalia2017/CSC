@@ -546,7 +546,7 @@ struct IntegerHolder implement Interface {
 	virtual void store (CR<Val64> item) = 0 ;
 	virtual Bool equal (CR<IntegerLayout> that) const = 0 ;
 	virtual Flag compr (CR<IntegerLayout> that) const = 0 ;
-	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void visit (CR<Visitor> visitor) const = 0 ;
 	virtual IntegerLayout sadd (CR<IntegerLayout> that) const = 0 ;
 	virtual IntegerLayout ssub (CR<IntegerLayout> that) const = 0 ;
 	virtual IntegerLayout smul (CR<IntegerLayout> that) const = 0 ;
@@ -642,7 +642,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const {
+	void visit (CR<Visitor> visitor) const {
 		return IntegerHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -760,21 +760,11 @@ public:
 	}
 } ;
 
-struct JetNode ;
-using JetEvalFunction = Function<VR<JetNode> ,CR<Wrapper<Flt64>>> ;
-
-struct JetNode {
-	Flt64 mFX ;
-	Flt64 mEX ;
-	RefBuffer<Flt64> mDX ;
-	Index mSlot ;
-	JetEvalFunction mEval ;
-	Ref<JetNode> mFake ;
-	Ref<JetNode> mThat ;
-} ;
+struct JetTree ;
 
 struct JetLayout {
-	Ref<JetNode> mThis ;
+	SharedRef<JetTree> mThis ;
+	Index mIndex ;
 } ;
 
 struct JetHolder implement Interface {
@@ -783,7 +773,6 @@ struct JetHolder implement Interface {
 
 	virtual void initialize (CR<Length> size_ ,CR<Flt64> item) = 0 ;
 	virtual void initialize (CR<Length> size_ ,CR<Flt64> item ,CR<Index> slot) = 0 ;
-	virtual void initialize (CR<JetLayout> that) = 0 ;
 	virtual Flt64 fx () const = 0 ;
 	virtual Flt64 ex () const = 0 ;
 	virtual Flt64 dx (CR<Index> slot) const = 0 ;
@@ -814,6 +803,7 @@ template <class A>
 class Jet implement JetLayout {
 protected:
 	using JetLayout::mThis ;
+	using JetLayout::mIndex ;
 
 public:
 	implicit Jet () = default ;
@@ -825,18 +815,6 @@ public:
 	explicit Jet (CR<Flt64> item ,CR<Index> slot) {
 		JetHolder::hold (thiz)->initialize (A::expr ,item ,slot) ;
 	}
-
-	implicit Jet (CR<Jet> that) {
-		JetHolder::hold (thiz)->initialize (that) ;
-	}
-
-	forceinline VR<Jet> operator= (CR<Jet> that) {
-		return assign (thiz ,that) ;
-	}
-
-	implicit Jet (RR<Jet> that) = default ;
-
-	forceinline VR<Jet> operator= (RR<Jet> that) = default ;
 
 	Flt64 fx () const {
 		return JetHolder::hold (thiz)->fx () ;

@@ -326,7 +326,7 @@ struct StreamFileWriterHolder implement Interface {
 	imports CFat<StreamFileWriterHolder> hold (CR<StreamFileWriterLayout> that) ;
 
 	virtual void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> encode) = 0 ;
-	virtual VR<Writer> ref_m () leftvalue = 0 ;
+	virtual CR<Writer> ref_m () leftvalue = 0 ;
 	virtual void flush () = 0 ;
 } ;
 
@@ -339,11 +339,11 @@ public:
 		StreamFileWriterHolder::hold (thiz)->initialize (file ,encode) ;
 	}
 
-	VR<Writer> ref_m () leftvalue {
+	CR<Writer> ref_m () leftvalue {
 		return StreamFileWriterHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator VR<Writer> () leftvalue {
+	forceinline operator CR<Writer> () leftvalue {
 		return ref ;
 	}
 

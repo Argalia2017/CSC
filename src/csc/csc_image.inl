@@ -7,6 +7,35 @@
 #include "csc_image.hpp"
 
 namespace CSC {
+class ImageShapeImplHolder final implement Fat<ImageShapeHolder ,ImageShapeLayout> {
+public:
+	Length size () const override {
+		return self.mCX * self.mCY ;
+	}
+
+	Length step () const override {
+		return self.mStep ;
+	}
+
+	Bool equal (CR<ImageShapeLayout> that) const override {
+		if (self.mCX != that.mCX)
+			return FALSE ;
+		if (self.mCY != that.mCY)
+			return FALSE ;
+		if (self.mStep != that.mStep)
+			return FALSE ;
+		return TRUE ;
+	}
+} ;
+
+exports VFat<ImageShapeHolder> ImageShapeHolder::hold (VR<ImageShapeLayout> that) {
+	return VFat<ImageShapeHolder> (ImageShapeImplHolder () ,that) ;
+}
+
+exports CFat<ImageShapeHolder> ImageShapeHolder::hold (CR<ImageShapeLayout> that) {
+	return CFat<ImageShapeHolder> (ImageShapeImplHolder () ,that) ;
+}
+
 class ImageImplHolder final implement Fat<ImageHolder ,ImageLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
@@ -99,8 +128,6 @@ public:
 
 	ImageShape shape () const override {
 		ImageShape ret ;
-		ret.mBX = bx () ;
-		ret.mBY = by () ;
 		ret.mCX = cx () ;
 		ret.mCY = cy () ;
 		ret.mStep = step () ;
@@ -541,7 +568,7 @@ public:
 } ;
 
 template <class A ,class B>
-class TensorPairUnknownBinder final implement Fat<FriendUnknown ,void> {
+class TensorPairUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectTensorPairBinder<A ,B>::expr)
@@ -565,7 +592,6 @@ public:
 		rax.mBuffer = inline_alignas (rax.mBuffer ,16) ;
 		rax.mSize = size_ ;
 		rax.mStep = r1x ;
-		self.mHolder = TRUE ;
 		self.mBuffer = rax.mBuffer ;
 		self.mRank = 1 ;
 		self.mStride[0] = r1x ;
@@ -660,7 +686,6 @@ public:
 		const auto r1x = choose_unknown (type_ ,type ()) ;
 		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
 		const auto r3x = self.mStride[0] ;
-		auto rax = Flt64 (0) ;
 		for (auto &&i : range (0 ,size ())) {
 			const auto r4x = ret.mBuffer + i * r3x ;
 			const auto r5x = self.mBuffer + i * r3x ;

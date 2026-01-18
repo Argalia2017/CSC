@@ -105,6 +105,7 @@ public:
 			rax.splice (ix ,pathname[i]) ;
 			ix += pathname[i].length () ;
 		}
+		rax.trunc (ix) ;
 		initialize (move (rax)) ;
 	}
 
@@ -614,7 +615,7 @@ public:
 	}
 
 	void lock_dire_push (CR<Path> file ,CR<RefBuffer<Byte>> snapshot_) const {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		auto rax = UniqueRef<String<Str>> ([&] (VR<String<Str>> me) {
 			me = file ;
 			FileProc::save_file (me ,snapshot_) ;
@@ -1140,7 +1141,7 @@ public:
 	}
 
 	void set_option (CR<Just<ConsoleOption>> option) override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (option != ConsoleOption::All)
@@ -1157,11 +1158,11 @@ public:
 		self.mLogWriter << slice ("[") ;
 		const auto r1x = CurrentTime () ;
 		const auto r2x = r1x.calendar () ;
-		self.mLogWriter << WriteAligned (r2x.mHour ,2) ;
+		self.mLogWriter << WriteAligned ({r2x.mHour ,2}) ;
 		self.mLogWriter << slice (":") ;
-		self.mLogWriter << WriteAligned (r2x.mMinute ,2) ;
+		self.mLogWriter << WriteAligned ({r2x.mMinute ,2}) ;
 		self.mLogWriter << slice (":") ;
-		self.mLogWriter << WriteAligned (r2x.mSecond ,2) ;
+		self.mLogWriter << WriteAligned ({r2x.mSecond ,2}) ;
 		self.mLogWriter << slice ("][") ;
 		self.mLogWriter << tag ;
 		self.mLogWriter << slice ("] : ") ;
@@ -1171,11 +1172,12 @@ public:
 	}
 
 	void print (CR<Format> msg) override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoPrint])
 			return ;
 		self.mLogWriter.reset () ;
 		self.mLogWriter << msg ;
+		self.mLogWriter << GAP ;
 		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
 			if (!self.mConsole.exist ())
@@ -1186,7 +1188,7 @@ public:
 	}
 
 	void fatal (CR<Format> msg) override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoFatal])
 			return ;
 		log (slice ("Fatal") ,msg) ;
@@ -1200,7 +1202,7 @@ public:
 	}
 
 	void error (CR<Format> msg) override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoError])
 			return ;
 		log (slice ("Error") ,msg) ;
@@ -1214,7 +1216,7 @@ public:
 	}
 
 	void warn (CR<Format> msg) override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoWarn])
 			return ;
 		log (slice ("Warn") ,msg) ;
@@ -1228,7 +1230,7 @@ public:
 	}
 
 	void info (CR<Format> msg) override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoInfo])
 			return ;
 		log (slice ("Info") ,msg) ;
@@ -1242,7 +1244,7 @@ public:
 	}
 
 	void debug (CR<Format> msg) override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoDebug])
 			return ;
 		log (slice ("Debug") ,msg) ;
@@ -1256,7 +1258,7 @@ public:
 	}
 
 	void trace (CR<Format> msg) override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoTrace])
 			return ;
 		log (slice ("Trace") ,msg) ;
@@ -1270,7 +1272,7 @@ public:
 	}
 
 	void open (CR<String<Str>> dire) override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		self.mLogFile = Path (dire).child (slice ("console.log")) ;
 		self.mOldLogFile = Path (dire).child (slice ("console.old.log")) ;
 		FileProc::erase_file (self.mOldLogFile) ;
@@ -1294,19 +1296,19 @@ public:
 	}
 
 	void show () override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		if (self.mConsole.exist ())
 			return ;
 		self.mConsole = UniqueRef<csc_handle_t>::make (stderr) ;
 	}
 
 	void hide () override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		self.mConsole = UniqueRef<csc_handle_t> () ;
 	}
 
 	void pause () override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		if ifdo (TRUE) {
 			if (!self.mConsole.exist ())
 				discard ;
@@ -1319,7 +1321,7 @@ public:
 	}
 
 	void clear () override {
-		Scope<Mutex> anonymous (self.mMutex) ;
+		Scope anonymous (self.mMutex) ;
 		self.mCommand.execute (slice ("clear")) ;
 	}
 } ;

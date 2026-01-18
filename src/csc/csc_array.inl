@@ -122,7 +122,7 @@ public:
 		return inline_compr (r1x ,r2x) ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const override {
+	void visit (CR<Visitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
 		const auto r2x = RFat<ReflectVisit> (self.mArray.unknown ()) ;
@@ -277,13 +277,13 @@ public:
 		if ifdo (act) {
 			if (step () != SIZE_OF<Stru16>::expr)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru8>>::expr] (Pointer::from (self.mString)) ;
+			auto &&rax = keep[TYPE<RefBuffer<Stru16>>::expr] (Pointer::from (self.mString)) ;
 			item = rax[index] ;
 		}
 		if ifdo (act) {
 			if (step () != SIZE_OF<Stru32>::expr)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru8>>::expr] (Pointer::from (self.mString)) ;
+			auto &&rax = keep[TYPE<RefBuffer<Stru32>>::expr] (Pointer::from (self.mString)) ;
 			item = rax[index] ;
 		}
 		if ifdo (act) {
@@ -404,7 +404,7 @@ public:
 		return inline_compr (r1x ,r2x) ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const override {
+	void visit (CR<Visitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
 		auto rax = Stru32 () ;
@@ -2105,12 +2105,8 @@ struct FUNCTION_fnvhash {
 
 static constexpr auto fnvhash = FUNCTION_fnvhash () ;
 
-class FriendHashcodeVisitorBinder final implement Fat<FriendVisitor ,HashcodeVisitor> {
+class HashcodeVisitorImplHolder final implement Fat<HashcodeVisitorHolder ,HashcodeVisitorLayout> {
 public:
-	static VFat<FriendVisitor> hold (VR<HashcodeVisitor> that) {
-		return VFat<FriendVisitor> (FriendHashcodeVisitorBinder () ,that) ;
-	}
-
 	void reset () override {
 		self.mCode = fnvhash () ;
 		self.mDepth = 0 ;
@@ -2146,6 +2142,14 @@ public:
 		self.mCode = fnvhash (a ,self.mCode) ;
 	}
 } ;
+
+exports VFat<HashcodeVisitorHolder> HashcodeVisitorHolder::hold (VR<HashcodeVisitorLayout> that) {
+	return VFat<HashcodeVisitorHolder> (HashcodeVisitorImplHolder () ,that) ;
+}
+
+exports CFat<HashcodeVisitorHolder> HashcodeVisitorHolder::hold (CR<HashcodeVisitorLayout> that) {
+	return CFat<HashcodeVisitorHolder> (HashcodeVisitorImplHolder () ,that) ;
+}
 
 class HashSetImplHolder final implement Fat<HashSetHolder ,HashSetLayout> {
 public:
@@ -2239,11 +2243,11 @@ public:
 	}
 
 	Flag hashcode (CR<Pointer> item) const {
-		const auto r1x = FriendHashcodeVisitorBinder::hold (self.mVisitor) ;
-		r1x->reset () ;
+		const auto r1x = Visitor (self.mVisitor.ref) ;
+		r1x.reset () ;
 		const auto r2x = RFat<ReflectVisit> (self.mSet.unknown ()) ;
-		r2x->visit (r1x.ref ,item) ;
-		return r1x->fetch () ;
+		r2x->visit (r1x ,item) ;
+		return r1x.fetch () ;
 	}
 
 	void update_emplace (CR<Index> curr) {
@@ -2495,7 +2499,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const override {
+	void visit (CR<Visitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = self.mSet.size () ;
 		for (auto &&i : range (0 ,r1x)) {

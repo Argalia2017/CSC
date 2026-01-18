@@ -15,7 +15,7 @@
 #include "csc_runtime.hpp"
 
 namespace CSC {
-struct FriendCoroutine implement Interface {
+struct CoroutineHolder implement Interface {
 	virtual void before () = 0 ;
 	virtual Bool tick (CR<Flt64> deltatime) = 0 ;
 	virtual Bool idle () = 0 ;
@@ -23,38 +23,34 @@ struct FriendCoroutine implement Interface {
 	virtual void execute () = 0 ;
 } ;
 
-template <class A>
-class FriendCoroutineBinder final implement Fat<FriendCoroutine ,A> {
+class Coroutine implement Proxy {
+protected:
+	VFat<CoroutineHolder> mThat ;
+
 public:
-	static VFat<FriendCoroutine> hold (VR<A> that) {
-		return VFat<FriendCoroutine> (FriendCoroutineBinder () ,that) ;
+	implicit Coroutine () = delete ;
+
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<CoroutineHolder ,ARG1>>>
+	implicit Coroutine (CR<VFat<ARG1>> that) :mThat (that) {}
+
+	void before () const {
+		return mThat->before () ;
 	}
 
-	void before () override {
-		return thiz.self.before () ;
+	Bool tick (CR<Flt64> deltatime) const {
+		return mThat->tick (deltatime) ;
 	}
 
-	Bool tick (CR<Flt64> deltatime) override {
-		return thiz.self.tick (deltatime) ;
+	Bool idle () const {
+		return mThat->idle () ;
 	}
 
-	Bool idle () override {
-		return thiz.self.idle () ;
+	void after () const {
+		return mThat->after () ;
 	}
 
-	void after () override {
-		return thiz.self.after () ;
-	}
-
-	void execute () override {
-		thiz.before () ;
-		while (TRUE) {
-			while (thiz.tick (0))
-				noop () ;
-			if (!thiz.idle ())
-				break ;
-		}
-		thiz.after () ;
+	void execute () const {
+		return mThat->execute () ;
 	}
 } ;
 

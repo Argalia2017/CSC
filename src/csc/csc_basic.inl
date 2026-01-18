@@ -7,6 +7,18 @@
 #include "csc_basic.hpp"
 
 #include "csc_end.h"
+#ifdef __CSC_SYSTEM_WINDOWS__
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include <Windows.h>
+#endif
+
 #include <mutex>
 #include "csc_begin.h"
 
@@ -92,15 +104,14 @@ exports CFat<OptionalHolder> OptionalHolder::hold (CR<OptionalLayout> that) {
 }
 
 struct FunctionTree {
-	Flag mHolder ;
 	BoxLayout mValue ;
 } ;
 
 class FunctionImplHolder final implement Fat<FunctionHolder ,FunctionLayout> {
 public:
 	void initialize (CR<Unknown> holder) override {
+		self.mThis.prepare (holder) ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<FunctionTree> () ,holder ,1) ;
-		self.mThis->mHolder = inline_vptr (holder) ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		BoxHolder::hold (raw ())->release () ;
 	}
@@ -110,7 +121,7 @@ public:
 	}
 
 	Unknown unknown () const {
-		return Unknown (self.mThis->mHolder) ;
+		return self.mThis.unknown () ;
 	}
 
 	VR<BoxLayout> raw () leftvalue override {
@@ -177,7 +188,9 @@ public:
 	}
 
 	Bool exist () const override {
-		return self.mThis.exist () ;
+		if (self.mThis == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	VR<BoxLayout> raw () leftvalue override {
@@ -216,10 +229,10 @@ public:
 		return Pointer::from (self) ;
 	}
 
-	AutoRefLayout recast (CR<Unknown> simple) override {
+	AutoRefLayout recast (CR<Unknown> extend) override {
 		AutoRefLayout ret ;
 		ret.mThis = move (self.mThis) ;
-		const auto r1x = RFat<ReflectRecast> (simple) ;
+		const auto r1x = RFat<ReflectRecast> (extend) ;
 		ret.mLayout = r1x->recast (self.mLayout) ;
 		return move (ret) ;
 	}
@@ -233,13 +246,7 @@ exports CFat<AutoRefHolder> AutoRefHolder::hold (CR<AutoRefLayout> that) {
 	return CFat<AutoRefHolder> (AutoRefImplHolder () ,that) ;
 }
 
-#ifdef __CSC_CONFIG_VAL32__
-static constexpr auto SHADERREFIMPLLAYOUT_HEADER = Flag (CHAR_ENDIAN) ;
-#endif
-
-#ifdef __CSC_CONFIG_VAL64__
 static constexpr auto SHADERREFIMPLLAYOUT_HEADER = Flag (QUAD_ENDIAN) ;
-#endif
 
 struct SharedRefTree {
 	Flag mHeader ;
@@ -278,21 +285,23 @@ public:
 			return ZERO ;
 		}) ;
 		const auto r6x = r2x - r3x * ALIGN_OF<SharedRefTree>::expr ;
-		auto &&rax = keep[TYPE<SharedRefTree>::expr] (Pointer::make (r6x)) ;
-		if (rax.mHeader != SHADERREFIMPLLAYOUT_HEADER)
-			return ;
-		const auto r7x = address (BoxHolder::hold (rax.mValue)->ref) ;
-		if (layout < r7x)
-			return ;
-		if (layout >= r7x + r1x->type_size ())
-			return ;
-		Scope<HeapMutex> anonymous (rax.mMutex) ;
-		const auto r8x = rax.mCounter ;
-		if (r8x <= 0)
-			return ;
-		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<SharedRefTree> () ,r6x) ;
-		self.mLayout = layout ;
-		self.mThis->mCounter++ ;
+		if ifdo (TRUE) {
+			auto &&rax = keep[TYPE<SharedRefTree>::expr] (Pointer::make (r6x)) ;
+			if (rax.mHeader != SHADERREFIMPLLAYOUT_HEADER)
+				discard ;
+			const auto r7x = address (BoxHolder::hold (rax.mValue)->ref) ;
+			if (layout < r7x)
+				discard ;
+			if (layout >= r7x + r1x->type_size ())
+				discard ;
+			Scope anonymous (rax.mMutex) ;
+			const auto r8x = rax.mCounter ;
+			if (r8x <= 0)
+				discard ;
+			RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<SharedRefTree> () ,ORDINARY::expr ,r6x) ;
+			self.mLayout = layout ;
+			self.mThis->mCounter++ ;
+		}
 	}
 
 	void initialize (CR<SharedRefLayout> that) override {
@@ -300,7 +309,7 @@ public:
 		if ifdo (TRUE) {
 			if (that.mThis == NULL)
 				discard ;
-			Scope<HeapMutex> anonymous (that.mThis->mMutex) ;
+			Scope anonymous (that.mThis->mMutex) ;
 			self.mThis = that.mThis.share () ;
 			self.mLayout = address (BoxHolder::hold (raw ())->ref) ;
 			self.mThis->mCounter++ ;
@@ -310,16 +319,23 @@ public:
 	void destroy () override {
 		if (!exist ())
 			return ;
-		Scope<HeapMutex> anonymous (self.mThis->mMutex) ;
-		const auto r1x = --self.mThis->mCounter ;
-		if (r1x > 0)
+		Scope anonymous (self.mThis->mMutex) ;
+		const auto r1x = RFat<ReflectSize> (self.mThis.unknown ()) ;
+		if (r1x->type_size () != SIZE_OF<SharedRefTree>::expr)
+			return ;
+		const auto r2x = --self.mThis->mCounter ;
+		if (r2x > 0)
 			return ;
 		BoxHolder::hold (raw ())->destroy () ;
 		self.mThis->mHeader = ZERO ;
 	}
 
 	Bool exist () const override {
-		return self.mThis.exist () ;
+		if (self.mThis == NULL)
+			return FALSE ;
+		if (self.mThis->mHeader != SHADERREFIMPLLAYOUT_HEADER)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	VR<BoxLayout> raw () leftvalue override {
@@ -333,7 +349,7 @@ public:
 	Length counter () const override {
 		if (!exist ())
 			return 0 ;
-		Scope<HeapMutex> anonymous (self.mThis->mMutex) ;
+		Scope anonymous (self.mThis->mMutex) ;
 		return self.mThis->mCounter ;
 	}
 
@@ -342,16 +358,18 @@ public:
 		return Pointer::make (self.mLayout) ;
 	}
 
-	SharedRefLayout recast (CR<Unknown> simple) override {
+	SharedRefLayout recast (CR<Unknown> extend) override {
 		SharedRefLayout ret ;
 		ret.mThis = move (self.mThis) ;
-		const auto r1x = RFat<ReflectRecast> (simple) ;
+		const auto r1x = RFat<ReflectRecast> (extend) ;
 		ret.mLayout = r1x->recast (self.mLayout) ;
 		return move (ret) ;
 	}
 
-	RefLayout weak () const override {
-		RefLayout ret = self.mThis.share () ;
+	SharedRefLayout weak () const override {
+		SharedRefLayout ret ;
+		ret.mThis = self.mThis.share () ;
+		ret.mThis.prepare (RefUnknownBinder<int> ()) ;
 		ret.mLayout = self.mLayout ;
 		return move (ret) ;
 	}
@@ -399,7 +417,9 @@ public:
 	}
 
 	Bool exist () const override {
-		return self.mThis.exist () ;
+		if (self.mThis == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	VR<BoxLayout> raw () leftvalue override {
@@ -415,10 +435,10 @@ public:
 		return Pointer::make (self.mLayout) ;
 	}
 
-	UniqueRefLayout recast (CR<Unknown> simple) override {
+	UniqueRefLayout recast (CR<Unknown> extend) override {
 		UniqueRefLayout ret ;
 		ret.mThis = move (self.mThis) ;
-		const auto r1x = RFat<ReflectRecast> (simple) ;
+		const auto r1x = RFat<ReflectRecast> (extend) ;
 		ret.mLayout = r1x->recast (self.mLayout) ;
 		return move (ret) ;
 	}
@@ -440,16 +460,16 @@ struct RefBufferTree {
 class RefBufferImplHolder final implement Fat<RefBufferHolder ,RefBufferLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		self.mHolder = inline_vptr (holder) ;
+		self.mThis.prepare (holder) ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<Length> size_) override {
 		assert (!exist ()) ;
+		self.mThis.prepare (holder) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (size_ <= 0)
 				discard ;
-			self.mHolder = inline_vptr (holder) ;
 			const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
 			RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<RefBufferTree> () ,r1x ,size_) ;
 			BoxHolder::hold (raw ())->initialize (r1x) ;
@@ -462,7 +482,6 @@ public:
 			self.mThis->mCapacity = size_ ;
 		}
 		if ifdo (act) {
-			self.mHolder = inline_vptr (holder) ;
 			self.mBuffer = ZERO ;
 			self.mSize = 0 ;
 			self.mStep = 0 ;
@@ -471,7 +490,7 @@ public:
 
 	void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) override {
 		assert (!exist ()) ;
-		self.mHolder = inline_vptr (holder) ;
+		self.mThis.prepare (holder) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<RefBufferTree> () ,r1x ,1) ;
 		BoxHolder::hold (raw ())->acquire (item) ;
@@ -494,7 +513,9 @@ public:
 	}
 
 	Bool exist () const override {
-		return self.mThis.exist () ;
+		if (self.mThis == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	Bool fixed () const override {
@@ -506,7 +527,7 @@ public:
 	}
 
 	Unknown unknown () const override {
-		return Unknown (self.mHolder) ;
+		return self.mThis.unknown () ;
 	}
 
 	VR<BoxLayout> raw () leftvalue override {
@@ -557,7 +578,7 @@ public:
 		assert (!fixed ()) ;
 		const auto r2x = inline_min (r1x ,size ()) ;
 		auto rax = RefBufferLayout () ;
-		rax.mHolder = self.mHolder ;
+		rax.mThis.prepare (unknown ()) ;
 		const auto r3x = RFat<ReflectElement> (unknown ())->element () ;
 		RefHolder::hold (rax.mThis)->initialize (RefUnknownBinder<RefBufferTree> () ,r3x ,r1x) ;
 		BoxHolder::hold (rax.mThis->mValue)->initialize (r3x) ;
@@ -591,7 +612,8 @@ exports CFat<RefBufferHolder> RefBufferHolder::hold (CR<RefBufferLayout> that) {
 }
 
 struct FarBufferTree {
-	Index mIndex ;
+	mutable Index mIndex ;
+	mutable Index mCheck ;
 	Function<CR<Index> ,VR<Pointer>> mGetter ;
 	Function<CR<Index> ,CR<Pointer>> mSetter ;
 	BoxLayout mValue ;
@@ -600,12 +622,12 @@ struct FarBufferTree {
 class FarBufferImplHolder final implement Fat<FarBufferHolder ,FarBufferLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		self.mHolder = inline_vptr (holder) ;
+		self.mThis.prepare (holder) ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<Length> size_) override {
 		assert (!exist ()) ;
-		self.mHolder = inline_vptr (holder) ;
+		self.mThis.prepare (holder) ;
 		const auto r1x = RFat<ReflectElement> (holder)->element () ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<FarBufferTree> () ,r1x ,1) ;
 		BoxHolder::hold (raw ())->initialize (r1x) ;
@@ -614,6 +636,7 @@ public:
 		const auto r2x = RFat<ReflectSize> (r1x) ;
 		self.mStep = r2x->type_size () ;
 		self.mThis->mIndex = NONE ;
+		self.mThis->mCheck = 0 ;
 	}
 
 	void use_getter (CR<Function<CR<Index> ,VR<Pointer>>> getter) override {
@@ -625,11 +648,13 @@ public:
 	}
 
 	Bool exist () const override {
-		return self.mThis.exist () ;
+		if (self.mThis == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	Unknown unknown () const override {
-		return Unknown (self.mHolder) ;
+		return self.mThis.unknown () ;
 	}
 
 	VR<BoxLayout> raw () leftvalue override {
@@ -659,13 +684,13 @@ public:
 	VR<Pointer> at (CR<Index> index) leftvalue override {
 		assert (inline_between (index ,0 ,size ())) ;
 		update_sync (index) ;
-		return ref ;
+		return Pointer::make (self.mBuffer) ;
 	}
 
 	CR<Pointer> at (CR<Index> index) const leftvalue override {
 		assert (inline_between (index ,0 ,size ())) ;
 		update_sync (index) ;
-		return ref ;
+		return Pointer::make (self.mBuffer) ;
 	}
 
 	void update_sync (CR<Index> index) const {
@@ -674,6 +699,7 @@ public:
 		refresh () ;
 		self.mThis->mGetter (index ,ref) ;
 		self.mThis->mIndex = index ;
+		self.mThis->mCheck++ ;
 	}
 
 	void refresh () const override {
@@ -703,7 +729,6 @@ public:
 		RefBufferHolder::hold (self.mAllocator)->initialize (holder ,size_) ;
 		const auto r1x = RFat<ReflectTuple> (holder) ;
 		self.mOffset = r1x->tuple_m2nd () ;
-		self.mWidth = 0 ;
 		self.mLength = 0 ;
 		self.mFree = NONE ;
 	}
@@ -711,12 +736,13 @@ public:
 	void destroy () override {
 		if (!exist ())
 			return ;
-		const auto r1x = inline_min (self.mWidth ,size ()) ;
-		const auto r2x = RFat<ReflectDestroy> (unknown ()) ;
-		for (auto &&i : range (0 ,r1x)) {
+		const auto r1x = inline_alignas (self.mLength + 1 ,ALLOCATOR_MIN_SIZE::expr) ;
+		const auto r2x = inline_min (r1x ,size ()) ;
+		const auto r3x = RFat<ReflectDestroy> (unknown ()) ;
+		for (auto &&i : range (0 ,r2x)) {
 			if (ptr (self ,i).mNext != USED)
 				continue ;
-			r2x->destroy (self.mAllocator.at (i) ,1) ;
+			r3x->destroy (self.mAllocator.at (i) ,1) ;
 		}
 	}
 
@@ -738,7 +764,6 @@ public:
 
 	void clear () override {
 		destroy () ;
-		self.mWidth = 0 ;
 		self.mLength = 0 ;
 		self.mFree = NONE ;
 	}
@@ -821,8 +846,6 @@ public:
 	}
 
 	Bool used (CR<Index> index) const override {
-		if (!inline_between (index ,0 ,self.mWidth))
-			return FALSE ;
 		const auto r1x = ptr (self ,index).mNext ;
 		return r1x == USED ;
 	}
@@ -839,20 +862,25 @@ public:
 	}
 
 	void check_resize () {
+		if (self.mLength != 0)
+			if (self.mFree != NONE)
+				return ;
+		const auto r1x = self.mLength ;
 		if ifdo (TRUE) {
-			if (self.mWidth != 0)
-				if (self.mFree != NONE)
-					discard ;
-			if ifdo (TRUE) {
-				if (self.mWidth < size ())
-					discard ;
-				const auto r1x = inline_max (self.mWidth * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
-				resize (r1x) ;
-			}
-			self.mFree = self.mWidth ;
-			ptr (self ,self.mFree).mNext = NONE ;
-			self.mWidth++ ;
+			if (r1x < size ())
+				discard ;
+			const auto r2x = inline_max (r1x * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
+			resize (r2x) ;
 		}
+		const auto r3x = inline_alignas (r1x + 1 ,ALLOCATOR_MIN_SIZE::expr) ;
+		const auto r4x = inline_min (r3x ,size ()) ;
+		Index ix = self.mFree ;
+		for (auto &&i : range (r1x ,r4x)) {
+			Index iy = r4x - 1 - i + r1x ;
+			ptr (self ,iy).mNext = ix ;
+			ix = iy ;
+		}
+		self.mFree = ix ;
 	}
 } ;
 

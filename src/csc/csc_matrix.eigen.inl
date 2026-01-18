@@ -22,6 +22,28 @@ public:
 		noop () ;
 	}
 
+	Array<Flt64> convert (CR<Matrix> a) const {
+		Array<Flt64> ret = Array<Flt64> (16) ;
+		for (auto &&i : range (0 ,4 ,0 ,4)) {
+			Index ix = i.mX + 4 * i.mY ;
+			ret[ix] = a[i] ;
+		}
+		return move (ret) ;
+	}
+
+	Matrix convert (CR<Array<Flt64>> a) const {
+		Matrix ret = Matrix::iden () ;
+		const auto r1x = MathProc::sqrt (Flt64 (a.length ())) ;
+		const auto r2x = Length (MathProc::round (r1x)) ;
+		const auto r3x = MathProc::square (r2x) ;
+		assert (r3x == a.length ()) ;
+		for (auto &&i : range (0 ,r3x ,0 ,r3x)) {
+			Index ix = i.mX + i.mY * 4 ;
+			ret[i] = a[ix] ;
+		}
+		return move (ret) ;
+	}
+
 	TRSResult solve_trs (CR<Matrix> a) const override {
 		TRSResult ret ;
 		const auto r1x = a * Vector::axis_x () ;

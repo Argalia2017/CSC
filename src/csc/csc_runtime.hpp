@@ -26,7 +26,9 @@ struct TimeCalendar {
 } ;
 
 struct TimeLayout ;
-struct TimeStorage implement Storage<ENUM<8> ,ENUM<8>> {} ;
+struct TimeStorage {
+	Val64 mTime ;
+} ;
 
 struct TimeHolder implement Interface {
 	imports Box<TimeLayout ,TimeStorage> create () ;
@@ -202,7 +204,9 @@ public:
 } ;
 
 struct AtomicLayout ;
-struct AtomicStorage implement Storage<ENUM_MUL<SIZE_OF<Val> ,RANK1> ,ENUM<8>> {} ;
+struct AtomicStorage {
+	Val64 mAtomic ;
+} ;
 
 struct AtomicHolder implement Interface {
 	imports Box<AtomicLayout ,AtomicStorage> create () ;
@@ -340,7 +344,10 @@ inline Mutex UniqueMutex () {
 }
 
 struct SharedLockLayout ;
-struct SharedLockStorage implement Storage<ENUM_MUL<SIZE_OF<Val> ,RANK4> ,ENUM<8>> {} ;
+struct SharedLockStorage {
+	RefLayout mMutex ;
+	RefLayout mLock ;
+} ;
 
 struct SharedLockHolder implement Interface {
 	imports Box<SharedLockLayout ,SharedLockStorage> create () ;
@@ -376,7 +383,10 @@ public:
 } ;
 
 struct UniqueLockLayout ;
-struct UniqueLockStorage implement Storage<ENUM_MUL<SIZE_OF<Val> ,RANK4> ,ENUM<8>> {} ;
+struct UniqueLockStorage {
+	RefLayout mMutex ;
+	RefLayout mLock ;
+} ;
 
 struct UniqueLockHolder implement Interface {
 	imports Box<UniqueLockLayout ,UniqueLockStorage> create () ;
@@ -416,19 +426,22 @@ public:
 	}
 } ;
 
-struct FriendExecuting implement Interface {
+struct ExecutingHolder implement Interface {
 	virtual void friend_execute (CR<Index> slot) = 0 ;
 } ;
 
-template <class A>
-class FriendExecutingBinder final implement Fat<FriendExecuting ,A> {
-public:
-	static VFat<FriendExecuting> hold (VR<A> that) {
-		return VFat<FriendExecuting> (FriendExecutingBinder () ,that) ;
-	}
+class Executing implement Proxy {
+protected:
+	VFat<ExecutingHolder> mThat ;
 
-	void friend_execute (CR<Index> slot) override {
-		thiz.self.friend_execute (slot) ;
+public:
+	implicit Executing () = delete ;
+
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<ExecutingHolder ,ARG1>>>
+	implicit Executing (CR<VFat<ARG1>> that) :mThat (that) {}
+
+	void friend_execute (CR<Index> slot) const {
+		return mThat->friend_execute (slot) ;
 	}
 } ;
 
@@ -439,7 +452,7 @@ struct ThreadHolder implement Interface {
 	imports VFat<ThreadHolder> hold (VR<ThreadLayout> that) ;
 	imports CFat<ThreadHolder> hold (CR<ThreadLayout> that) ;
 
-	virtual void initialize (RR<VFat<FriendExecuting>> executing ,CR<Index> slot) = 0 ;
+	virtual void initialize (RR<Ref<Executing>> executing ,CR<Index> slot) = 0 ;
 	virtual Flag thread_uid () const = 0 ;
 	virtual void start () = 0 ;
 	virtual void stop () = 0 ;
@@ -449,7 +462,7 @@ class Thread implement Like<AutoRef<ThreadLayout>> {
 public:
 	implicit Thread () = default ;
 
-	explicit Thread (RR<VFat<FriendExecuting>> executing ,CR<Index> slot) {
+	explicit Thread (RR<Ref<Executing>> executing ,CR<Index> slot) {
 		mThis = ThreadHolder::create () ;
 		ThreadHolder::hold (thiz)->initialize (move (executing) ,slot) ;
 	}
@@ -718,7 +731,7 @@ public:
 struct GlobalTree ;
 
 struct GlobalLayout {
-	Ref<GlobalTree> mThis ;
+	SharedRef<GlobalTree> mThis ;
 	Index mIndex ;
 	Clazz mClazz ;
 } ;
@@ -753,7 +766,7 @@ public:
 } ;
 
 template <class A>
-class GlobalUnknownBinder final implement Fat<FriendUnknown ,void> {
+class GlobalUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)

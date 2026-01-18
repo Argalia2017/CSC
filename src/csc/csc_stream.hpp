@@ -124,54 +124,32 @@ static constexpr auto CAT = RANK2 () ;
 static constexpr auto GAP = RANK3 () ;
 static constexpr auto EOS = RANK4 () ;
 
-class ByteUnknownBinder final implement Fat<FriendUnknown ,void> {
-public:
-	Flag reflect (CR<Flag> uuid) const override {
-		return ZERO ;
-	}
-} ;
-
-class TextUnknownBinder final implement Fat<FriendUnknown ,void> {
-public:
-	Flag reflect (CR<Flag> uuid) const override {
-		return ZERO ;
-	}
-} ;
-
 class Reader ;
+class Writer ;
 
-template <class...>
-trait HAS_FRIEND_READ_HELP ;
-
-template <class A ,class OTHERWISE>
-trait HAS_FRIEND_READ_HELP<A ,OTHERWISE> {
-	using RET = ENUM_FALSE ;
+struct ReadingHolder implement Interface {
+	virtual void friend_read (CR<Reader> reader) = 0 ;
 } ;
 
-template <class A>
-trait HAS_FRIEND_READ_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).friend_read (nullof (VR<Reader>)))>>> {
-	using RET = ENUM_TRUE ;
-} ;
+class Reading implement Proxy {
+protected:
+	VFat<ReadingHolder> mThat ;
 
-template <class A>
-using HAS_FRIEND_READ = typename HAS_FRIEND_READ_HELP<A ,ALWAYS>::RET ;
+public:
+	implicit Reading () = delete ;
 
-struct ReaderLayout {
-	Flag mHolder ;
-	Ref<RefBuffer<Byte>> mStream ;
-	Bool mDiffEndian ;
-	Function<VR<ReaderLayout>> mOverflow ;
-	Index mRead ;
-	Index mWrite ;
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<ReadingHolder ,ARG1>>>
+	implicit Reading (CR<VFat<ARG1>> that) :mThat (that) {}
+
+	void friend_read (CR<Reader> reader) const {
+		return mThat->friend_read (reader) ;
+	}
 } ;
 
 struct ReaderHolder implement Interface {
-	imports VFat<ReaderHolder> hold (VR<ReaderLayout> that) ;
-	imports CFat<ReaderHolder> hold (CR<ReaderLayout> that) ;
-
-	virtual void prepare (CR<Unknown> holder) = 0 ;
 	virtual void initialize (RR<Ref<RefBuffer<Byte>>> stream) = 0 ;
-	virtual void use_overflow (CR<Function<VR<ReaderLayout>>> overflow) = 0 ;
+	virtual void use_overflow (CR<Function<CR<Pointer>>> overflow) = 0 ;
+	virtual void set_cats (CR<Array<Slice>> cats) = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Length length () const = 0 ;
 	virtual StreamShape shape () const = 0 ;
@@ -196,44 +174,266 @@ struct ReaderHolder implement Interface {
 	virtual void read (CR<typeof (EOS)> item) = 0 ;
 } ;
 
-class Reader implement ReaderLayout {
+class Reader implement Proxy {
 protected:
-	using ReaderLayout::mHolder ;
-	using ReaderLayout::mStream ;
-	using ReaderLayout::mDiffEndian ;
-	using ReaderLayout::mOverflow ;
-	using ReaderLayout::mRead ;
-	using ReaderLayout::mWrite ;
+	VFat<ReaderHolder> mThat ;
 
 public:
-	implicit Reader () = default ;
+	implicit Reader () = delete ;
 
-	void use_overflow (CR<Function<VR<Reader>>> overflow) {
-		return ReaderHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<ReaderHolder ,ARG1>>>
+	implicit Reader (CR<VFat<ARG1>> that) :mThat (that) {}
+
+	void use_overflow (CR<Function<CR<Reader>>> overflow) const {
+		return mThat->use_overflow (Pointer::from (overflow)) ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) const {
+		return mThat->set_cats (cats) ;
 	}
 
 	Length size () const {
-		return ReaderHolder::hold (thiz)->size () ;
+		return mThat->size () ;
 	}
 
 	Length length () const {
-		return ReaderHolder::hold (thiz)->length () ;
+		return mThat->length () ;
 	}
 
 	StreamShape shape () const {
-		return ReaderHolder::hold (thiz)->shape () ;
+		return mThat->shape () ;
 	}
 
 	Bool good () const {
-		return ReaderHolder::hold (thiz)->good () ;
+		return mThat->good () ;
+	}
+
+	void reset () const {
+		return mThat->reset () ;
+	}
+
+	void reset (CR<StreamShape> shape) const {
+		return mThat->reset (shape) ;
+	}
+
+	template <class ARG1>
+	ARG1 poll (TYPE<ARG1>) const {
+		ARG1 ret ;
+		read (ret) ;
+		return move (ret) ;
+	}
+
+	void read (VR<Bool> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Bool> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Val32> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Val32> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Val64> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Val64> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Flt32> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Flt32> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Flt64> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Flt64> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Byte> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Byte> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Word> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Word> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Char> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Char> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Quad> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Quad> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Stru32> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<Stru32> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<Slice> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (CR<Slice> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<StringLayout> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (VR<StringLayout> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (BOM)> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (CR<typeof (BOM)> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (CAT)> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (CR<typeof (CAT)> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (GAP)> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (CR<typeof (GAP)> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (EOS)> item) const {
+		return mThat->read (item) ;
+	}
+
+	forceinline CR<Reader> operator>> (CR<typeof (EOS)> item) const {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<Reading> item) const {
+		item.friend_read (thiz) ;
+	}
+
+	forceinline CR<Reader> operator>> (CR<Reading> item) const {
+		read (item) ;
+		return thiz ;
+	}
+} ;
+
+struct ByteReaderLayout {
+	Ref<RefBuffer<Byte>> mStream ;
+	Index mRead ;
+	Index mWrite ;
+	Bool mDiffEndian ;
+	Function<CR<Pointer>> mOverflow ;
+	Array<Slice> mCats ;
+	Index mCatIndex ;
+} ;
+
+struct ByteReaderHolder implement ReaderHolder {
+	imports VFat<ByteReaderHolder> hold (VR<ByteReaderLayout> that) ;
+	imports CFat<ByteReaderHolder> hold (CR<ByteReaderLayout> that) ;
+} ;
+
+class ByteReader implement ByteReaderLayout {
+public:
+	implicit ByteReader () = default ;
+
+	explicit ByteReader (RR<Ref<RefBuffer<Byte>>> stream) {
+		ByteReaderHolder::hold (thiz)->initialize (move (stream)) ;
+	}
+
+	implicit operator Reader () leftvalue {
+		return ByteReaderHolder::hold (thiz) ;
+	}
+
+	void use_overflow (CR<Function<VR<ByteReader>>> overflow) {
+		return ByteReaderHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) {
+		return ByteReaderHolder::hold (thiz)->set_cats (cats) ;
+	}
+
+	Length size () const {
+		return ByteReaderHolder::hold (thiz)->size () ;
+	}
+
+	Length length () const {
+		return ByteReaderHolder::hold (thiz)->length () ;
+	}
+
+	StreamShape shape () const {
+		return ByteReaderHolder::hold (thiz)->shape () ;
+	}
+
+	Bool good () const {
+		return ByteReaderHolder::hold (thiz)->good () ;
 	}
 
 	void reset () {
-		return ReaderHolder::hold (thiz)->reset () ;
+		return ByteReaderHolder::hold (thiz)->reset () ;
 	}
 
 	void reset (CR<StreamShape> shape) {
-		return ReaderHolder::hold (thiz)->reset (shape) ;
+		return ByteReaderHolder::hold (thiz)->reset (shape) ;
 	}
 
 	template <class ARG1>
@@ -244,237 +444,402 @@ public:
 	}
 
 	void read (VR<Bool> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Bool> item) {
+	forceinline VR<ByteReader> operator>> (VR<Bool> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<Val32> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Val32> item) {
+	forceinline VR<ByteReader> operator>> (VR<Val32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<Val64> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Val64> item) {
+	forceinline VR<ByteReader> operator>> (VR<Val64> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<Flt32> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Flt32> item) {
+	forceinline VR<ByteReader> operator>> (VR<Flt32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<Flt64> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Flt64> item) {
+	forceinline VR<ByteReader> operator>> (VR<Flt64> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<Byte> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Byte> item) {
+	forceinline VR<ByteReader> operator>> (VR<Byte> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<Word> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Word> item) {
+	forceinline VR<ByteReader> operator>> (VR<Word> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<Char> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Char> item) {
+	forceinline VR<ByteReader> operator>> (VR<Char> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<Quad> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Quad> item) {
+	forceinline VR<ByteReader> operator>> (VR<Quad> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<Stru32> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<Stru32> item) {
+	forceinline VR<ByteReader> operator>> (VR<Stru32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (CR<Slice> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (CR<Slice> item) {
+	forceinline VR<ByteReader> operator>> (CR<Slice> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (VR<StringLayout> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (VR<StringLayout> item) {
+	forceinline VR<ByteReader> operator>> (VR<StringLayout> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (CR<typeof (BOM)> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (CR<typeof (BOM)> item) {
+	forceinline VR<ByteReader> operator>> (CR<typeof (BOM)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (CR<typeof (CAT)> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (CR<typeof (CAT)> item) {
+	forceinline VR<ByteReader> operator>> (CR<typeof (CAT)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (CR<typeof (GAP)> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (CR<typeof (GAP)> item) {
+	forceinline VR<ByteReader> operator>> (CR<typeof (GAP)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void read (CR<typeof (EOS)> item) {
-		return ReaderHolder::hold (thiz)->read (item) ;
+		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<Reader> operator>> (CR<typeof (EOS)> item) {
+	forceinline VR<ByteReader> operator>> (CR<typeof (EOS)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	void read (XR<ARG1> item) {
+	void read (CR<Reading> item) {
 		item.friend_read (thiz) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	forceinline VR<Reader> operator>> (XR<ARG1> item) {
+	forceinline VR<ByteReader> operator>> (CR<Reading> item) {
 		read (item) ;
 		return thiz ;
 	}
 } ;
 
-struct ByteReaderHolder implement ReaderHolder {
-	imports VFat<ByteReaderHolder> hold (VR<ReaderLayout> that) ;
-	imports CFat<ByteReaderHolder> hold (CR<ReaderLayout> that) ;
-} ;
-
-struct ByteReaderImplLayout implement Reader {
-public:
-	implicit ByteReaderImplLayout () noexcept {
-		ByteReaderHolder::hold (thiz)->prepare (ByteUnknownBinder ()) ;
-	}
-} ;
-
-class ByteReader implement ByteReaderImplLayout {
-public:
-	implicit ByteReader () = default ;
-
-	explicit ByteReader (RR<Ref<RefBuffer<Byte>>> stream) {
-		ByteReaderHolder::hold (thiz)->initialize (move (stream)) ;
-	}
+struct TextReaderLayout {
+	Ref<RefBuffer<Byte>> mStream ;
+	Index mRead ;
+	Index mWrite ;
+	Bool mDiffEndian ;
+	Function<CR<Pointer>> mOverflow ;
+	Array<Slice> mCats ;
+	Index mCatIndex ;
 } ;
 
 struct TextReaderHolder implement ReaderHolder {
-	imports VFat<TextReaderHolder> hold (VR<ReaderLayout> that) ;
-	imports CFat<TextReaderHolder> hold (CR<ReaderLayout> that) ;
+	imports VFat<TextReaderHolder> hold (VR<TextReaderLayout> that) ;
+	imports CFat<TextReaderHolder> hold (CR<TextReaderLayout> that) ;
 } ;
 
-struct TextReaderImplLayout implement Reader {
-public:
-	implicit TextReaderImplLayout () noexcept {
-		TextReaderHolder::hold (thiz)->prepare (TextUnknownBinder ()) ;
-	}
-} ;
-
-class TextReader implement TextReaderImplLayout {
+class TextReader implement TextReaderLayout {
 public:
 	implicit TextReader () = default ;
 
 	explicit TextReader (RR<Ref<RefBuffer<Byte>>> stream) {
 		TextReaderHolder::hold (thiz)->initialize (move (stream)) ;
 	}
+
+	implicit operator Reader () leftvalue {
+		return TextReaderHolder::hold (thiz) ;
+	}
+
+	void use_overflow (CR<Function<VR<TextReader>>> overflow) {
+		return TextReaderHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) {
+		return TextReaderHolder::hold (thiz)->set_cats (cats) ;
+	}
+
+	Length size () const {
+		return TextReaderHolder::hold (thiz)->size () ;
+	}
+
+	Length length () const {
+		return TextReaderHolder::hold (thiz)->length () ;
+	}
+
+	StreamShape shape () const {
+		return TextReaderHolder::hold (thiz)->shape () ;
+	}
+
+	Bool good () const {
+		return TextReaderHolder::hold (thiz)->good () ;
+	}
+
+	void reset () {
+		return TextReaderHolder::hold (thiz)->reset () ;
+	}
+
+	void reset (CR<StreamShape> shape) {
+		return TextReaderHolder::hold (thiz)->reset (shape) ;
+	}
+
+	template <class ARG1>
+	ARG1 poll (TYPE<ARG1>) {
+		ARG1 ret ;
+		read (ret) ;
+		return move (ret) ;
+	}
+
+	void read (VR<Bool> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Bool> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Val32> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Val32> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Val64> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Val64> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Flt32> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Flt32> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Flt64> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Flt64> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Byte> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Byte> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Word> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Word> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Char> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Char> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Quad> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Quad> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<Stru32> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<Stru32> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<Slice> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (CR<Slice> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (VR<StringLayout> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (VR<StringLayout> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (BOM)> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (CR<typeof (BOM)> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (CAT)> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (CR<typeof (CAT)> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (GAP)> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (CR<typeof (GAP)> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (EOS)> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (CR<typeof (EOS)> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<Reading> item) {
+		item.friend_read (thiz) ;
+	}
+
+	forceinline VR<TextReader> operator>> (CR<Reading> item) {
+		read (item) ;
+		return thiz ;
+	}
 } ;
 
-class Writer ;
-
-template <class...>
-trait HAS_FRIEND_WRITE_HELP ;
-
-template <class A ,class OTHERWISE>
-trait HAS_FRIEND_WRITE_HELP<A ,OTHERWISE> {
-	using RET = ENUM_FALSE ;
+struct WritingHolder implement Interface {
+	virtual void friend_write (CR<Writer> writer) const = 0 ;
 } ;
 
-template <class A>
-trait HAS_FRIEND_WRITE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).friend_write (nullof (VR<Writer>)))>>> {
-	using RET = ENUM_TRUE ;
-} ;
+class Writing implement Proxy {
+protected:
+	CFat<WritingHolder> mThat ;
 
-template <class A>
-using HAS_FRIEND_WRITE = typename HAS_FRIEND_WRITE_HELP<A ,ALWAYS>::RET ;
+public:
+	implicit Writing () = delete ;
 
-struct WriterLayout {
-	Flag mHolder ;
-	Ref<RefBuffer<Byte>> mStream ;
-	Bool mDiffEndian ;
-	Function<VR<WriterLayout>> mOverflow ;
-	Index mRead ;
-	Index mWrite ;
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<WritingHolder ,ARG1>>>
+	implicit Writing (CR<CFat<ARG1>> that) :mThat (that) {}
+
+	void friend_write (CR<Writer> writer) const {
+		return mThat->friend_write (writer) ;
+	}
 } ;
 
 struct WriterHolder implement Interface {
-	imports VFat<WriterHolder> hold (VR<WriterLayout> that) ;
-	imports CFat<WriterHolder> hold (CR<WriterLayout> that) ;
-
-	virtual void prepare (CR<Unknown> holder) = 0 ;
 	virtual void initialize (RR<Ref<RefBuffer<Byte>>> stream) = 0 ;
-	virtual void use_overflow (CR<Function<VR<WriterLayout>>> overflow) = 0 ;
+	virtual void use_overflow (CR<Function<CR<Pointer>>> overflow) = 0 ;
+	virtual void set_cats (CR<Array<Slice>> cats) = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Length length () const = 0 ;
 	virtual StreamShape shape () const = 0 ;
@@ -499,241 +864,625 @@ struct WriterHolder implement Interface {
 	virtual void write (CR<typeof (EOS)> item) = 0 ;
 } ;
 
-class Writer implement WriterLayout {
+class Writer implement Proxy {
 protected:
-	using WriterLayout::mHolder ;
-	using WriterLayout::mStream ;
-	using WriterLayout::mDiffEndian ;
-	using WriterLayout::mOverflow ;
-	using WriterLayout::mRead ;
-	using WriterLayout::mWrite ;
+	VFat<WriterHolder> mThat ;
 
 public:
-	implicit Writer () = default ;
+	implicit Writer () = delete ;
 
-	void use_overflow (CR<Function<VR<Writer>>> overflow) {
-		return WriterHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<WriterHolder ,ARG1>>>
+	implicit Writer (CR<VFat<ARG1>> that) :mThat (that) {}
+
+	void use_overflow (CR<Function<CR<Writer>>> overflow) const {
+		return mThat->use_overflow (Pointer::from (overflow)) ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) const {
+		return mThat->set_cats (cats) ;
 	}
 
 	Length size () const {
-		return WriterHolder::hold (thiz)->size () ;
+		return mThat->size () ;
 	}
 
 	Length length () const {
-		return WriterHolder::hold (thiz)->length () ;
+		return mThat->length () ;
 	}
 
 	StreamShape shape () const {
-		return WriterHolder::hold (thiz)->shape () ;
+		return mThat->shape () ;
 	}
 
 	Bool good () const {
-		return WriterHolder::hold (thiz)->good () ;
+		return mThat->good () ;
 	}
 
-	void reset () {
-		return WriterHolder::hold (thiz)->reset () ;
+	void reset () const {
+		return mThat->reset () ;
 	}
 
-	void reset (CR<StreamShape> shape) {
-		return WriterHolder::hold (thiz)->reset (shape) ;
+	void reset (CR<StreamShape> shape) const {
+		return mThat->reset (shape) ;
 	}
 
-	void write (CR<Bool> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Bool> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Bool> item) {
+	forceinline CR<Writer> operator<< (CR<Bool> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Val32> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Val32> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Val32> item) {
+	forceinline CR<Writer> operator<< (CR<Val32> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Val64> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Val64> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Val64> item) {
+	forceinline CR<Writer> operator<< (CR<Val64> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Flt32> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Flt32> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Flt32> item) {
+	forceinline CR<Writer> operator<< (CR<Flt32> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Flt64> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Flt64> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Flt64> item) {
+	forceinline CR<Writer> operator<< (CR<Flt64> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Byte> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Byte> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Byte> item) {
+	forceinline CR<Writer> operator<< (CR<Byte> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Word> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Word> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Word> item) {
+	forceinline CR<Writer> operator<< (CR<Word> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Char> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Char> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Char> item) {
+	forceinline CR<Writer> operator<< (CR<Char> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Quad> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Quad> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Quad> item) {
+	forceinline CR<Writer> operator<< (CR<Quad> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Stru32> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Stru32> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Stru32> item) {
+	forceinline CR<Writer> operator<< (CR<Stru32> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<Slice> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<Slice> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<Slice> item) {
+	forceinline CR<Writer> operator<< (CR<Slice> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<StringLayout> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<StringLayout> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<StringLayout> item) {
+	forceinline CR<Writer> operator<< (CR<StringLayout> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<typeof (BOM)> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<typeof (BOM)> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<typeof (BOM)> item) {
+	forceinline CR<Writer> operator<< (CR<typeof (BOM)> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<typeof (CAT)> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<typeof (CAT)> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<typeof (CAT)> item) {
+	forceinline CR<Writer> operator<< (CR<typeof (CAT)> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<typeof (GAP)> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<typeof (GAP)> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<typeof (GAP)> item) {
+	forceinline CR<Writer> operator<< (CR<typeof (GAP)> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CR<typeof (EOS)> item) {
-		return WriterHolder::hold (thiz)->write (item) ;
+	void write (CR<typeof (EOS)> item) const {
+		return mThat->write (item) ;
 	}
 
-	forceinline VR<Writer> operator<< (CR<typeof (EOS)> item) {
+	forceinline CR<Writer> operator<< (CR<typeof (EOS)> item) const {
 		write (item) ;
 		return thiz ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	void write (XR<ARG1> item) {
+	void write (CR<Writing> item) const {
 		item.friend_write (thiz) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	forceinline VR<Writer> operator<< (XR<ARG1> item) {
+	forceinline CR<Writer> operator<< (CR<Writing> item) const {
 		write (item) ;
 		return thiz ;
 	}
 } ;
 
+struct ByteWriterLayout {
+	Ref<RefBuffer<Byte>> mStream ;
+	Index mRead ;
+	Index mWrite ;
+	Bool mDiffEndian ;
+	Function<CR<Pointer>> mOverflow ;
+	Array<Slice> mCats ;
+	Index mCatIndex ;
+} ;
+
 struct ByteWriterHolder implement WriterHolder {
-	imports VFat<ByteWriterHolder> hold (VR<WriterLayout> that) ;
-	imports CFat<ByteWriterHolder> hold (CR<WriterLayout> that) ;
+	imports VFat<ByteWriterHolder> hold (VR<ByteWriterLayout> that) ;
+	imports CFat<ByteWriterHolder> hold (CR<ByteWriterLayout> that) ;
 } ;
 
-struct ByteWriterImplLayout implement Writer {
-public:
-	implicit ByteWriterImplLayout () noexcept {
-		ByteWriterHolder::hold (thiz)->prepare (ByteUnknownBinder ()) ;
-	}
-} ;
-
-class ByteWriter implement ByteWriterImplLayout {
+class ByteWriter implement ByteWriterLayout {
 public:
 	implicit ByteWriter () = default ;
 
 	explicit ByteWriter (RR<Ref<RefBuffer<Byte>>> stream) {
 		ByteWriterHolder::hold (thiz)->initialize (move (stream)) ;
 	}
-} ;
 
-struct TextWriterHolder implement WriterHolder {
-	imports VFat<TextWriterHolder> hold (VR<WriterLayout> that) ;
-	imports CFat<TextWriterHolder> hold (CR<WriterLayout> that) ;
-} ;
+	implicit operator Writer () leftvalue {
+		return ByteWriterHolder::hold (thiz) ;
+	}
 
-struct TextWriterImplLayout implement Writer {
-public:
-	implicit TextWriterImplLayout () noexcept {
-		TextWriterHolder::hold (thiz)->prepare (TextUnknownBinder ()) ;
+	void use_overflow (CR<Function<VR<ByteWriter>>> overflow) {
+		return ByteWriterHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) {
+		return ByteWriterHolder::hold (thiz)->set_cats (cats) ;
+	}
+
+	Length size () const {
+		return ByteWriterHolder::hold (thiz)->size () ;
+	}
+
+	Length length () const {
+		return ByteWriterHolder::hold (thiz)->length () ;
+	}
+
+	StreamShape shape () const {
+		return ByteWriterHolder::hold (thiz)->shape () ;
+	}
+
+	Bool good () const {
+		return ByteWriterHolder::hold (thiz)->good () ;
+	}
+
+	void reset () {
+		return ByteWriterHolder::hold (thiz)->reset () ;
+	}
+
+	void reset (CR<StreamShape> shape) {
+		return ByteWriterHolder::hold (thiz)->reset (shape) ;
+	}
+
+	void write (CR<Bool> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Bool> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Val32> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Val32> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Val64> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Val64> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Flt32> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Flt32> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Flt64> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Flt64> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Byte> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Byte> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Word> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Word> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Char> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Char> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Quad> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Quad> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Stru32> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Stru32> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Slice> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Slice> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<StringLayout> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<StringLayout> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<typeof (BOM)> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<typeof (BOM)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<typeof (CAT)> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<typeof (CAT)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<typeof (GAP)> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<typeof (GAP)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<typeof (EOS)> item) {
+		return ByteWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<typeof (EOS)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Writing> item) {
+		item.friend_write (thiz) ;
+	}
+
+	forceinline VR<ByteWriter> operator<< (CR<Writing> item) {
+		write (item) ;
+		return thiz ;
 	}
 } ;
 
-class TextWriter implement TextWriterImplLayout {
+struct TextWriterLayout {
+	Ref<RefBuffer<Byte>> mStream ;
+	Index mRead ;
+	Index mWrite ;
+	Bool mDiffEndian ;
+	Function<CR<Pointer>> mOverflow ;
+	Array<Slice> mCats ;
+	Index mCatIndex ;
+} ;
+
+struct TextWriterHolder implement WriterHolder {
+	imports VFat<TextWriterHolder> hold (VR<TextWriterLayout> that) ;
+	imports CFat<TextWriterHolder> hold (CR<TextWriterLayout> that) ;
+} ;
+
+class TextWriter implement TextWriterLayout {
 public:
 	implicit TextWriter () = default ;
 
 	explicit TextWriter (RR<Ref<RefBuffer<Byte>>> stream) {
 		TextWriterHolder::hold (thiz)->initialize (move (stream)) ;
+	}
+
+	implicit operator Writer () leftvalue {
+		return TextWriterHolder::hold (thiz) ;
+	}
+
+	void use_overflow (CR<Function<VR<TextWriter>>> overflow) {
+		return TextWriterHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) {
+		return TextWriterHolder::hold (thiz)->set_cats (cats) ;
+	}
+
+	Length size () const {
+		return TextWriterHolder::hold (thiz)->size () ;
+	}
+
+	Length length () const {
+		return TextWriterHolder::hold (thiz)->length () ;
+	}
+
+	StreamShape shape () const {
+		return TextWriterHolder::hold (thiz)->shape () ;
+	}
+
+	Bool good () const {
+		return TextWriterHolder::hold (thiz)->good () ;
+	}
+
+	void reset () {
+		return TextWriterHolder::hold (thiz)->reset () ;
+	}
+
+	void reset (CR<StreamShape> shape) {
+		return TextWriterHolder::hold (thiz)->reset (shape) ;
+	}
+
+	void write (CR<Bool> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Bool> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Val32> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Val32> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Val64> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Val64> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Flt32> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Flt32> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Flt64> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Flt64> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Byte> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Byte> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Word> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Word> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Char> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Char> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Quad> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Quad> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Stru32> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Stru32> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Slice> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Slice> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<StringLayout> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<StringLayout> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<typeof (BOM)> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<typeof (BOM)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<typeof (CAT)> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<typeof (CAT)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<typeof (GAP)> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<typeof (GAP)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<typeof (EOS)> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<typeof (EOS)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<Writing> item) {
+		item.friend_write (thiz) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<Writing> item) {
+		write (item) ;
+		return thiz ;
 	}
 } ;
 
@@ -777,37 +1526,18 @@ public:
 	}
 } ;
 
-struct FriendReading implement Interface {
-	virtual void friend_read (VR<Reader> reader) = 0 ;
-} ;
-
 template <class A>
-class FriendReadingBinder final implement Fat<FriendReading ,A> {
+class PrintWritingBinder final implement Fat<WritingHolder ,A> {
 public:
-	static VFat<FriendReading> hold (VR<A> that) {
-		return VFat<FriendReading> (FriendReadingBinder () ,that) ;
-	}
-
-	void friend_read (VR<Reader> reader) const override {
-		reader.read (thiz.self) ;
+	void friend_write (CR<Writer> writer) const override {
+		return writer.write (thiz.self) ;
 	}
 } ;
 
-struct FriendWriting implement Interface {
-	virtual void friend_write (VR<Writer> writer) const = 0 ;
-} ;
-
-template <class A>
-class FriendWritingBinder final implement Fat<FriendWriting ,A> {
-public:
-	static CFat<FriendWriting> hold (CR<A> that) {
-		return CFat<FriendWriting> (FriendWritingBinder () ,that) ;
-	}
-
-	void friend_write (VR<Writer> writer) const override {
-		writer.write (thiz.self) ;
-	}
-} ;
+template <class ARG1>
+inline FatLayout PrintWriting (CR<ARG1> param) {
+	return CFat<WritingHolder> (PrintWritingBinder<ARG1> () ,param) ;
+}
 
 struct FormatLayout {
 	Slice mFormat ;
@@ -820,8 +1550,15 @@ struct FormatHolder implement Interface {
 	imports CFat<FormatHolder> hold (CR<FormatLayout> that) ;
 
 	virtual void initialize (CR<Slice> format) = 0 ;
-	virtual void friend_write (VR<Writer> writer) const = 0 ;
+	virtual void friend_write (CR<Writer> writer) const = 0 ;
 	virtual void once (CR<Wrapper<FatLayout>> params) const = 0 ;
+} ;
+
+class FormatWritingBinder final implement Fat<WritingHolder ,FormatLayout> {
+public:
+	void friend_write (CR<Writer> writer) const override {
+		return FormatHolder::hold (self)->friend_write (writer) ;
+	}
 } ;
 
 class Format implement FormatLayout {
@@ -837,13 +1574,17 @@ public:
 		FormatHolder::hold (thiz)->initialize (format) ;
 	}
 
-	void friend_write (VR<Writer> writer) const {
+	implicit operator Writing () const leftvalue {
+		return CFat<WritingHolder> (FormatWritingBinder () ,thiz) ;
+	}
+
+	void friend_write (CR<Writer> writer) const {
 		return FormatHolder::hold (thiz)->friend_write (writer) ;
 	}
 
 	template <class...ARG1>
 	void once (CR<ARG1>...params) const {
-		return FormatHolder::hold (thiz)->once (MakeWrapper (keep[TYPE<FatLayout>::expr] (FriendWritingBinder<ARG1>::hold (params))...)) ;
+		return FormatHolder::hold (thiz)->once (MakeWrapper (PrintWriting (params)...)) ;
 	}
 
 	template <class...ARG1>
@@ -872,13 +1613,13 @@ struct StreamTextProcHolder implement Interface {
 	imports CFat<StreamTextProcHolder> hold (CR<StreamTextProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void read_keyword (VR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
-	virtual void read_scalar (VR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
-	virtual void read_escape (VR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
-	virtual void write_escape (VR<Writer> writer ,CR<String<Stru8>> item) const = 0 ;
-	virtual void read_blank (VR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
-	virtual void read_endline (VR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
-	virtual void write_aligned (VR<Writer> writer ,CR<Val64> number ,CR<Length> align) const = 0 ;
+	virtual void read_keyword (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
+	virtual void read_scalar (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
+	virtual void read_escape (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
+	virtual void write_escape (CR<Writer> writer ,CR<String<Stru8>> item) const = 0 ;
+	virtual void read_blank (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
+	virtual void read_endline (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
+	virtual void write_aligned (CR<Writer> writer ,CR<Val64> number ,CR<Length> align) const = 0 ;
 } ;
 
 class StreamTextProc implement Like<UniqueRef<StreamTextProcLayout>> {
@@ -887,136 +1628,111 @@ public:
 		return keep[TYPE<StreamTextProc>::expr] (StreamTextProcHolder::expr) ;
 	}
 
-	static void read_keyword (VR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_keyword (CR<Reader> reader ,VR<String<Stru8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_keyword (reader ,item) ;
 	}
 
-	static void read_scalar (VR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_scalar (CR<Reader> reader ,VR<String<Stru8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_scalar (reader ,item) ;
 	}
 
-	static void read_escape (VR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_escape (CR<Reader> reader ,VR<String<Stru8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_escape (reader ,item) ;
 	}
 
-	static void write_escape (VR<Writer> writer ,CR<String<Stru8>> item) {
+	static void write_escape (CR<Writer> writer ,CR<String<Stru8>> item) {
 		return StreamTextProcHolder::hold (expr)->write_escape (writer ,item) ;
 	}
 
-	static void read_blank (VR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_blank (CR<Reader> reader ,VR<String<Stru8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_blank (reader ,item) ;
 	}
 
-	static void read_endline (VR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_endline (CR<Reader> reader ,VR<String<Stru8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_endline (reader ,item) ;
 	}
 
-	static void write_aligned (VR<Writer> writer ,CR<Val64> number ,CR<Length> align) {
+	static void write_aligned (CR<Writer> writer ,CR<Val64> number ,CR<Length> align) {
 		return StreamTextProcHolder::hold (expr)->write_aligned (writer ,number ,align) ;
 	}
 } ;
 
-class ReadKeyword implement Proxy {
-protected:
-	VR<String<Stru8>> mThat ;
-
+class ReadKeywordReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
 public:
-	implicit ReadKeyword () = delete ;
-
-	explicit ReadKeyword (VR<String<Stru8>> that) :mThat (that) {}
-
-	void friend_read (VR<Reader> reader) const {
-		return StreamTextProc::read_keyword (reader ,mThat) ;
+	void friend_read (CR<Reader> reader) override {
+		return StreamTextProc::read_keyword (reader ,self) ;
 	}
 } ;
 
-class ReadScalar implement Proxy {
-protected:
-	VR<String<Stru8>> mThat ;
+inline VFat<ReadingHolder> ReadKeyword (VR<String<Stru8>> that) {
+	return VFat<ReadingHolder> (ReadKeywordReadingBinder () ,that) ;
+}
 
+class ReadScalarReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
 public:
-	implicit ReadScalar () = delete ;
-
-	explicit ReadScalar (VR<String<Stru8>> that) :mThat (that) {}
-
-	void friend_read (VR<Reader> reader) const {
-		return StreamTextProc::read_scalar (reader ,mThat) ;
+	void friend_read (CR<Reader> reader) override {
+		return StreamTextProc::read_scalar (reader ,self) ;
 	}
 } ;
 
-class ReadEscape implement Proxy {
-protected:
-	VR<String<Stru8>> mThat ;
+inline VFat<ReadingHolder> ReadScalar (VR<String<Stru8>> that) {
+	return VFat<ReadingHolder> (ReadScalarReadingBinder () ,that) ;
+}
 
+class ReadEscapeReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
 public:
-	implicit ReadEscape () = delete ;
-
-	explicit ReadEscape (VR<String<Stru8>> that) :mThat (that) {}
-
-	void friend_read (VR<Reader> reader) const {
-		return StreamTextProc::read_escape (reader ,mThat) ;
+	void friend_read (CR<Reader> reader) override {
+		return StreamTextProc::read_escape (reader ,self) ;
 	}
 } ;
 
-class WriteEscape implement Proxy {
-protected:
-	CR<String<Stru8>> mThat ;
+inline VFat<ReadingHolder> ReadEscape (VR<String<Stru8>> that) {
+	return VFat<ReadingHolder> (ReadEscapeReadingBinder () ,that) ;
+}
 
+class WriteEscapeWritingBinder final implement Fat<WritingHolder ,String<Stru8>> {
 public:
-	implicit WriteEscape () = delete ;
-
-	explicit WriteEscape (CR<String<Stru8>> that) :mThat (that) {}
-
-	void friend_read (VR<Writer> writer) const {
-		return StreamTextProc::write_escape (writer ,mThat) ;
+	void friend_write (CR<Writer> writer) const override {
+		return StreamTextProc::write_escape (writer ,self) ;
 	}
 } ;
 
-class ReadBlank implement Proxy {
-protected:
-	VR<String<Stru8>> mThat ;
+inline CFat<WritingHolder> WriteEscape (CR<String<Stru8>> that) {
+	return CFat<WritingHolder> (WriteEscapeWritingBinder () ,that) ;
+}
 
+class ReadBlankReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
 public:
-	implicit ReadBlank () = delete ;
-
-	explicit ReadBlank (VR<String<Stru8>> that) :mThat (that) {}
-
-	void friend_read (VR<Reader> reader) const {
-		return StreamTextProc::read_blank (reader ,mThat) ;
+	void friend_read (CR<Reader> reader) override {
+		return StreamTextProc::read_blank (reader ,self) ;
 	}
 } ;
 
-class ReadEndline implement Proxy {
-protected:
-	VR<String<Stru8>> mThat ;
+inline VFat<ReadingHolder> ReadBlank (VR<String<Stru8>> that) {
+	return VFat<ReadingHolder> (ReadBlankReadingBinder () ,that) ;
+}
 
+class ReadEndlineReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
 public:
-	implicit ReadEndline () = delete ;
-
-	explicit ReadEndline (VR<String<Stru8>> that) :mThat (that) {}
-
-	void friend_read (VR<Reader> reader) const {
-		return StreamTextProc::read_endline (reader ,mThat) ;
+	void friend_read (CR<Reader> reader) override {
+		return StreamTextProc::read_endline (reader ,self) ;
 	}
 } ;
 
-class WriteAligned implement Proxy {
-protected:
-	Val64 mNumber ;
-	Length mAlign ;
+inline VFat<ReadingHolder> ReadEndline (VR<String<Stru8>> that) {
+	return VFat<ReadingHolder> (ReadEndlineReadingBinder () ,that) ;
+}
 
+class WriteAlignedWritingBinder final implement Fat<WritingHolder ,Tuple<Val64 ,Length>> {
 public:
-	implicit WriteAligned () = delete ;
-
-	explicit WriteAligned (CR<Val64> number ,CR<Length> align) {
-		mNumber = number ;
-		mAlign = align ;
-	}
-
-	void friend_write (VR<Writer> writer) const {
-		return StreamTextProc::write_aligned (writer ,mNumber ,mAlign) ;
+	void friend_write (CR<Writer> writer) const override {
+		return StreamTextProc::write_aligned (writer ,self.m1st ,self.m2nd) ;
 	}
 } ;
+
+inline CFat<WritingHolder> WriteAligned (CR<Tuple<Val64 ,Length>> that) {
+	return CFat<WritingHolder> (WriteAlignedWritingBinder () ,that) ;
+}
 
 struct CommaLayout ;
 
@@ -1026,10 +1742,17 @@ struct CommaHolder implement Interface {
 	imports CFat<CommaHolder> hold (CR<CommaLayout> that) ;
 
 	virtual void initialize (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) = 0 ;
-	virtual void friend_write (VR<Writer> writer) = 0 ;
+	virtual void friend_write (CR<Writer> writer) = 0 ;
 	virtual void increase () = 0 ;
 	virtual void decrease () = 0 ;
 	virtual void tight () = 0 ;
+} ;
+
+class CommaWritingBinder final implement Fat<WritingHolder ,SharedRef<CommaLayout>> {
+public:
+	void friend_write (CR<Writer> writer) const override {
+		return CommaHolder::hold (self)->friend_write (writer) ;
+	}
 } ;
 
 class Comma implement Like<SharedRef<CommaLayout>> {
@@ -1041,7 +1764,11 @@ public:
 		CommaHolder::hold (thiz)->initialize (indent ,comma ,endline) ;
 	}
 
-	void friend_write (VR<Writer> writer) const {
+	implicit operator Writing () const leftvalue {
+		return CFat<WritingHolder> (CommaWritingBinder () ,mThis) ;
+	}
+
+	void friend_write (CR<Writer> writer) const {
 		return CommaHolder::hold (thiz)->friend_write (writer) ;
 	}
 

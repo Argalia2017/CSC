@@ -188,7 +188,7 @@ public:
 
 	Flag load (CR<String<Str>> name) override {
 		assert (name.length () > 0) ;
-		const auto r1x = StringProc::stra_from_strs (name) ;
+		const auto r1x = StringProc::stra_from (name) ;
 		Flag ret = Flag (GetProcAddress (self.mLibrary ,r1x)) ;
 		if ifdo (TRUE) {
 			if (ret != ZERO)
@@ -369,7 +369,7 @@ public:
 
 	Flag load (CR<Clazz> clazz) const override {
 		assume (self.mRoot.exist ()) ;
-		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
+		Scope anonymous (self.mRoot->mMutex) ;
 		Flag ret = self.mRoot->mClazzSet.map (clazz) ;
 		replace (ret ,NONE ,ZERO) ;
 		return move (ret) ;
@@ -379,7 +379,7 @@ public:
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;
-		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
+		Scope anonymous (self.mRoot->mMutex) ;
 		const auto r1x = Pin<Set<Clazz>> (self.mRoot->mClazzSet) ;
 		r1x->add (clazz ,layout) ;
 	}

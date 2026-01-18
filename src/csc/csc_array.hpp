@@ -151,13 +151,13 @@ struct ArrayHolder implement Interface {
 	virtual Index inext (CR<Index> index) const = 0 ;
 	virtual Bool equal (CR<ArrayLayout> that) const = 0 ;
 	virtual Flag compr (CR<ArrayLayout> that) const = 0 ;
-	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void visit (CR<Visitor> visitor) const = 0 ;
 	virtual void fill (CR<Pointer> item) = 0 ;
 	virtual void splice (CR<Index> index ,CR<ArrayLayout> item) = 0 ;
 } ;
 
 template <class A>
-class ArrayUnknownBinder final implement Fat<FriendUnknown ,void> {
+class ArrayUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -294,8 +294,16 @@ public:
 		return ArrayHolder::hold (thiz)->inext (index) ;
 	}
 
+	ArrayIterator<VR<Array>> begin () leftvalue {
+		return ArrayIterator<VR<Array>> (thiz) ;
+	}
+
 	ArrayIterator<CR<Array>> begin () const leftvalue {
 		return ArrayIterator<CR<Array>> (thiz) ;
+	}
+
+	ArrayIterator<VR<Array>> end () leftvalue {
+		return ArrayIterator<VR<Array>> (thiz) ;
 	}
 
 	ArrayIterator<CR<Array>> end () const leftvalue {
@@ -338,7 +346,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const {
+	void visit (CR<Visitor> visitor) const {
 		return ArrayHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -390,7 +398,7 @@ struct StringHolder implement Interface {
 	virtual Bool equal (CR<StringLayout> that) const = 0 ;
 	virtual Flag compr (CR<Slice> that) const = 0 ;
 	virtual Flag compr (CR<StringLayout> that) const = 0 ;
-	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void visit (CR<Visitor> visitor) const = 0 ;
 	virtual void trunc (CR<Index> index) = 0 ;
 	virtual void fill (CR<Stru32> item) = 0 ;
 	virtual void splice (CR<Index> index ,CR<Slice> item) = 0 ;
@@ -402,7 +410,7 @@ struct StringHolder implement Interface {
 } ;
 
 template <class A>
-class StringUnknownBinder final implement Fat<FriendUnknown ,void> {
+class StringUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -555,8 +563,16 @@ public:
 		return StringHolder::hold (thiz)->inext (index) ;
 	}
 
+	ArrayIterator<VR<String>> begin () leftvalue {
+		return ArrayIterator<VR<String>> (thiz) ;
+	}
+
 	ArrayIterator<CR<String>> begin () const leftvalue {
 		return ArrayIterator<CR<String>> (thiz) ;
+	}
+
+	ArrayIterator<VR<String>> end () leftvalue {
+		return ArrayIterator<VR<String>> (thiz) ;
 	}
 
 	ArrayIterator<CR<String>> end () const leftvalue {
@@ -611,7 +627,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const {
+	void visit (CR<Visitor> visitor) const {
 		return StringHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -686,7 +702,7 @@ struct DequeHolder implement Interface {
 } ;
 
 template <class A>
-class DequeUnknownBinder final implement Fat<FriendUnknown ,void> {
+class DequeUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -778,8 +794,16 @@ public:
 		return DequeHolder::hold (thiz)->inext (index) ;
 	}
 
+	ArrayIterator<VR<Deque>> begin () leftvalue {
+		return ArrayIterator<VR<Deque>> (thiz) ;
+	}
+
 	ArrayIterator<CR<Deque>> begin () const leftvalue {
 		return ArrayIterator<CR<Deque>> (thiz) ;
+	}
+
+	ArrayIterator<VR<Deque>> end () leftvalue {
+		return ArrayIterator<VR<Deque>> (thiz) ;
 	}
 
 	ArrayIterator<CR<Deque>> end () const leftvalue {
@@ -882,7 +906,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const {
+	void visit (CR<Visitor> visitor) const {
 		visitor.enter () ;
 		inline_visit (visitor ,thiz.m1st) ;
 		visitor.leave () ;
@@ -918,7 +942,7 @@ struct PriorityHolder implement Interface {
 } ;
 
 template <class A>
-class PriorityUnknownBinder final implement Fat<FriendUnknown ,void> {
+class PriorityUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -1012,6 +1036,10 @@ public:
 		return ArrayIterator<CR<Priority>> (thiz) ;
 	}
 
+	ArrayIterator<VR<Priority>> end () leftvalue {
+		return ArrayIterator<VR<Priority>> (thiz) ;
+	}
+
 	ArrayIterator<CR<Priority>> end () const leftvalue {
 		return ArrayIterator<CR<Priority>> (thiz) ;
 	}
@@ -1093,7 +1121,7 @@ struct ListHolder implement Interface {
 } ;
 
 template <class A>
-class ListUnknownBinder final implement Fat<FriendUnknown ,void> {
+class ListUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,ListNode> ;
@@ -1186,8 +1214,16 @@ public:
 		return ListHolder::hold (thiz)->inext (index) ;
 	}
 
+	ArrayIterator<VR<List>> begin () leftvalue {
+		return ArrayIterator<VR<List>> (thiz) ;
+	}
+
 	ArrayIterator<CR<List>> begin () const leftvalue {
 		return ArrayIterator<CR<List>> (thiz) ;
+	}
+
+	ArrayIterator<VR<List>> end () leftvalue {
+		return ArrayIterator<VR<List>> (thiz) ;
 	}
 
 	ArrayIterator<CR<List>> end () const leftvalue {
@@ -1303,7 +1339,7 @@ struct ArrayListHolder implement Interface {
 } ;
 
 template <class A>
-class ArrayListUnknownBinder final implement Fat<FriendUnknown ,void> {
+class ArrayListUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,ArrayListNode> ;
@@ -1397,8 +1433,16 @@ public:
 		return ArrayListHolder::hold (thiz)->inext (index) ;
 	}
 
+	ArrayIterator<VR<ArrayList>> begin () leftvalue {
+		return ArrayIterator<VR<ArrayList>> (thiz) ;
+	}
+
 	ArrayIterator<CR<ArrayList>> begin () const leftvalue {
 		return ArrayIterator<CR<ArrayList>> (thiz) ;
+	}
+
+	ArrayIterator<VR<ArrayList>> end () leftvalue {
+		return ArrayIterator<VR<ArrayList>> (thiz) ;
 	}
 
 	ArrayIterator<CR<ArrayList>> end () const leftvalue {
@@ -1484,7 +1528,7 @@ struct SortedMapHolder implement Interface {
 } ;
 
 template <class A>
-class SortedMapUnknownBinder final implement Fat<FriendUnknown ,void> {
+class SortedMapUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,SortedMapNode> ;
@@ -1590,8 +1634,16 @@ public:
 		return SortedMapHolder::hold (thiz)->inext (index) ;
 	}
 
+	ArrayIterator<VR<SortedMap>> begin () leftvalue {
+		return ArrayIterator<VR<SortedMap>> (thiz) ;
+	}
+
 	ArrayIterator<CR<SortedMap>> begin () const leftvalue {
 		return ArrayIterator<CR<SortedMap>> (thiz) ;
+	}
+
+	ArrayIterator<VR<SortedMap>> end () leftvalue {
+		return ArrayIterator<VR<SortedMap>> (thiz) ;
 	}
 
 	ArrayIterator<CR<SortedMap>> end () const leftvalue {
@@ -1677,7 +1729,7 @@ struct SetHolder implement Interface {
 } ;
 
 template <class A>
-class SetUnknownBinder final implement Fat<FriendUnknown ,void> {
+class SetUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,SetNode> ;
@@ -1776,8 +1828,16 @@ public:
 		return SetHolder::hold (thiz)->inext (index) ;
 	}
 
+	ArrayIterator<VR<Set>> begin () leftvalue {
+		return ArrayIterator<VR<Set>> (thiz) ;
+	}
+
 	ArrayIterator<CR<Set>> begin () const leftvalue {
 		return ArrayIterator<CR<Set>> (thiz) ;
+	}
+
+	ArrayIterator<VR<Set>> end () leftvalue {
+		return ArrayIterator<VR<Set>> (thiz) ;
 	}
 
 	ArrayIterator<CR<Set>> end () const leftvalue {
@@ -1826,9 +1886,23 @@ public:
 	}
 } ;
 
-struct HashcodeVisitor {
+struct HashcodeVisitorLayout {
 	BYTE_BASE<Val> mCode ;
 	Length mDepth ;
+} ;
+
+struct HashcodeVisitorHolder implement VisitorHolder {
+	imports VFat<HashcodeVisitorHolder> hold (VR<HashcodeVisitorLayout> that) ;
+	imports CFat<HashcodeVisitorHolder> hold (CR<HashcodeVisitorLayout> that) ;
+} ;
+
+class HashcodeVisitor implement HashcodeVisitorLayout {
+public:
+	implicit HashcodeVisitor () = default ;
+
+	implicit operator Visitor () leftvalue {
+		return HashcodeVisitorHolder::hold (thiz) ;
+	}
 } ;
 
 struct HashSetNode implement AllocatorNode {
@@ -1869,7 +1943,7 @@ struct HashSetHolder implement Interface {
 } ;
 
 template <class A>
-class HashSetUnknownBinder final implement Fat<FriendUnknown ,void> {
+class HashSetUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,HashSetNode> ;
@@ -1966,8 +2040,16 @@ public:
 		return HashSetHolder::hold (thiz)->inext (index) ;
 	}
 
+	ArrayIterator<VR<HashSet>> begin () leftvalue {
+		return ArrayIterator<VR<HashSet>> (thiz) ;
+	}
+
 	ArrayIterator<CR<HashSet>> begin () const leftvalue {
 		return ArrayIterator<CR<HashSet>> (thiz) ;
+	}
+
+	ArrayIterator<VR<HashSet>> end () leftvalue {
+		return ArrayIterator<VR<HashSet>> (thiz) ;
 	}
 
 	ArrayIterator<CR<HashSet>> end () const leftvalue {
@@ -2062,7 +2144,7 @@ struct BitSetHolder implement Interface {
 	virtual Index inext (CR<Index> index) const = 0 ;
 	virtual Bool equal (CR<BitSetLayout> that) const = 0 ;
 	virtual Flag compr (CR<BitSetLayout> that) const = 0 ;
-	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void visit (CR<Visitor> visitor) const = 0 ;
 	virtual void add (RR<BoxLayout> item) = 0 ;
 	virtual Bool contain (CR<Pointer> item) const = 0 ;
 	virtual void erase (CR<Pointer> item) = 0 ;
@@ -2154,8 +2236,16 @@ public:
 		return BitSetHolder::hold (thiz)->inext (index) ;
 	}
 
+	ArrayIterator<VR<BitSet>> begin () leftvalue {
+		return ArrayIterator<VR<BitSet>> (thiz) ;
+	}
+
 	ArrayIterator<CR<BitSet>> begin () const leftvalue {
 		return ArrayIterator<CR<BitSet>> (thiz) ;
+	}
+
+	ArrayIterator<VR<BitSet>> end () leftvalue {
+		return ArrayIterator<VR<BitSet>> (thiz) ;
 	}
 
 	ArrayIterator<CR<BitSet>> end () const leftvalue {
@@ -2198,7 +2288,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const {
+	void visit (CR<Visitor> visitor) const {
 		return BitSetHolder::hold (thiz)->visit (visitor) ;
 	}
 

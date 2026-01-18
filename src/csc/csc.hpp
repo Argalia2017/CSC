@@ -151,6 +151,7 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wmicrosoft-template"
 #pragma clang diagnostic ignored "-Wdefaulted-function-deleted"
+#pragma clang diagnostic ignored "-Wabstract-final-class"
 #endif
 
 #include "csc_end.h"
@@ -283,7 +284,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_debug ()) { __macro_break () ; } else { inline_abort () ; } } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (!inline_debug ()) break ; __macro_break () ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -321,11 +322,11 @@ class initializer_list ;
 
 #ifndef __macro_notice
 #ifdef __CSC_VER_DEBUG__
-#define __macro_notice(...) do { struct LINE ; CSC::inline_notice (TYPE<LINE>::expr ,__VA_ARGS__) ; } while (false)
+#define __macro_notice(...) do { struct LINE ; CSC::inline_notice (TYPE<LINE>::expr ,__macro_sz (__VA_ARGS__) ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_notice(...) do { struct LINE ; CSC::inline_notice (TYPE<LINE>::expr ,__VA_ARGS__) ; } while (false)
+#define __macro_notice(...) do { struct LINE ; if (!inline_debug ()) break ; CSC::inline_notice (TYPE<LINE>::expr ,__macro_sz (__VA_ARGS__) ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -446,7 +447,7 @@ struct TYPE {
 template <class A>
 struct FUNCTION_nullof {
 	forceinline static DEF<A &> invoke () noexcept {
-		return (*DEF<A *> (sizeof (A))) ;
+		return (*DEF<A *> (1024)) ;
 	}
 } ;
 

@@ -34,9 +34,12 @@ public:
 	implicit ~WorkThreadLayout () noexcept {
 		WorkThreadHolder::hold (thiz)->stop () ;
 	}
+} ;
 
+class WorkThreadExecutingBinder final implement Fat<ExecutingHolder ,WorkThreadLayout> {
+public:
 	void friend_execute (CR<Index> slot) {
-		WorkThreadHolder::hold (thiz)->friend_execute (slot) ;
+		return WorkThreadHolder::hold (self)->friend_execute (slot) ;
 	}
 } ;
 
@@ -54,7 +57,7 @@ public:
 	}
 
 	void set_thread_size (CR<Length> size_) override {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		self.mThread = Array<Thread> (size_) ;
 		self.mThreadJoin = BitSet (size_) ;
@@ -64,22 +67,24 @@ public:
 
 	void set_queue_size (CR<Length> size_) override {
 		assert (size_ > 0) ;
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (self.mItemQueue.empty ()) ;
 		self.mItemQueue = Deque<IndexIterator> (size_) ;
 	}
 
 	void start (CR<Function<CR<Index>>> func) override {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (self.mThread.size () > 0) ;
 		self.mThreadLoadLength.fill (0) ;
 		self.mItemLoadLength = 0 ;
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mThreadFunc = func ;
+		const auto r1x = VFat<ExecutingHolder> (WorkThreadExecutingBinder () ,self) ;
+		const auto r2x = Ref<Executing>::make (r1x) ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (FriendExecutingBinder<WorkThreadLayout>::hold (self) ,i) ;
+			self.mThread[i] = Thread (r2x.share () ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -234,9 +239,12 @@ public:
 	implicit ~CalcThreadLayout () noexcept {
 		CalcThreadHolder::hold (thiz)->stop () ;
 	}
+} ;
 
+class CalcThreadExecutingBinder final implement Fat<ExecutingHolder ,CalcThreadLayout> {
+public:
 	void friend_execute (CR<Index> slot) {
-		CalcThreadHolder::hold (thiz)->friend_execute (slot) ;
+		return CalcThreadHolder::hold (self)->friend_execute (slot) ;
 	}
 } ;
 
@@ -250,7 +258,7 @@ public:
 	}
 
 	void set_thread_size (CR<Length> size_) override {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (self.mThreadSolution.size () == 0) ;
 		self.mThread = Array<Thread> (size_) ;
@@ -261,7 +269,7 @@ public:
 	}
 
 	void set_start_input (CR<BitSet> input ,CR<Flt64> factor) override {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (self.mThread.size () > 0) ;
 		self.mBestSolution.mIteration = ZERO ;
@@ -280,14 +288,16 @@ public:
 	}
 
 	void start (CR<Function<CR<CalcSolution> ,VR<CalcSolution>>> func) override {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (self.mThread.size () > 0) ;
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mSuspendFlag = FALSE ;
 		self.mThreadFunc = func ;
+		const auto r1x = VFat<ExecutingHolder> (CalcThreadExecutingBinder () ,self) ;
+		const auto r2x = Ref<Executing>::make (r1x) ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (FriendExecutingBinder<CalcThreadLayout>::hold (self) ,i) ;
+			self.mThread[i] = Thread (r2x.share () ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -352,7 +362,7 @@ public:
 	}
 
 	void wait_solution (CR<Index> slot) {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		if (self.mBestSolution.mIteration != NONE)
 			if (self.mThreadSolution[slot].mIteration == self.mBestSolution.mIteration)
 				return ;
@@ -411,7 +421,7 @@ public:
 	}
 
 	Bool ready () const override {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		return self.mNewSolution ;
 	}
 
@@ -495,9 +505,12 @@ public:
 	implicit ~PromiseLayout () noexcept {
 		PromiseHolder::hold (thiz)->stop () ;
 	}
+} ;
 
+class PromiseExecutingBinder final implement Fat<ExecutingHolder ,PromiseLayout> {
+public:
 	void friend_execute (CR<Index> slot) {
-		PromiseHolder::hold (thiz)->friend_execute (slot) ;
+		return PromiseHolder::hold (self)->friend_execute (slot) ;
 	}
 } ;
 
@@ -510,7 +523,7 @@ public:
 	}
 
 	void set_retry (CR<Bool> flag) override {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		self.mRetryFlag = flag ;
 	}
@@ -537,8 +550,10 @@ public:
 			if (self.mThread.size () > 0)
 				discard ;
 			self.mThread = Array<Thread> (1) ;
+			const auto r1x = VFat<ExecutingHolder> (PromiseExecutingBinder () ,self) ;
+			const auto r2x = Ref<Executing>::make (r1x) ;
 			for (auto &&i : self.mThread.iter ()) {
-				self.mThread[i] = Thread (FriendExecutingBinder<PromiseLayout>::hold (self) ,0) ;
+				self.mThread[i] = Thread (r2x.share () ,0) ;
 				self.mThread[i].start () ;
 			}
 		}
@@ -612,14 +627,14 @@ public:
 	}
 
 	Bool ready () const override {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		if (self.mThreadFlag == ThreadFlag::Finishing)
 			return TRUE ;
 		return FALSE ;
 	}
 
 	Bool running () const override {
-		Scope<Mutex> anonymous (self.mThreadMutex) ;
+		Scope anonymous (self.mThreadMutex) ;
 		if (self.mThreadFlag == ThreadFlag::Running)
 			return TRUE ;
 		if (self.mThreadFlag == ThreadFlag::Finishing)

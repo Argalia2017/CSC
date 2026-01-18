@@ -32,9 +32,9 @@ public:
 	}
 
 	Bool big_endian () const override {
-		const auto r1x = WORD_ENDIAN ;
-		const auto r2x = bitwise[TYPE<Buffer<Byte ,SIZE_OF<Word>>>::expr] (r1x) ;
-		return r2x[0] == BYTE_ENDIAN ;
+		const auto r1x = QUAD_ENDIAN ;
+		const auto r2x = bitwise[TYPE<Buffer<Char ,RANK2>>::expr] (r1x) ;
+		return r2x[0] != CHAR_ENDIAN ;
 	}
 
 	Bool is_blank (CR<Stru32> str) const override {
@@ -205,26 +205,8 @@ exports CFat<StreamProcHolder> StreamProcHolder::hold (CR<StreamProcLayout> that
 	return CFat<StreamProcHolder> (StreamProcImplHolder () ,that) ;
 }
 
-class ReaderImplHolder final implement Fat<ReaderHolder ,ReaderLayout> {} ;
-
-exports VFat<ReaderHolder> ReaderHolder::hold (VR<ReaderLayout> that) {
-	assert (that.mHolder != ZERO) ;
-	auto &&rax = keep[TYPE<ReaderImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return VFat<ReaderHolder> (rax ,that) ;
-}
-
-exports CFat<ReaderHolder> ReaderHolder::hold (CR<ReaderLayout> that) {
-	assert (that.mHolder != ZERO) ;
-	auto &&rax = keep[TYPE<ReaderImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return CFat<ReaderHolder> (rax ,that) ;
-}
-
-class ByteReaderImplHolder final implement Fat<ByteReaderHolder ,ReaderLayout> {
+class ByteReaderImplHolder final implement Fat<ByteReaderHolder ,ByteReaderLayout> {
 public:
-	void prepare (CR<Unknown> holder) override {
-		self.mHolder = inline_vptr (thiz) ;
-	}
-
 	void initialize (RR<Ref<RefBuffer<Byte>>> stream) override {
 		assert (stream != NULL) ;
 		assert (stream->step () == 1) ;
@@ -233,8 +215,13 @@ public:
 		reset () ;
 	}
 
-	void use_overflow (CR<Function<VR<ReaderLayout>>> overflow) override {
+	void use_overflow (CR<Function<CR<Pointer>>> overflow) override {
 		self.mOverflow = overflow ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) override {
+		self.mCats = cats ;
+		self.mCatIndex = 0 ;
 	}
 
 	Length size () const override {
@@ -304,7 +291,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mRead < self.mWrite)
 				discard ;
-			self.mOverflow (self) ;
+			self.mOverflow (Pointer::from (thiz)) ;
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -405,7 +392,10 @@ public:
 	}
 
 	void read (CR<typeof (CAT)>) override {
-		unimplemented () ;
+		if (self.mCats.size () == 0)
+			return ;
+		read (self.mCats[self.mCatIndex]) ;
+		self.mCatIndex = (self.mCatIndex + 1) % self.mCats.size () ;
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -427,20 +417,16 @@ public:
 	}
 } ;
 
-exports VFat<ByteReaderHolder> ByteReaderHolder::hold (VR<ReaderLayout> that) {
+exports VFat<ByteReaderHolder> ByteReaderHolder::hold (VR<ByteReaderLayout> that) {
 	return VFat<ByteReaderHolder> (ByteReaderImplHolder () ,that) ;
 }
 
-exports CFat<ByteReaderHolder> ByteReaderHolder::hold (CR<ReaderLayout> that) {
+exports CFat<ByteReaderHolder> ByteReaderHolder::hold (CR<ByteReaderLayout> that) {
 	return CFat<ByteReaderHolder> (ByteReaderImplHolder () ,that) ;
 }
 
-class TextReaderImplHolder final implement Fat<TextReaderHolder ,ReaderLayout> {
+class TextReaderImplHolder final implement Fat<TextReaderHolder ,TextReaderLayout> {
 public:
-	void prepare (CR<Unknown> holder) override {
-		self.mHolder = inline_vptr (thiz) ;
-	}
-
 	void initialize (RR<Ref<RefBuffer<Byte>>> stream) override {
 		assert (stream != NULL) ;
 		assert (stream->step () <= 4) ;
@@ -449,8 +435,13 @@ public:
 		reset () ;
 	}
 
-	void use_overflow (CR<Function<VR<ReaderLayout>>> overflow) override {
+	void use_overflow (CR<Function<CR<Pointer>>> overflow) override {
 		self.mOverflow = overflow ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) override {
+		self.mCats = cats ;
+		self.mCatIndex = 0 ;
 	}
 
 	Length size () const override {
@@ -725,7 +716,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mRead < self.mWrite)
 				discard ;
-			self.mOverflow (self) ;
+			self.mOverflow (Pointer::from (thiz)) ;
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -857,7 +848,22 @@ public:
 	}
 
 	void read (CR<typeof (CAT)>) override {
-		unimplemented () ;
+		if (self.mCats.size () == 0)
+			return ;
+		read (self.mCats[self.mCatIndex]) ;
+		self.mCatIndex = (self.mCatIndex + 1) % self.mCats.size () ;
+	}
+
+	void cat_prefix () {
+		if (self.mCatIndex == NONE)
+			return ;
+		read (self.mCats[self.mCatIndex]) ;
+		if ifdo (TRUE) {
+			self.mCatIndex++ ;
+			if (self.mCatIndex < self.mCats.size ())
+				discard ;
+			self.mCatIndex = 0 ;
+		}
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -880,45 +886,31 @@ public:
 	}
 } ;
 
-exports VFat<TextReaderHolder> TextReaderHolder::hold (VR<ReaderLayout> that) {
+exports VFat<TextReaderHolder> TextReaderHolder::hold (VR<TextReaderLayout> that) {
 	return VFat<TextReaderHolder> (TextReaderImplHolder () ,that) ;
 }
 
-exports CFat<TextReaderHolder> TextReaderHolder::hold (CR<ReaderLayout> that) {
+exports CFat<TextReaderHolder> TextReaderHolder::hold (CR<TextReaderLayout> that) {
 	return CFat<TextReaderHolder> (TextReaderImplHolder () ,that) ;
 }
 
-class WriterImplHolder final implement Fat<WriterHolder ,WriterLayout> {} ;
-
-exports VFat<WriterHolder> WriterHolder::hold (VR<WriterLayout> that) {
-	assert (that.mHolder != ZERO) ;
-	auto &&rax = keep[TYPE<WriterImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return VFat<WriterHolder> (rax ,that) ;
-}
-
-exports CFat<WriterHolder> WriterHolder::hold (CR<WriterLayout> that) {
-	assert (that.mHolder != ZERO) ;
-	auto &&rax = keep[TYPE<WriterImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return CFat<WriterHolder> (rax ,that) ;
-}
-
-class ByteWriterImplHolder final implement Fat<ByteWriterHolder ,WriterLayout> {
+class ByteWriterImplHolder final implement Fat<ByteWriterHolder ,ByteWriterLayout> {
 public:
-	void prepare (CR<Unknown> holder) override {
-		self.mHolder = inline_vptr (thiz) ;
-	}
-
 	void initialize (RR<Ref<RefBuffer<Byte>>> stream) override {
 		assert (stream != NULL) ;
 		assert (stream->step () == 1) ;
-		assert (stream.exclusive ()) ;
 		self.mStream = move (stream) ;
 		self.mDiffEndian = FALSE ;
 		reset () ;
 	}
 
-	void use_overflow (CR<Function<VR<WriterLayout>>> overflow) override {
+	void use_overflow (CR<Function<CR<Pointer>>> overflow) override {
 		self.mOverflow = overflow ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) override {
+		self.mCats = cats ;
+		self.mCatIndex = 0 ;
 	}
 
 	Length size () const override {
@@ -983,7 +975,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mWrite < self.mRead)
 				discard ;
-			self.mOverflow (self) ;
+			self.mOverflow (Pointer::from (thiz)) ;
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -1077,7 +1069,22 @@ public:
 	}
 
 	void write (CR<typeof (CAT)>) override {
-		unimplemented () ;
+		if (self.mCats.size () == 0)
+			return ;
+		write (self.mCats[self.mCatIndex]) ;
+		self.mCatIndex = (self.mCatIndex + 1) % self.mCats.size () ;
+	}
+
+	void cat_prefix () {
+		if (self.mCatIndex == NONE)
+			return ;
+		write (self.mCats[self.mCatIndex]) ;
+		if ifdo (TRUE) {
+			self.mCatIndex++ ;
+			if (self.mCatIndex < self.mCats.size ())
+				discard ;
+			self.mCatIndex = 0 ;
+		}
 	}
 
 	void write (CR<typeof (GAP)>) override {
@@ -1094,11 +1101,11 @@ public:
 	}
 } ;
 
-exports VFat<ByteWriterHolder> ByteWriterHolder::hold (VR<WriterLayout> that) {
+exports VFat<ByteWriterHolder> ByteWriterHolder::hold (VR<ByteWriterLayout> that) {
 	return VFat<ByteWriterHolder> (ByteWriterImplHolder () ,that) ;
 }
 
-exports CFat<ByteWriterHolder> ByteWriterHolder::hold (CR<WriterLayout> that) {
+exports CFat<ByteWriterHolder> ByteWriterHolder::hold (CR<ByteWriterLayout> that) {
 	return CFat<ByteWriterHolder> (ByteWriterImplHolder () ,that) ;
 }
 
@@ -1107,23 +1114,23 @@ struct WriteValueBuffer {
 	Index mWrite ;
 } ;
 
-class TextWriterImplHolder final implement Fat<TextWriterHolder ,WriterLayout> {
+class TextWriterImplHolder final implement Fat<TextWriterHolder ,TextWriterLayout> {
 public:
-	void prepare (CR<Unknown> holder) override {
-		self.mHolder = inline_vptr (thiz) ;
-	}
-
 	void initialize (RR<Ref<RefBuffer<Byte>>> stream) override {
 		assert (stream != NULL) ;
 		assert (stream->step () <= 4) ;
-		assert (stream.exclusive ()) ;
 		self.mStream = move (stream) ;
 		self.mDiffEndian = FALSE ;
 		reset () ;
 	}
 
-	void use_overflow (CR<Function<VR<WriterLayout>>> overflow) override {
+	void use_overflow (CR<Function<CR<Pointer>>> overflow) override {
 		self.mOverflow = overflow ;
+	}
+
+	void set_cats (CR<Array<Slice>> cats) override {
+		self.mCats = cats ;
+		self.mCatIndex = 0 ;
 	}
 
 	Length size () const override {
@@ -1481,7 +1488,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mWrite < self.mRead)
 				discard ;
-			self.mOverflow (self) ;
+			self.mOverflow (Pointer::from (thiz)) ;
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -1573,7 +1580,22 @@ public:
 	}
 
 	void write (CR<typeof (CAT)>) override {
-		unimplemented () ;
+		if (self.mCats.size () == 0)
+			return ;
+		write (self.mCats[self.mCatIndex]) ;
+		self.mCatIndex = (self.mCatIndex + 1) % self.mCats.size () ;
+	}
+
+	void cat_prefix () {
+		if (self.mCatIndex == NONE)
+			return ;
+		write (self.mCats[self.mCatIndex]) ;
+		if ifdo (TRUE) {
+			self.mCatIndex++ ;
+			if (self.mCatIndex < self.mCats.size ())
+				discard ;
+			self.mCatIndex = 0 ;
+		}
 	}
 
 	void write (CR<typeof (GAP)>) override {
@@ -1587,11 +1609,11 @@ public:
 	}
 } ;
 
-exports VFat<TextWriterHolder> TextWriterHolder::hold (VR<WriterLayout> that) {
+exports VFat<TextWriterHolder> TextWriterHolder::hold (VR<TextWriterLayout> that) {
 	return VFat<TextWriterHolder> (TextWriterImplHolder () ,that) ;
 }
 
-exports CFat<TextWriterHolder> TextWriterHolder::hold (CR<WriterLayout> that) {
+exports CFat<TextWriterHolder> TextWriterHolder::hold (CR<TextWriterLayout> that) {
 	return CFat<TextWriterHolder> (TextWriterImplHolder () ,that) ;
 }
 
@@ -1601,7 +1623,7 @@ public:
 		self.mFormat = format ;
 	}
 
-	void friend_write (VR<Writer> writer) const override {
+	void friend_write (CR<Writer> writer) const override {
 		auto rax = Flag (0) ;
 		for (auto &&i : range (0 ,self.mFormat.size ())) {
 			auto act = TRUE ;
@@ -1626,7 +1648,7 @@ public:
 					const auto r1x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
 					if (!inline_between (r1x ,0 ,self.mWrite))
 						discard ;
-					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[r1x]) ;
+					auto &&rbx = keep[TYPE<VFat<WritingHolder>>::expr] (self.mParams[r1x]) ;
 					rbx->friend_write (writer) ;
 				}
 				rax = Flag (0) ;
@@ -1637,7 +1659,7 @@ public:
 				if (self.mFormat[i] != Stru32 ('0'))
 					discard ;
 				for (auto &&j : range (0 ,self.mWrite)) {
-					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[j]) ;
+					auto &&rbx = keep[TYPE<VFat<WritingHolder>>::expr] (self.mParams[j]) ;
 					rbx->friend_write (writer) ;
 				}
 				rax = Flag (3) ;
@@ -1649,7 +1671,7 @@ public:
 					const auto r2x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
 					if (!inline_between (r2x ,0 ,self.mWrite))
 						discard ;
-					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[r2x]) ;
+					auto &&rbx = keep[TYPE<VFat<WritingHolder>>::expr] (self.mParams[r2x]) ;
 					rbx->friend_write (writer) ;
 				}
 				rax = Flag (3) ;
@@ -1695,7 +1717,7 @@ public:
 		noop () ;
 	}
 
-	void read_keyword (VR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_keyword (CR<Reader> reader ,VR<String<Stru8>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1718,7 +1740,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_scalar (VR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_scalar (CR<Reader> reader ,VR<String<Stru8>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1773,7 +1795,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_escape (VR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_escape (CR<Reader> reader ,VR<String<Stru8>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1812,7 +1834,7 @@ public:
 		reader.read (rax) ;
 	}
 
-	void write_escape (VR<Writer> writer ,CR<String<Stru8>> item) const override {
+	void write_escape (CR<Writer> writer ,CR<String<Stru8>> item) const override {
 		writer.write (Stru32 ('\"')) ;
 		for (auto &&i : item) {
 			auto act = TRUE ;
@@ -1830,7 +1852,7 @@ public:
 		writer.write (Stru32 ('\"')) ;
 	}
 
-	void read_blank (VR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_blank (CR<Reader> reader ,VR<String<Stru8>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1850,7 +1872,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_endline (VR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_endline (CR<Reader> reader ,VR<String<Stru8>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1870,7 +1892,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void write_aligned (VR<Writer> writer ,CR<Val64> number ,CR<Length> align) const override {
+	void write_aligned (CR<Writer> writer ,CR<Val64> number ,CR<Length> align) const override {
 		auto rax = WriteValueBuffer () ;
 		assert (inline_between (align ,0 ,rax.mBuffer.size ())) ;
 		rax.mWrite = rax.mBuffer.size () ;
@@ -1925,7 +1947,7 @@ public:
 		self.mLastTight = 0 ;
 	}
 
-	void friend_write (VR<Writer> writer) override {
+	void friend_write (CR<Writer> writer) override {
 		if ifdo (TRUE) {
 			if (self.mDepth >= self.mTight + self.mLastTight)
 				discard ;

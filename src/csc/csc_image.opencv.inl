@@ -123,14 +123,14 @@ public:
 
 	ImageLayout load_image (CR<String<Str>> file) const override {
 		auto rax = Box<cv::Mat>::zeroize () ;
-		const auto r1x = StringProc::stra_from_strs (file) ;
+		const auto r1x = StringProc::stra_from (file) ;
 		rax.ref = cv::imread (r1x.ref ,cv::IMREAD_UNCHANGED) ;
 		assume (!rax->empty ()) ;
 		return make_image (move (rax)) ;
 	}
 
 	void save_image (CR<String<Str>> file ,CR<ImageLayout> image) const override {
-		const auto r1x = StringProc::stra_from_strs (file) ;
+		const auto r1x = StringProc::stra_from (file) ;
 		const auto r2x = ImageHolder::hold (image)->bx () ;
 		const auto r3x = ImageHolder::hold (image)->by () ;
 		const auto r4x = ImageHolder::hold (image)->cx () ;

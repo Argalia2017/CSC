@@ -34,20 +34,25 @@ public:
 } ;
 
 struct ImageShapeLayout {
-	Length mBX ;
-	Length mBY ;
 	Length mCX ;
 	Length mCY ;
 	Length mStep ;
 
 public:
 	implicit ImageShapeLayout () noexcept {
-		mBX = 0 ;
-		mBY = 0 ;
 		mCX = 0 ;
 		mCY = 0 ;
 		mStep = 0 ;
 	}
+} ;
+
+struct ImageShapeHolder implement Interface {
+	imports VFat<ImageShapeHolder> hold (VR<ImageShapeLayout> that) ;
+	imports CFat<ImageShapeHolder> hold (CR<ImageShapeLayout> that) ;
+
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Bool equal (CR<ImageShapeLayout> that) const = 0 ;
 } ;
 
 class ImageShape implement ImageShapeLayout {
@@ -55,19 +60,15 @@ public:
 	implicit ImageShape () = default ;
 
 	Length size () const {
-		return mCX * mCY ;
+		return ImageShapeHolder::hold (thiz)->size () ;
+	}
+
+	Length step () const {
+		return ImageShapeHolder::hold (thiz)->step () ;
 	}
 
 	Bool equal (CR<ImageShape> that) const {
-		if (mBX != that.mBX)
-			return FALSE ;
-		if (mBY != that.mBY)
-			return FALSE ;
-		if (mCX != that.mCX)
-			return FALSE ;
-		if (mCY != that.mCY)
-			return FALSE ;
-		return TRUE ;
+		return ImageShapeHolder::hold (thiz)->equal (that) ;
 	}
 
 	forceinline Bool operator== (CR<ImageShape> that) const {
@@ -76,6 +77,10 @@ public:
 
 	forceinline Bool operator!= (CR<ImageShape> that) const {
 		return (!equal (that)) ;
+	}
+
+	PixelIterator iter () const {
+		return PixelIterator (0 ,mCX ,0 ,mCY) ;
 	}
 } ;
 
@@ -218,10 +223,6 @@ public:
 		return ImageHolder::hold (thiz)->reset () ;
 	}
 
-	void reset (CR<ImageShape> shape_) {
-		return ImageHolder::hold (thiz)->reset (shape_.mBX ,shape_.mBY ,shape_.mCX ,shape_.mCY) ;
-	}
-
 	void reset (CR<Length> bx_ ,CR<Length> by_ ,CR<Length> cx_ ,CR<Length> cy_) {
 		return ImageHolder::hold (thiz)->reset (bx_ ,by_ ,cx_ ,cy_) ;
 	}
@@ -359,27 +360,27 @@ public:
 		return keep[TYPE<ColorProc>::expr] (ColorProcHolder::expr) ;
 	}
 
-	imports Flt64 gray_from_bgr (CR<Color3B> a) {
+	static Flt64 gray_from_bgr (CR<Color3B> a) {
 		return ColorProcHolder::hold (expr)->gray_from_bgr (a) ;
 	}
 
-	imports Color3B bgr_from_gray (CR<Flt64> a) {
+	static Color3B bgr_from_gray (CR<Flt64> a) {
 		return ColorProcHolder::hold (expr)->bgr_from_gray (a) ;
 	}
 
-	imports Color3B jet_from_norm (CR<Flt64> a) {
+	static Color3B jet_from_norm (CR<Flt64> a) {
 		return ColorProcHolder::hold (expr)->jet_from_norm (a) ;
 	}
 
-	imports Flt64 norm_from_jet (CR<Color3B> a) {
+	static Flt64 norm_from_jet (CR<Color3B> a) {
 		return ColorProcHolder::hold (expr)->norm_from_jet (a) ;
 	}
 
-	imports Color3W hsv_from_bgr (CR<Color3B> a) {
+	static Color3W hsv_from_bgr (CR<Color3B> a) {
 		return ColorProcHolder::hold (expr)->hsv_from_bgr (a) ;
 	}
 
-	imports Color3B bgr_from_hsv (CR<Color3W> a) {
+	static Color3B bgr_from_hsv (CR<Color3W> a) {
 		return ColorProcHolder::hold (expr)->bgr_from_hsv (a) ;
 	}
 } ;
@@ -460,7 +461,6 @@ struct TensorType {
 
 struct TensorLayout {
 	Ref<RefBuffer<Byte>> mTensor ;
-	Flag mHolder ;
 	Flag mBuffer ;
 	Length mRank ;
 	Buffer5<Length> mStride ;
@@ -495,7 +495,6 @@ struct TensorHolder implement Interface {
 class Tensor implement TensorLayout {
 protected:
 	using TensorLayout::mTensor ;
-	using TensorLayout::mHolder ;
 	using TensorLayout::mBuffer ;
 	using TensorLayout::mRank ;
 	using TensorLayout::mStride ;

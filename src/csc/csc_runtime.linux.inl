@@ -414,7 +414,7 @@ public:
 
 	Flag load (CR<Clazz> clazz) const override {
 		assume (self.mRoot.exist ()) ;
-		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
+		Scope anonymous (self.mRoot->mMutex) ;
 		Flag ret = self.mRoot->mClazzSet.map (clazz) ;
 		replace (ret ,NONE ,ZERO) ;
 		return move (ret) ;
@@ -424,7 +424,7 @@ public:
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;
-		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
+		Scope anonymous (self.mRoot->mMutex) ;
 		const auto r1x = Pin<Set<Clazz>> (self.mRoot->mClazzSet) ;
 		r1x->add (clazz ,layout) ;
 	}

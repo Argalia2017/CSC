@@ -8,15 +8,12 @@
 
 namespace CSC {
 using Bool = csc_bool_t ;
-using BOOL = Bool ;
 
 static constexpr auto TRUE = Bool (true) ;
 static constexpr auto FALSE = Bool (false) ;
 
 using Val32 = csc_int32_t ;
-using VAL32 = Val32 ;
 using Val64 = csc_int64_t ;
-using VAL64 = Val64 ;
 
 static constexpr auto VAL32_MAX = Val32 (2147483647) ;
 static constexpr auto VAL32_MIN = -VAL32_MAX ;
@@ -27,7 +24,6 @@ static constexpr auto VAL64_ABS = VAL64_MIN - 1 ;
 
 #ifdef __CSC_CONFIG_VAL32__
 using Val = Val32 ;
-using VAL = Val ;
 
 static constexpr auto VAL_MAX = VAL32_MAX ;
 static constexpr auto VAL_MIN = VAL32_MIN ;
@@ -36,7 +32,6 @@ static constexpr auto VAL_ABS = VAL32_ABS ;
 
 #ifdef __CSC_CONFIG_VAL64__
 using Val = Val64 ;
-using VAL = Val ;
 
 static constexpr auto VAL_MAX = VAL64_MAX ;
 static constexpr auto VAL_MIN = VAL64_MIN ;
@@ -49,19 +44,14 @@ static constexpr auto NONE = Val (-1) ;
 static constexpr auto USED = Val (-2) ;
 
 using Index = Val ;
-using INDEX = Index ;
 using Length = Val ;
-using LENGTH = Length ;
 using Flag = Val ;
-using FLAG = Flag ;
 
 template <class A>
 using Just = KILL<Val ,A> ;
 
 using Flt32 = csc_float32_t ;
-using FLT32 = Flt32 ;
 using Flt64 = csc_float64_t ;
-using FLT64 = Flt64 ;
 
 static constexpr auto FLT32_MAX = Flt32 (3.402823466E+38) ;
 static constexpr auto FLT32_MIN = -FLT32_MAX ;
@@ -75,13 +65,9 @@ static constexpr auto FLT64_EPS = Flt64 (2.2204460492503131E-016) ;
 static constexpr auto FLT64_INF = Flt64 (infinity) ;
 
 enum class Byte :csc_uint8_t ;
-using BYTE = Byte ;
 enum class Word :csc_uint16_t ;
-using WORD = Word ;
 enum class Char :csc_uint32_t ;
-using CHAR = Char ;
 enum class Quad :csc_uint64_t ;
-using QUAD = Quad ;
 
 static constexpr auto BYTE_ENDIAN = Byte (0X1F) ;
 static constexpr auto WORD_ENDIAN = Word (0X2F1F) ;
@@ -233,24 +219,17 @@ forceinline constexpr Quad operator>> (CR<Quad> a ,CR<Length> b) noexcept {
 }
 
 using Stra = csc_char_t ;
-using STRA = Stra ;
 using Strw = csc_wchar_t ;
-using STRW = Strw ;
 using Stru8 = csc_char8_t ;
-using STRU8 = Stru8 ;
 using Stru16 = csc_char16_t ;
-using STRU16 = Stru16 ;
 using Stru32 = csc_char32_t ;
-using STRU32 = Stru32 ;
 
 #ifdef __CSC_CONFIG_STRA__
 using Str = Stra ;
-using STR = Str ;
 #endif
 
 #ifdef __CSC_CONFIG_STRW__
 using Str = Strw ;
-using STR = Str ;
 #endif
 
 static constexpr auto NULL = nullptr ;
@@ -707,9 +686,7 @@ struct Interface {
 	forceinline VR<Interface> operator= (RR<Interface> that) = delete ;
 } ;
 
-struct FriendUnknown implement Interface {
-	virtual Flag reflect (CR<Flag> uuid) const = 0 ;
-} ;
+class Unknown ;
 
 template <class...>
 trait PLACEHOLDER_HELP ;
@@ -1169,16 +1146,7 @@ trait HAS_COMPR_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).compr (nullof
 template <class A>
 using HAS_COMPR = typename HAS_COMPR_HELP<A ,ALWAYS>::RET ;
 
-struct FriendVisitor implement Interface {
-	virtual void reset () = 0 ;
-	virtual void enter () = 0 ;
-	virtual void leave () = 0 ;
-	virtual Flag fetch () const = 0 ;
-	virtual void push (CR<Byte> a) = 0 ;
-	virtual void push (CR<Word> a) = 0 ;
-	virtual void push (CR<Char> a) = 0 ;
-	virtual void push (CR<Quad> a) = 0 ;
-} ;
+class Visitor ;
 
 template <class...>
 trait HAS_VISIT_HELP ;
@@ -1189,12 +1157,28 @@ trait HAS_VISIT_HELP<A ,OTHERWISE> {
 } ;
 
 template <class A>
-trait HAS_VISIT_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).visit (nullof (FriendVisitor)))>>> {
+trait HAS_VISIT_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).visit (nullof (Visitor)))>>> {
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A>
 using HAS_VISIT = typename HAS_VISIT_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
+trait HAS_SCOPE_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_SCOPE_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_SCOPE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,TYPE<typeof (nullof (A).enter ()) ,typeof (nullof (A).leave ())>>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_SCOPE = typename HAS_SCOPE_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_EXTEND_HELP ;
@@ -1335,8 +1319,8 @@ trait TEXT_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
 template <class A>
 using TEXT_BASE = typename TEXT_BASE_HELP<SIZE_OF<A> ,ALIGN_OF<A> ,ALWAYS>::RET ;
 
-using STRUA = TEXT_BASE<Stra> ;
-using STRUW = TEXT_BASE<Strw> ;
+using Strua = TEXT_BASE<Stra> ;
+using Struw = TEXT_BASE<Strw> ;
 
 template <class SIZE ,class ALIGN = RANK1>
 struct Storage {
@@ -1513,5 +1497,111 @@ public:
 
 	template <class ARG1>
 	forceinline operator ARG1 () const leftvalue noexcept = delete ;
+} ;
+
+struct FatLayout {
+	Flag mHolder ;
+	Flag mLayout ;
+} ;
+
+template <class A ,class B>
+class Fat implement A {
+private:
+	require (IS_INTERFACE<A>) ;
+
+protected:
+	Flag mLayout ;
+
+public:
+	template <class ARG1 = B>
+	VR<ARG1> self_m () leftvalue {
+		return Pointer::make (mLayout) ;
+	}
+
+	template <class ARG1 = B>
+	CR<ARG1> self_m () const leftvalue {
+		return Pointer::make (mLayout) ;
+	}
+} ;
+
+template <class A>
+class VFat implement FatLayout {
+private:
+	require (IS_INTERFACE<A>) ;
+
+protected:
+	using FatLayout::mHolder ;
+	using FatLayout::mLayout ;
+
+public:
+	implicit VFat () = delete ;
+
+	template <class ARG1 ,class ARG2>
+	explicit VFat (CR<ARG1> holder ,VR<ARG2> that) ;
+
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<ARG1 ,A>>>
+	implicit operator CR<VFat<ARG1>> () const leftvalue {
+		return Pointer::from (thiz) ;
+	}
+
+	VR<A> ref_m () const {
+		return Pointer::from (const_cast<VR<VFat>> (thiz)) ;
+	}
+
+	forceinline PTR<VR<A>> operator-> () const {
+		return (&ref) ;
+	}
+} ;
+
+template <class A>
+class CFat implement FatLayout {
+private:
+	require (IS_INTERFACE<A>) ;
+
+protected:
+	using FatLayout::mHolder ;
+	using FatLayout::mLayout ;
+
+public:
+	implicit CFat () = delete ;
+
+	template <class ARG1 ,class ARG2>
+	explicit CFat (CR<ARG1> holder ,CR<ARG2> that) ;
+
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<ARG1 ,A>>>
+	implicit operator CR<CFat<ARG1>> () const leftvalue {
+		return Pointer::from (thiz) ;
+	}
+
+	CR<A> ref_m () const {
+		return Pointer::from (const_cast<CR<CFat>> (thiz)) ;
+	}
+
+	forceinline PTR<CR<A>> operator-> () const {
+		return (&ref) ;
+	}
+} ;
+
+template <class A>
+class RFat implement FatLayout {
+private:
+	require (IS_INTERFACE<A>) ;
+
+protected:
+	using FatLayout::mHolder ;
+	using FatLayout::mLayout ;
+
+public:
+	implicit RFat () = delete ;
+
+	explicit RFat (CR<Unknown> unknown) ;
+
+	VR<A> ref_m () const {
+		return Pointer::from (const_cast<VR<RFat>> (thiz)) ;
+	}
+
+	forceinline PTR<VR<A>> operator-> () const {
+		return (&ref) ;
+	}
 } ;
 } ;

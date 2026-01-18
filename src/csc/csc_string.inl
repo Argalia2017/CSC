@@ -12,30 +12,6 @@
 #include "csc_begin.h"
 
 namespace CSC {
-template <class A>
-struct FUNCTION_string_from_impl {
-	template <class ARG1>
-	forceinline CR<String<A>> operator() (CR<String<ARG1>> that) {
-		assert (IS_SAME<A ,ARG1>::expr) ;
-		return keep[TYPE<String<A>>::expr] (Pointer::from (that)) ;
-	}
-
-	template <class ARG1>
-	forceinline RR<String<A>> operator() (RR<String<ARG1>> that) {
-		assert (IS_SAME<A ,ARG1>::expr) ;
-		return move (keep[TYPE<String<A>>::expr] (Pointer::from (that))) ;
-	}
-} ;
-
-struct FUNCTION_string_from {
-	template <class ARG1>
-	forceinline consteval FUNCTION_string_from_impl<ARG1> operator[] (TYPE<ARG1>) const noexcept {
-		return FUNCTION_string_from_impl<ARG1> () ;
-	}
-} ;
-
-static constexpr auto string_from = FUNCTION_string_from () ;
-
 #ifdef __CSC_SYSTEM_WINDOWS__
 using csc_locale_t = _locale_t ;
 
@@ -126,46 +102,10 @@ public:
 		return move (ret) ;
 	}
 
-	String<Stra> stra_from_strs (CR<String<Str>> a) const override {
-		if (IS_SAME<Str ,Stra>::expr)
-			return string_from[TYPE<Stra>::expr] (a) ;
-		if (IS_SAME<Str ,Strw>::expr)
-			return stra_from_strw (string_from[TYPE<Strw>::expr] (a)) ;
-		assert (FALSE) ;
-		return String<Stra> () ;
-	}
-
 	String<Strw> strw_from_stra (CR<String<Stra>> a) const override {
 		String<Strw> ret = String<Strw> (a.length () + 1) ;
 		string_strw_from_stra (ret ,a ,self.mStringLocale) ;
 		return move (ret) ;
-	}
-
-	String<Strw> strw_from_strs (CR<String<Str>> a) const override {
-		if (IS_SAME<Str ,Stra>::expr)
-			return strw_from_stra (string_from[TYPE<Stra>::expr] (a)) ;
-		if (IS_SAME<Str ,Strw>::expr)
-			return string_from[TYPE<Strw>::expr] (a) ;
-		assert (FALSE) ;
-		return String<Strw> () ;
-	}
-
-	String<Str> strs_from_stra (CR<String<Stra>> a) const override {
-		if (IS_SAME<Str ,Stra>::expr)
-			return string_from[TYPE<Str>::expr] (a) ;
-		if (IS_SAME<Str ,Strw>::expr)
-			return string_from[TYPE<Str>::expr] (strw_from_stra (a)) ;
-		assert (FALSE) ;
-		return String<Str> () ;
-	}
-
-	String<Str> strs_from_strw (CR<String<Strw>> a) const override {
-		if (IS_SAME<Str ,Stra>::expr)
-			return string_from[TYPE<Str>::expr] (stra_from_strw (a)) ;
-		if (IS_SAME<Str ,Strw>::expr)
-			return string_from[TYPE<Str>::expr] (a) ;
-		assert (FALSE) ;
-		return String<Str> () ;
 	}
 
 	String<Stru8> stru8_from_stru16 (CR<String<Stru16>> a) const override {
@@ -675,149 +615,201 @@ public:
 		return move (ret) ;
 	}
 
-	String<STRUA> strua_from_stra (RR<String<Stra>> a) const override {
-		return move (keep[TYPE<String<STRUA>>::expr] (Pointer::from (a))) ;
+	String<Str> strs_from_straw (RR<String<Stra>> a) const {
+		assert (a.step () == ALIGN_OF<Str>::expr) ;
+		return move (keep[TYPE<String<Str>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<Stra> stra_from_strua (RR<String<STRUA>> a) const override {
-		return move (keep[TYPE<String<Stra>>::expr] (Pointer::from (a))) ;
+	String<Str> strs_from_straw (RR<String<Strw>> a) const {
+		assert (a.step () == ALIGN_OF<Str>::expr) ;
+		return move (keep[TYPE<String<Str>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<STRUW> struw_from_strw (RR<String<Strw>> a) const override {
-		return move (keep[TYPE<String<STRUW>>::expr] (Pointer::from (a))) ;
-	}
-
-	String<Strw> strw_from_struw (RR<String<STRUW>> a) const override {
+	String<Strw> strw_from_struw (RR<String<Stru8>> a) const {
+		assert (a.step () == ALIGN_OF<Strw>::expr) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<Stra> stra_from_stru (CR<String<Stru8>> a) const override {
-		return stra_from_strw (strw_from_stru (a)) ;
+	String<Strw> strw_from_struw (RR<String<Stru16>> a) const {
+		assert (a.step () == ALIGN_OF<Strw>::expr) ;
+		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<Stra> stra_from_stru (CR<String<Stru16>> a) const override {
-		return stra_from_strw (strw_from_stru (a)) ;
+	String<Strw> strw_from_struw (RR<String<Stru32>> a) const {
+		assert (a.step () == ALIGN_OF<Strw>::expr) ;
+		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<Stra> stra_from_stru (CR<String<Stru32>> a) const override {
-		return stra_from_strw (strw_from_stru (a)) ;
+	String<Stra> stra_from (CR<String<Stra>> a) const override {
+		return a ;
 	}
 
-	String<Strw> strw_from_stru (CR<String<Stru8>> a) const override {
-		if (IS_SAME<STRUW ,Stru8>::expr)
-			return strw_from_struw (string_from[TYPE<STRUW>::expr] (move (a))) ;
-		if (IS_SAME<STRUW ,Stru16>::expr)
-			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru16_from_stru8 (a))) ;
-		if (IS_SAME<STRUW ,Stru32>::expr)
-			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru32_from_stru8 (a))) ;
+	String<Stra> stra_from (CR<String<Strw>> a) const override {
+		return stra_from_strw (a) ;
+	}
+
+	String<Stra> stra_from (CR<String<Stru8>> a) const override {
+		return stra_from_strw (strw_from (a)) ;
+	}
+
+	String<Stra> stra_from (CR<String<Stru16>> a) const override {
+		return stra_from_strw (strw_from (a)) ;
+	}
+
+	String<Stra> stra_from (CR<String<Stru32>> a) const override {
+		return stra_from_strw (strw_from (a)) ;
+	}
+
+	String<Strw> strw_from (CR<String<Stra>> a) const override {
+		return strw_from_stra (a) ;
+	}
+
+	String<Strw> strw_from (CR<String<Strw>> a) const override {
+		return a ;
+	}
+
+	String<Strw> strw_from (CR<String<Stru8>> a) const override {
+		if (IS_SAME<Struw ,Stru8>::expr)
+			return strw_from_struw (move (a)) ;
+		if (IS_SAME<Struw ,Stru16>::expr)
+			return strw_from_struw (stru16_from_stru8 (a)) ;
+		if (IS_SAME<Struw ,Stru32>::expr)
+			return strw_from_struw (stru32_from_stru8 (a)) ;
 		assert (FALSE) ;
 		return String<Strw> () ;
 	}
 
-	String<Strw> strw_from_stru (CR<String<Stru16>> a) const override {
-		if (IS_SAME<STRUW ,Stru8>::expr)
-			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru8_from_stru16 (a))) ;
-		if (IS_SAME<STRUW ,Stru16>::expr)
-			return strw_from_struw (string_from[TYPE<STRUW>::expr] (move (a))) ;
-		if (IS_SAME<STRUW ,Stru32>::expr)
-			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru32_from_stru16 (a))) ;
+	String<Strw> strw_from (CR<String<Stru16>> a) const override {
+		if (IS_SAME<Struw ,Stru8>::expr)
+			return strw_from_struw (stru8_from_stru16 (a)) ;
+		if (IS_SAME<Struw ,Stru16>::expr)
+			return strw_from_struw (move (a)) ;
+		if (IS_SAME<Struw ,Stru32>::expr)
+			return strw_from_struw (stru32_from_stru16 (a)) ;
 		assert (FALSE) ;
 		return String<Strw> () ;
 	}
 
-	String<Strw> strw_from_stru (CR<String<Stru32>> a) const override {
-		if (IS_SAME<STRUW ,Stru8>::expr)
-			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru8_from_stru32 (a))) ;
-		if (IS_SAME<STRUW ,Stru16>::expr)
-			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru16_from_stru32 (a))) ;
-		if (IS_SAME<STRUW ,Stru32>::expr)
-			return strw_from_struw (string_from[TYPE<STRUW>::expr] (move (a))) ;
+	String<Strw> strw_from (CR<String<Stru32>> a) const override {
+		if (IS_SAME<Struw ,Stru8>::expr)
+			return strw_from_struw (stru8_from_stru32 (a)) ;
+		if (IS_SAME<Struw ,Stru16>::expr)
+			return strw_from_struw (stru16_from_stru32 (a)) ;
+		if (IS_SAME<Struw ,Stru32>::expr)
+			return strw_from_struw (move (a)) ;
 		assert (FALSE) ;
 		return String<Strw> () ;
 	}
 
-	String<Str> strs_from_stru (CR<String<Stru8>> a) const override {
+	String<Str> strs_from (CR<String<Stra>> a) const override {
 		if (IS_SAME<Str ,Stra>::expr)
-			return string_from[TYPE<Str>::expr] (stra_from_stru (a)) ;
+			return strs_from_straw (move (a)) ;
 		if (IS_SAME<Str ,Strw>::expr)
-			return string_from[TYPE<Str>::expr] (strw_from_stru (a)) ;
+			return strs_from_straw (strw_from_stra (a)) ;
 		assert (FALSE) ;
 		return String<Str> () ;
 	}
 
-	String<Str> strs_from_stru (CR<String<Stru16>> a) const override {
+	String<Str> strs_from (CR<String<Strw>> a) const override {
 		if (IS_SAME<Str ,Stra>::expr)
-			return string_from[TYPE<Str>::expr] (stra_from_stru (a)) ;
+			return strs_from_straw (stra_from_strw (a)) ;
 		if (IS_SAME<Str ,Strw>::expr)
-			return string_from[TYPE<Str>::expr] (strw_from_stru (a)) ;
+			return strs_from_straw (move (a)) ;
 		assert (FALSE) ;
 		return String<Str> () ;
 	}
 
-	String<Str> strs_from_stru (CR<String<Stru32>> a) const override {
-		if (IS_SAME<Str ,Stra>::expr)
-			return string_from[TYPE<Str>::expr] (stra_from_stru (a)) ;
-		if (IS_SAME<Str ,Strw>::expr)
-			return string_from[TYPE<Str>::expr] (strw_from_stru (a)) ;
-		assert (FALSE) ;
-		return String<Str> () ;
+	String<Str> strs_from (CR<String<Stru8>> a) const override {
+		return strs_from_straw (strw_from (a)) ;
 	}
 
-	String<Stru8> stru8_from_struw (CR<String<STRUW>> a) const override {
-		if (IS_SAME<STRUW ,Stru8>::expr)
-			return string_from[TYPE<Stru8>::expr] (a) ;
-		if (IS_SAME<STRUW ,Stru16>::expr)
-			return stru8_from_stru16 (string_from[TYPE<Stru16>::expr] (a)) ;
-		if (IS_SAME<STRUW ,Stru32>::expr)
-			return stru8_from_stru32 (string_from[TYPE<Stru32>::expr] (a)) ;
+	String<Str> strs_from (CR<String<Stru16>> a) const override {
+		return strs_from_straw (strw_from (a)) ;
+	}
+
+	String<Str> strs_from (CR<String<Stru32>> a) const override {
+		return strs_from_straw (strw_from (a)) ;
+	}
+
+	String<Stru8> stru8_from (CR<String<Stra>> a) const override {
+		return stru8_from (strw_from_stra (a)) ;
+	}
+
+	String<Stru8> stru8_from (CR<String<Strw>> a) const override {
+		if (IS_SAME<Struw ,Stru8>::expr)
+			return keep[TYPE<String<Stru8>>::expr] (Pointer::from (a)) ;
+		if (IS_SAME<Struw ,Stru16>::expr)
+			return stru8_from_stru16 (Pointer::from (a)) ;
+		if (IS_SAME<Struw ,Stru32>::expr)
+			return stru8_from_stru32 (Pointer::from (a)) ;
 		assert (FALSE) ;
 		return String<Stru8> () ;
 	}
 
-	String<Stru16> stru16_from_struw (CR<String<STRUW>> a) const override {
-		if (IS_SAME<STRUW ,Stru8>::expr)
-			return stru16_from_stru8 (string_from[TYPE<Stru8>::expr] (a)) ;
-		if (IS_SAME<STRUW ,Stru16>::expr)
-			return string_from[TYPE<Stru16>::expr] (a) ;
-		if (IS_SAME<STRUW ,Stru32>::expr)
-			return stru16_from_stru32 (string_from[TYPE<Stru32>::expr] (a)) ;
+	String<Stru8> stru8_from (CR<String<Stru8>> a) const override {
+		return a ;
+	}
+
+	String<Stru8> stru8_from (CR<String<Stru16>> a) const override {
+		return stru8_from_stru16 (a) ;
+	}
+
+	String<Stru8> stru8_from (CR<String<Stru32>> a) const override {
+		return stru8_from_stru32 (a) ;
+	}
+
+	String<Stru16> stru16_from (CR<String<Stra>> a) const override {
+		return stru16_from (strw_from_stra (a)) ;
+	}
+
+	String<Stru16> stru16_from (CR<String<Strw>> a) const override {
+		if (IS_SAME<Struw ,Stru8>::expr)
+			return stru16_from_stru8 (Pointer::from (a)) ;
+		if (IS_SAME<Struw ,Stru16>::expr)
+			return keep[TYPE<String<Stru16>>::expr] (Pointer::from (a)) ;
+		if (IS_SAME<Struw ,Stru32>::expr)
+			return stru16_from_stru32 (Pointer::from (a)) ;
 		assert (FALSE) ;
 		return String<Stru16> () ;
 	}
 
-	String<Stru32> stru32_from_struw (CR<String<STRUW>> a) const override {
-		if (IS_SAME<STRUW ,Stru8>::expr)
-			return stru32_from_stru8 (string_from[TYPE<Stru8>::expr] (a)) ;
-		if (IS_SAME<STRUW ,Stru16>::expr)
-			return stru32_from_stru16 (string_from[TYPE<Stru16>::expr] (a)) ;
-		if (IS_SAME<STRUW ,Stru32>::expr)
-			return string_from[TYPE<Stru32>::expr] (a) ;
+	String<Stru16> stru16_from (CR<String<Stru8>> a) const override {
+		return stru16_from_stru8 (a) ;
+	}
+
+	String<Stru16> stru16_from (CR<String<Stru16>> a) const override {
+		return a ;
+	}
+
+	String<Stru16> stru16_from (CR<String<Stru32>> a) const override {
+		return stru16_from_stru32 (a) ;
+	}
+
+	String<Stru32> stru32_from (CR<String<Stra>> a) const override {
+		return stru32_from (strw_from_stra (a)) ;
+	}
+
+	String<Stru32> stru32_from (CR<String<Strw>> a) const override {
+		if (IS_SAME<Struw ,Stru8>::expr)
+			return stru32_from_stru8 (Pointer::from (a)) ;
+		if (IS_SAME<Struw ,Stru16>::expr)
+			return stru32_from_stru16 (Pointer::from (a)) ;
+		if (IS_SAME<Struw ,Stru32>::expr)
+			return keep[TYPE<String<Stru32>>::expr] (Pointer::from (a)) ;
 		assert (FALSE) ;
 		return String<Stru32> () ;
 	}
 
-	String<Stru8> stru8_from_strs (CR<String<Stra>> a) const override {
-		return stru8_from_struw (struw_from_strw (strw_from_stra (a))) ;
+	String<Stru32> stru32_from (CR<String<Stru8>> a) const override {
+		return stru32_from_stru8 (a) ;
 	}
 
-	String<Stru8> stru8_from_strs (CR<String<Strw>> a) const override {
-		return stru8_from_struw (struw_from_strw (move (a))) ;
+	String<Stru32> stru32_from (CR<String<Stru16>> a) const override {
+		return stru32_from_stru16 (a) ;
 	}
 
-	String<Stru16> stru16_from_strs (CR<String<Stra>> a) const override {
-		return stru16_from_struw (struw_from_strw (strw_from_stra (a))) ;
-	}
-
-	String<Stru16> stru16_from_strs (CR<String<Strw>> a) const override {
-		return stru16_from_struw (struw_from_strw (move (a))) ;
-	}
-
-	String<Stru32> stru32_from_strs (CR<String<Stra>> a) const override {
-		return stru32_from_struw (struw_from_strw (strw_from_stra (a))) ;
-	}
-
-	String<Stru32> stru32_from_strs (CR<String<Strw>> a) const override {
-		return stru32_from_struw (struw_from_strw (move (a))) ;
+	String<Stru32> stru32_from (CR<String<Stru32>> a) const override {
+		return a ;
 	}
 } ;
 
@@ -973,14 +965,14 @@ struct XmlParserNode {
 } ;
 
 struct XmlParserTree {
-	Array<XmlParserNode> mList ;
+	Array<XmlParserNode> mTree ;
 	Index mRoot ;
 } ;
 
 struct MakeXmlParserLayout {
 	RegularReader mReader ;
 	ScopeCounter mScopeCounter ;
-	List<XmlParserNode> mList ;
+	List<XmlParserNode> mTree ;
 	SortedMap<Index> mArrayMap ;
 	List<Index> mArrayMemberList ;
 	SortedMap<String<Stru8>> mObjectMap ;
@@ -993,7 +985,7 @@ class MakeXmlParser implement MakeXmlParserLayout {
 protected:
 	using MakeXmlParserLayout::mReader ;
 	using MakeXmlParserLayout::mScopeCounter ;
-	using MakeXmlParserLayout::mList ;
+	using MakeXmlParserLayout::mTree ;
 	using MakeXmlParserLayout::mArrayMap ;
 	using MakeXmlParserLayout::mObjectMap ;
 	using MakeXmlParserLayout::mLastIndex ;
@@ -1010,14 +1002,14 @@ public:
 
 	XmlParserTree poll () {
 		XmlParserTree ret ;
-		ret.mList = Array<XmlParserNode> (mList.length ()) ;
-		const auto r1x = Array<Index>::make (mList.iter ()) ;
-		for (auto &&i : ret.mList.iter ()) {
-			ret.mList[i] = move (mList[r1x[i]]) ;
-			const auto r2x = ret.mList[i].mArrayMap.length () ;
-			ret.mList[i].mArrayMap.remap () ;
-			assume (ret.mList[i].mArrayMap.length () == r2x) ;
-			ret.mList[i].mObjectMap.remap () ;
+		ret.mTree = Array<XmlParserNode> (mTree.length ()) ;
+		const auto r1x = Array<Index>::make (mTree.iter ()) ;
+		for (auto &&i : ret.mTree.iter ()) {
+			ret.mTree[i] = move (mTree[r1x[i]]) ;
+			const auto r2x = ret.mTree[i].mArrayMap.length () ;
+			ret.mTree[i].mArrayMap.remap () ;
+			assume (ret.mTree[i].mArrayMap.length () == r2x) ;
+			ret.mTree[i].mObjectMap.remap () ;
 		}
 		ret.mRoot = NONE ;
 		if ifdo (TRUE) {
@@ -1065,19 +1057,19 @@ public:
 
 	//@info: $3->$1 = $2
 	void read_shift_e3 (CR<Index> curr) {
-		Index ix = mList.insert () ;
+		Index ix = mTree.insert () ;
 		read_shift_e1 () ;
-		mList[ix].mName = move (mLastString) ;
-		mList[ix].mMember = NONE ;
-		mList[ix].mType = XmlParserNodeType::Value ;
-		mList[ix].mParent = curr ;
-		mList[ix].mBrother = NONE ;
-		mList[ix].mChild = NONE ;
+		mTree[ix].mName = move (mLastString) ;
+		mTree[ix].mMember = NONE ;
+		mTree[ix].mType = XmlParserNodeType::Value ;
+		mTree[ix].mParent = curr ;
+		mTree[ix].mBrother = NONE ;
+		mTree[ix].mChild = NONE ;
 		mReader >> GAP ;
 		mReader >> slice ("=") ;
 		mReader >> GAP ;
 		read_shift_e2 () ;
-		mList[ix].mValue = move (mLastString) ;
+		mTree[ix].mValue = move (mLastString) ;
 		mLastIndex = ix ;
 	}
 
@@ -1097,10 +1089,10 @@ public:
 				iy = mLastIndex ;
 			}
 			if ifdo (act) {
-				mList[iy].mBrother = mLastIndex ;
+				mTree[iy].mBrother = mLastIndex ;
 				iy = mLastIndex ;
 			}
-			mList[curr].mObjectMap.add (mList[iy].mName ,iy) ;
+			mTree[curr].mObjectMap.add (mTree[iy].mName ,iy) ;
 			mReader >> GAP ;
 		}
 		mLastIndex = ix ;
@@ -1108,17 +1100,17 @@ public:
 
 	//@info: $5-><$1 $4 />|<$1 $4 > $8 </$1 >
 	void read_shift_e5 (CR<Index> curr) {
-		Scope<ScopeCounter> anonymous (mScopeCounter) ;
+		Scope anonymous (mScopeCounter) ;
 		mReader >> slice ("<") ;
-		Index ix = mList.insert () ;
+		Index ix = mTree.insert () ;
 		read_shift_e1 () ;
-		mList[ix].mName = move (mLastString) ;
-		mList[ix].mObjectMap = mObjectMap.share () ;
-		mList[ix].mMember = mObjectMemberList.insert () ;
-		mList[ix].mType = XmlParserNodeType::Object ;
-		mList[ix].mParent = curr ;
-		mList[ix].mBrother = NONE ;
-		mList[ix].mChild = NONE ;
+		mTree[ix].mName = move (mLastString) ;
+		mTree[ix].mObjectMap = mObjectMap.share () ;
+		mTree[ix].mMember = mObjectMemberList.insert () ;
+		mTree[ix].mType = XmlParserNodeType::Object ;
+		mTree[ix].mParent = curr ;
+		mTree[ix].mBrother = NONE ;
+		mTree[ix].mChild = NONE ;
 		mReader >> GAP ;
 		read_shift_e4 (ix) ;
 		Index iy = mLastIndex ;
@@ -1130,19 +1122,19 @@ public:
 			mReader++ ;
 			mReader >> GAP ;
 			read_shift_e8 (ix ,iy) ;
-			mList[ix].mChild = mLastIndex ;
+			mTree[ix].mChild = mLastIndex ;
 			mReader >> GAP ;
 			mReader >> slice ("</") ;
 			read_shift_e1 () ;
-			assume (mLastString == mList[ix].mName) ;
+			assume (mLastString == mTree[ix].mName) ;
 			mReader >> GAP ;
 			mReader >> slice (">") ;
 		}
 		if ifdo (act) {
 			mReader >> slice ("/>") ;
 		}
-		mObjectMemberList.remove (mList[ix].mMember) ;
-		mList[ix].mMember = NONE ;
+		mObjectMemberList.remove (mTree[ix].mMember) ;
+		mTree[ix].mMember = NONE ;
 		mLastIndex = ix ;
 	}
 
@@ -1183,48 +1175,48 @@ public:
 		ix++ ;
 		rax.trunc (ix) ;
 		if ifdo (TRUE) {
-			if (mList[curr].mValue.size () > 0)
+			if (mTree[curr].mValue.size () > 0)
 				discard ;
-			mList[curr].mValue = move (rax) ;
+			mTree[curr].mValue = move (rax) ;
 		}
-		mList[curr].mValue.splice (mList[curr].mValue.length () ,rax) ;
+		mTree[curr].mValue.splice (mTree[curr].mValue.length () ,rax) ;
 	}
 
 	//@info: $8->$5 $8|$6 $8|$7 $8
 	void read_shift_e8 (CR<Index> curr ,CR<Index> first) {
-		Scope<ScopeCounter> anonymous (mScopeCounter) ;
+		Scope anonymous (mScopeCounter) ;
 		Index ix = first ;
 		Index iy = first ;
-		Index kx = mList[curr].mMember ;
+		Index kx = mTree[curr].mMember ;
 		while (TRUE) {
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (!is_first_of_object ())
 					discard ;
 				read_shift_e5 (curr) ;
-				auto rbx = move (mList[mLastIndex].mName) ;
+				auto rbx = move (mTree[mLastIndex].mName) ;
 				Index jx = mObjectMemberList[kx].map (rbx) ;
 				if ifdo (TRUE) {
 					if (jx != NONE)
 						discard ;
-					jx = mList.insert () ;
-					mList[jx].mName = move (rbx) ;
-					mObjectMemberList[kx].add (mList[jx].mName ,jx) ;
-					mList[jx].mArrayMap = mArrayMap.share () ;
-					mList[jx].mMember = NONE ;
-					mList[jx].mType = XmlParserNodeType::Array ;
-					mList[jx].mParent = curr ;
-					mList[jx].mBrother = NONE ;
-					mList[jx].mChild = NONE ;
+					jx = mTree.insert () ;
+					mTree[jx].mName = move (rbx) ;
+					mObjectMemberList[kx].add (mTree[jx].mName ,jx) ;
+					mTree[jx].mArrayMap = mArrayMap.share () ;
+					mTree[jx].mMember = NONE ;
+					mTree[jx].mType = XmlParserNodeType::Array ;
+					mTree[jx].mParent = curr ;
+					mTree[jx].mBrother = NONE ;
+					mTree[jx].mChild = NONE ;
 					brother_prev (ix ,iy) = jx ;
 					iy = jx ;
-					mList[curr].mObjectMap.add (mList[jx].mName ,iy) ;
+					mTree[curr].mObjectMap.add (mTree[jx].mName ,iy) ;
 				}
-				mList[mLastIndex].mParent = jx ;
-				brother_prev (mList[jx].mChild ,mList[jx].mMember) = mLastIndex ;
-				mList[jx].mMember = mLastIndex ;
-				const auto r1x = mList[jx].mArrayMap.length () ;
-				mList[jx].mArrayMap.add (r1x ,mLastIndex) ;
+				mTree[mLastIndex].mParent = jx ;
+				brother_prev (mTree[jx].mChild ,mTree[jx].mMember) = mLastIndex ;
+				mTree[jx].mMember = mLastIndex ;
+				const auto r1x = mTree[jx].mArrayMap.length () ;
+				mTree[jx].mArrayMap.add (r1x ,mLastIndex) ;
 			}
 			if ifdo (act) {
 				if (!is_first_of_comment ())
@@ -1240,12 +1232,12 @@ public:
 			}
 		}
 		if ifdo (TRUE) {
-			Index iz = mList[curr].mChild ;
+			Index iz = mTree[curr].mChild ;
 			while (TRUE) {
 				if (iz == NONE)
 					break ;
-				mList[iz].mMember = NONE ;
-				iz = mList[iz].mBrother ;
+				mTree[iz].mMember = NONE ;
+				iz = mTree[iz].mBrother ;
 			}
 		}
 		mLastIndex = ix ;
@@ -1254,7 +1246,7 @@ public:
 	VR<Index> brother_prev (VR<Index> prev ,CR<Index> curr) leftvalue {
 		if (prev == NONE)
 			return prev ;
-		return mList[curr].mBrother ;
+		return mTree[curr].mBrother ;
 	}
 
 	Bool is_first_of_comment () const {
@@ -1353,7 +1345,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mParent ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mParent ;
 		}
 		return move (ret) ;
 	}
@@ -1364,7 +1356,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mBrother ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mBrother ;
 		}
 		return move (ret) ;
 	}
@@ -1375,7 +1367,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mChild ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mChild ;
 		}
 		return move (ret) ;
 	}
@@ -1386,7 +1378,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mArrayMap.map (index) ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mArrayMap.map (index) ;
 		}
 		return move (ret) ;
 	}
@@ -1397,7 +1389,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
 	}
@@ -1408,7 +1400,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
 	}
@@ -1418,11 +1410,11 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			const auto r1x = self.mThis->mList[self.mIndex].mArrayMap.length () ;
+			const auto r1x = self.mThis->mTree[self.mIndex].mArrayMap.length () ;
 			ret = Array<XmlParserLayout> (r1x) ;
 			for (auto &&i : range (0 ,r1x)) {
 				ret[i].mThis = self.mThis ;
-				ret[i].mIndex = self.mThis->mList[self.mIndex].mArrayMap[i] ;
+				ret[i].mIndex = self.mThis->mTree[self.mIndex].mArrayMap[i] ;
 			}
 		}
 		return move (ret) ;
@@ -1433,11 +1425,11 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			const auto r1x = self.mThis->mList[self.mIndex].mArrayMap.length () ;
+			const auto r1x = self.mThis->mTree[self.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
 			for (auto &&i : range (0 ,r2x)) {
 				ret[i].mThis = self.mThis ;
-				ret[i].mIndex = self.mThis->mList[self.mIndex].mArrayMap[i] ;
+				ret[i].mIndex = self.mThis->mTree[self.mIndex].mArrayMap[i] ;
 			}
 		}
 		return move (ret) ;
@@ -1449,7 +1441,7 @@ public:
 			return FALSE ;
 		if (!self.mThis.exist ())
 			return TRUE ;
-		if (address (self.mThis->mList) != address (that.mThis->mList))
+		if (address (self.mThis->mTree) != address (that.mThis->mTree))
 			return FALSE ;
 		if (self.mIndex != that.mIndex)
 			return FALSE ;
@@ -1458,14 +1450,14 @@ public:
 
 	CR<String<Stru8>> name () const leftvalue override {
 		assert (exist ()) ;
-		return self.mThis->mList[self.mIndex].mName ;
+		return self.mThis->mTree[self.mIndex].mName ;
 	}
 
 	Bool parse (CR<Bool> def) const override {
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Bool>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Bool>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1476,7 +1468,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Val32>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Val32>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1487,7 +1479,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Val64>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Val64>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1498,7 +1490,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Flt32>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Flt32>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1509,7 +1501,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Flt64>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Flt64>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1520,7 +1512,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stra_from_stru (self.mThis->mList[self.mIndex].mValue) ;
+			return StringProc::stra_from (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1531,7 +1523,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::strw_from_stru (self.mThis->mList[self.mIndex].mValue) ;
+			return StringProc::strw_from (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1542,7 +1534,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return self.mThis->mList[self.mIndex].mValue ;
+			return self.mThis->mTree[self.mIndex].mValue ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1553,7 +1545,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stru16_from_stru8 (self.mThis->mList[self.mIndex].mValue) ;
+			return StringProc::stru16_from (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1564,7 +1556,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stru32_from_stru8 (self.mThis->mList[self.mIndex].mValue) ;
+			return StringProc::stru32_from (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -1653,14 +1645,14 @@ struct JsonParserNode {
 } ;
 
 struct JsonParserTree {
-	Array<JsonParserNode> mList ;
+	Array<JsonParserNode> mTree ;
 	Index mRoot ;
 } ;
 
 struct MakeJsonParserLayout {
 	RegularReader mReader ;
 	ScopeCounter mScopeCounter ;
-	List<JsonParserNode> mList ;
+	List<JsonParserNode> mTree ;
 	SortedMap<Index> mArrayMap ;
 	SortedMap<String<Stru8>> mObjectMap ;
 	Index mLastIndex ;
@@ -1671,7 +1663,7 @@ class MakeJsonParser implement MakeJsonParserLayout {
 protected:
 	using MakeJsonParserLayout::mReader ;
 	using MakeJsonParserLayout::mScopeCounter ;
-	using MakeJsonParserLayout::mList ;
+	using MakeJsonParserLayout::mTree ;
 	using MakeJsonParserLayout::mArrayMap ;
 	using MakeJsonParserLayout::mObjectMap ;
 	using MakeJsonParserLayout::mLastIndex ;
@@ -1688,16 +1680,16 @@ public:
 
 	JsonParserTree poll () {
 		JsonParserTree ret ;
-		ret.mList = Array<JsonParserNode> (mList.length ()) ;
-		const auto r1x = Array<Index>::make (mList.iter ()) ;
-		for (auto &&i : ret.mList.iter ()) {
-			ret.mList[i] = move (mList[r1x[i]]) ;
-			const auto r2x = ret.mList[i].mArrayMap.length () ;
-			ret.mList[i].mArrayMap.remap () ;
-			assume (ret.mList[i].mArrayMap.length () == r2x) ;
-			const auto r3x = ret.mList[i].mObjectMap.length () ;
-			ret.mList[i].mObjectMap.remap () ;
-			assume (ret.mList[i].mObjectMap.length () == r3x) ;
+		ret.mTree = Array<JsonParserNode> (mTree.length ()) ;
+		const auto r1x = Array<Index>::make (mTree.iter ()) ;
+		for (auto &&i : ret.mTree.iter ()) {
+			ret.mTree[i] = move (mTree[r1x[i]]) ;
+			const auto r2x = ret.mTree[i].mArrayMap.length () ;
+			ret.mTree[i].mArrayMap.remap () ;
+			assume (ret.mTree[i].mArrayMap.length () == r2x) ;
+			const auto r3x = ret.mTree[i].mObjectMap.length () ;
+			ret.mTree[i].mObjectMap.remap () ;
+			assume (ret.mTree[i].mObjectMap.length () == r3x) ;
 		}
 		ret.mRoot = NONE ;
 		if ifdo (TRUE) {
@@ -1773,44 +1765,44 @@ public:
 
 	//@info: $4->$1|$2|$3|$6|$9
 	void read_shift_e4 (CR<Index> curr) {
-		Scope<ScopeCounter> anonymous (mScopeCounter) ;
+		Scope anonymous (mScopeCounter) ;
 		Index ix = NONE ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (!is_first_of_number ())
 				discard ;
-			ix = mList.insert () ;
-			mList[ix].mName = move (mLastString) ;
+			ix = mTree.insert () ;
+			mTree[ix].mName = move (mLastString) ;
 			read_shift_e1 () ;
-			mList[ix].mValue = move (mLastString) ;
-			mList[ix].mType = JsonParserNodeType::Value ;
-			mList[ix].mParent = curr ;
-			mList[ix].mBrother = NONE ;
-			mList[ix].mChild = NONE ;
+			mTree[ix].mValue = move (mLastString) ;
+			mTree[ix].mType = JsonParserNodeType::Value ;
+			mTree[ix].mParent = curr ;
+			mTree[ix].mBrother = NONE ;
+			mTree[ix].mChild = NONE ;
 		}
 		if ifdo (act) {
 			if (!is_first_of_const ())
 				discard ;
-			ix = mList.insert () ;
-			mList[ix].mName = move (mLastString) ;
+			ix = mTree.insert () ;
+			mTree[ix].mName = move (mLastString) ;
 			read_shift_e2 () ;
-			mList[ix].mValue = move (mLastString) ;
-			mList[ix].mType = JsonParserNodeType::Value ;
-			mList[ix].mParent = curr ;
-			mList[ix].mBrother = NONE ;
-			mList[ix].mChild = NONE ;
+			mTree[ix].mValue = move (mLastString) ;
+			mTree[ix].mType = JsonParserNodeType::Value ;
+			mTree[ix].mParent = curr ;
+			mTree[ix].mBrother = NONE ;
+			mTree[ix].mChild = NONE ;
 		}
 		if ifdo (act) {
 			if (mReader[0] != Stru32 ('\"'))
 				discard ;
-			ix = mList.insert () ;
-			mList[ix].mName = move (mLastString) ;
+			ix = mTree.insert () ;
+			mTree[ix].mName = move (mLastString) ;
 			read_shift_e3 () ;
-			mList[ix].mValue = move (mLastString) ;
-			mList[ix].mType = JsonParserNodeType::Value ;
-			mList[ix].mParent = curr ;
-			mList[ix].mBrother = NONE ;
-			mList[ix].mChild = NONE ;
+			mTree[ix].mValue = move (mLastString) ;
+			mTree[ix].mType = JsonParserNodeType::Value ;
+			mTree[ix].mParent = curr ;
+			mTree[ix].mBrother = NONE ;
+			mTree[ix].mChild = NONE ;
 		}
 		if ifdo (act) {
 			if (mReader[0] != Stru32 ('['))
@@ -1859,8 +1851,8 @@ public:
 			read_shift_e4 (curr) ;
 			brother_prev (ix ,iy) = mLastIndex ;
 			iy = mLastIndex ;
-			const auto r1x = mList[curr].mArrayMap.length () ;
-			mList[curr].mArrayMap.add (r1x ,iy) ;
+			const auto r1x = mTree[curr].mArrayMap.length () ;
+			mTree[curr].mArrayMap.add (r1x ,iy) ;
 			mReader >> GAP ;
 			if (mReader[0] != Stru32 (','))
 				break ;
@@ -1872,21 +1864,21 @@ public:
 
 	//@info: $6->[ ]|[ $5 ]
 	void read_shift_e6 (CR<Index> curr) {
-		Scope<ScopeCounter> anonymous (mScopeCounter) ;
+		Scope anonymous (mScopeCounter) ;
 		mReader >> slice ("[") ;
-		Index ix = mList.insert () ;
-		mList[ix].mName = move (mLastString) ;
-		mList[ix].mArrayMap = mArrayMap.share () ;
-		mList[ix].mType = JsonParserNodeType::Array ;
-		mList[ix].mParent = curr ;
-		mList[ix].mBrother = NONE ;
-		mList[ix].mChild = NONE ;
+		Index ix = mTree.insert () ;
+		mTree[ix].mName = move (mLastString) ;
+		mTree[ix].mArrayMap = mArrayMap.share () ;
+		mTree[ix].mType = JsonParserNodeType::Array ;
+		mTree[ix].mParent = curr ;
+		mTree[ix].mBrother = NONE ;
+		mTree[ix].mChild = NONE ;
 		mReader >> GAP ;
 		if ifdo (TRUE) {
 			if (mReader[0] == Stru32 (']'))
 				break ;
 			read_shift_e5 (ix) ;
-			mList[ix].mChild = mLastIndex ;
+			mTree[ix].mChild = mLastIndex ;
 			mReader >> GAP ;
 		}
 		mReader >> slice ("]") ;
@@ -1910,9 +1902,9 @@ public:
 			read_shift_e7 (curr) ;
 			brother_prev (ix ,iy) = mLastIndex ;
 			iy = mLastIndex ;
-			const auto r1x = mList[curr].mArrayMap.length () ;
-			mList[curr].mArrayMap.add (r1x ,iy) ;
-			mList[curr].mObjectMap.add (mList[iy].mName ,iy) ;
+			const auto r1x = mTree[curr].mArrayMap.length () ;
+			mTree[curr].mArrayMap.add (r1x ,iy) ;
+			mTree[curr].mObjectMap.add (mTree[iy].mName ,iy) ;
 			mReader >> GAP ;
 			if (mReader[0] != Stru32 (','))
 				break ;
@@ -1925,27 +1917,27 @@ public:
 	VR<Index> brother_prev (VR<Index> prev ,CR<Index> curr) leftvalue {
 		if (prev == NONE)
 			return prev ;
-		return mList[curr].mBrother ;
+		return mTree[curr].mBrother ;
 	}
 
 	//@info: $9->{ }|{ $8 }
 	void read_shift_e9 (CR<Index> curr) {
-		Scope<ScopeCounter> anonymous (mScopeCounter) ;
+		Scope anonymous (mScopeCounter) ;
 		mReader >> slice ("{") ;
-		Index ix = mList.insert () ;
-		mList[ix].mName = move (mLastString) ;
-		mList[ix].mArrayMap = mArrayMap.share () ;
-		mList[ix].mObjectMap = mObjectMap.share () ;
-		mList[ix].mType = JsonParserNodeType::Object ;
-		mList[ix].mParent = curr ;
-		mList[ix].mBrother = NONE ;
-		mList[ix].mChild = NONE ;
+		Index ix = mTree.insert () ;
+		mTree[ix].mName = move (mLastString) ;
+		mTree[ix].mArrayMap = mArrayMap.share () ;
+		mTree[ix].mObjectMap = mObjectMap.share () ;
+		mTree[ix].mType = JsonParserNodeType::Object ;
+		mTree[ix].mParent = curr ;
+		mTree[ix].mBrother = NONE ;
+		mTree[ix].mChild = NONE ;
 		mReader >> GAP ;
 		if ifdo (TRUE) {
 			if (mReader[0] == Stru32 ('}'))
 				discard ;
 			read_shift_e8 (ix) ;
-			mList[ix].mChild = mLastIndex ;
+			mTree[ix].mChild = mLastIndex ;
 			mReader >> GAP ;
 		}
 		mReader >> slice ("}") ;
@@ -2009,7 +2001,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mParent ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mParent ;
 		}
 		return move (ret) ;
 	}
@@ -2020,7 +2012,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mBrother ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mBrother ;
 		}
 		return move (ret) ;
 	}
@@ -2031,7 +2023,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mChild ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mChild ;
 		}
 		return move (ret) ;
 	}
@@ -2042,7 +2034,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mArrayMap.map (index) ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mArrayMap.map (index) ;
 		}
 		return move (ret) ;
 	}
@@ -2053,7 +2045,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
 	}
@@ -2064,7 +2056,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mList[self.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
 	}
@@ -2074,11 +2066,11 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			const auto r1x = self.mThis->mList[self.mIndex].mArrayMap.length () ;
+			const auto r1x = self.mThis->mTree[self.mIndex].mArrayMap.length () ;
 			ret = Array<JsonParserLayout> (r1x) ;
 			for (auto &&i : range (0 ,r1x)) {
 				ret[i].mThis = self.mThis ;
-				ret[i].mIndex = self.mThis->mList[self.mIndex].mArrayMap[i] ;
+				ret[i].mIndex = self.mThis->mTree[self.mIndex].mArrayMap[i] ;
 			}
 		}
 		return move (ret) ;
@@ -2089,11 +2081,11 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			const auto r1x = self.mThis->mList[self.mIndex].mArrayMap.length () ;
+			const auto r1x = self.mThis->mTree[self.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
 			for (auto &&i : range (0 ,r2x)) {
 				ret[i].mThis = self.mThis ;
-				ret[i].mIndex = self.mThis->mList[self.mIndex].mArrayMap[i] ;
+				ret[i].mIndex = self.mThis->mTree[self.mIndex].mArrayMap[i] ;
 			}
 		}
 		return move (ret) ;
@@ -2105,7 +2097,7 @@ public:
 			return FALSE ;
 		if (!self.mThis.exist ())
 			return TRUE ;
-		if (address (self.mThis->mList) != address (that.mThis->mList))
+		if (address (self.mThis->mTree) != address (that.mThis->mTree))
 			return FALSE ;
 		if (self.mIndex != that.mIndex)
 			return FALSE ;
@@ -2114,14 +2106,14 @@ public:
 
 	CR<String<Stru8>> name () const leftvalue override {
 		assert (exist ()) ;
-		return self.mThis->mList[self.mIndex].mName ;
+		return self.mThis->mTree[self.mIndex].mName ;
 	}
 
 	Bool parse (CR<Bool> def) const override {
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Bool>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Bool>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -2132,7 +2124,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Val32>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Val32>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -2143,7 +2135,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Val64>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Val64>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -2154,7 +2146,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Flt32>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Flt32>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -2165,7 +2157,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<Flt64>::make (self.mThis->mList[self.mIndex].mValue) ;
+			return StringParse<Flt64>::make (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -2176,7 +2168,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stra_from_stru (self.mThis->mList[self.mIndex].mValue) ;
+			return StringProc::stra_from (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -2187,7 +2179,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::strw_from_stru (self.mThis->mList[self.mIndex].mValue) ;
+			return StringProc::strw_from (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -2198,7 +2190,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return self.mThis->mList[self.mIndex].mValue ;
+			return self.mThis->mTree[self.mIndex].mValue ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -2209,7 +2201,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stru16_from_stru8 (self.mThis->mList[self.mIndex].mValue) ;
+			return StringProc::stru16_from (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
@@ -2220,7 +2212,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stru32_from_stru8 (self.mThis->mList[self.mIndex].mValue) ;
+			return StringProc::stru32_from (self.mThis->mTree[self.mIndex].mValue) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
 		}

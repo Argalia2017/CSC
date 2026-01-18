@@ -232,6 +232,21 @@ exports CFat<AtomicHolder> AtomicHolder::hold (CR<AtomicLayout> that) {
 	return CFat<AtomicHolder> (AtomicImplHolder () ,that) ;
 }
 
+class SharedAtomicMutex implement Atomic {
+public:
+	implicit SharedAtomicMutex () = default ;
+
+	implicit SharedAtomicMutex (CR<typeof (NULL)>) :Atomic (NULL) {}
+
+	void lock () {
+		noop () ;
+	}
+
+	void unlock () {
+		thiz.decrease () ;
+	}
+} ;
+
 struct MutexType {
 	enum {
 		Basic ,
@@ -246,7 +261,7 @@ struct MutexType {
 struct MutexLayout {
 	Just<MutexType> mType ;
 	Box<std::mutex> mBasic ;
-	Atomic mShared ;
+	SharedAtomicMutex mShared ;
 	Box<std::condition_variable> mUnique ;
 } ;
 
@@ -321,24 +336,6 @@ exports CFat<MakeMutexHolder> MakeMutexHolder::hold (CR<MutexLayout> that) {
 	return CFat<MakeMutexHolder> (MakeMutexImplHolder () ,that) ;
 }
 
-class SharedAtomicMutex {
-protected:
-	Atomic mThat ;
-
-public:
-	static VR<SharedAtomicMutex> from (VR<Atomic> that) {
-		return Pointer::from (that) ;
-	}
-
-	void lock () {
-		noop () ;
-	}
-
-	void unlock () {
-		mThat.decrease () ;
-	}
-} ;
-
 struct SharedLockLayout {
 	Ref<MutexLayout> mMutex ;
 	std::unique_lock<SharedAtomicMutex> mLock ;
@@ -348,10 +345,9 @@ class SharedLockImplHolder final implement Fat<SharedLockHolder ,SharedLockLayou
 public:
 	void initialize (CR<Mutex> mutex) override {
 		self.mMutex = mutex.borrow () ;
-		assert (self.mMutex.exclusive ()) ;
 		assert (self.mMutex->mType == MutexType::Shared) ;
 		shared_enter () ;
-		self.mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (self.mMutex->mShared)) ;
+		self.mLock = std::unique_lock<SharedAtomicMutex> (self.mMutex->mShared) ;
 	}
 
 	void shared_enter () {
@@ -415,7 +411,6 @@ class UniqueLockImplHolder final implement Fat<UniqueLockHolder ,UniqueLockLayou
 public:
 	void initialize (CR<Mutex> mutex) override {
 		self.mMutex = mutex.borrow () ;
-		assert (self.mMutex.exclusive ()) ;
 		assert (self.mMutex->mType == MutexType::Unique) ;
 		self.mLock = std::unique_lock<std::mutex> (self.mMutex->mBasic.ref) ;
 	}
@@ -453,7 +448,7 @@ exports CFat<UniqueLockHolder> UniqueLockHolder::hold (CR<UniqueLockLayout> that
 }
 
 struct ThreadLayout {
-	Box<VFat<FriendExecuting>> mExecuting ;
+	Ref<Executing> mExecuting ;
 	Flag mUid ;
 	Index mSlot ;
 	Box<std::thread> mThread ;
@@ -468,8 +463,8 @@ public:
 
 class ThreadImplHolder final implement Fat<ThreadHolder ,ThreadLayout> {
 public:
-	void initialize (RR<VFat<FriendExecuting>> executing ,CR<Index> slot) override {
-		self.mExecuting = Box<VFat<FriendExecuting>>::make (move (executing)) ;
+	void initialize (RR<Ref<Executing>> executing ,CR<Index> slot) override {
+		self.mExecuting = move (executing) ;
 		self.mUid = ZERO ;
 		self.mSlot = slot ;
 	}
@@ -482,7 +477,7 @@ public:
 		auto &&rax = self ;
 		self.mThread = Box<std::thread>::make ([&] () {
 			rax.mUid = RuntimeProc::thread_uid () ;
-			rax.mExecuting.ref->friend_execute (rax.mSlot) ;
+			rax.mExecuting->friend_execute (rax.mSlot) ;
 		}) ;
 	}
 
@@ -557,12 +552,12 @@ public:
 	}
 
 	void set_locale (CR<String<Str>> name) override {
-		const auto r1x = StringProc::stra_from_strs (name) ;
+		const auto r1x = StringProc::stra_from (name) ;
 		self.mLocale = std::locale (r1x) ;
 	}
 
 	void execute (CR<String<Str>> command) const override {
-		const auto r1x = StringProc::stra_from_strs (command) ;
+		const auto r1x = StringProc::stra_from (command) ;
 		const auto r2x = Flag (std::system (r1x)) ;
 		noop (r2x) ;
 	}
@@ -796,16 +791,16 @@ struct GlobalTree {
 class GlobalImplHolder final implement Fat<GlobalHolder ,GlobalLayout> {
 public:
 	void initialize () override {
-		self.mThis = Ref<GlobalTree>::make () ;
+		self.mThis = SharedRef<GlobalTree>::make () ;
 		self.mThis->mMutex = NULL ;
 		self.mThis->mFinalize = FALSE ;
 		self.mIndex = NONE ;
 	}
 
 	void initialize (CR<Slice> name ,CR<Unknown> holder) override {
-		self.mThis = Singleton<GlobalProc>::expr.mThis.share () ;
+		self.mThis = Singleton<GlobalProc>::expr.mThis ;
+		Scope anonymous (self.mThis->mMutex) ;
 		assert (!self.mThis->mFinalize) ;
-		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		Index ix = self.mThis->mGlobalNameSet.map (name) ;
 		if ifdo (TRUE) {
 			if (ix != NONE)
@@ -819,12 +814,14 @@ public:
 	}
 
 	void startup () const override {
-		auto rax = Singleton<GlobalProc>::expr.mThis.share () ;
+		auto rax = Singleton<GlobalProc>::expr.mThis ;
+		Scope anonymous (rax->mMutex) ;
 		assume (!rax->mFinalize) ;
 	}
 
 	void shutdown () const override {
-		auto rax = Singleton<GlobalProc>::expr.mThis.share () ;
+		auto rax = Singleton<GlobalProc>::expr.mThis ;
+		Scope anonymous (rax->mMutex) ;
 		if (rax->mFinalize)
 			return ;
 		rax->mFinalize = TRUE ;
@@ -833,14 +830,14 @@ public:
 	}
 
 	Bool exist () const override {
-		Scope<Mutex> anonymous (self.mThis->mMutex) ;
+		Scope anonymous (self.mThis->mMutex) ;
 		Index ix = self.mIndex ;
 		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
 		return self.mClazz == rax.clazz () ;
 	}
 
 	AutoRef<Pointer> fetch () const override {
-		Scope<Mutex> anonymous (self.mThis->mMutex) ;
+		Scope anonymous (self.mThis->mMutex) ;
 		Index ix = self.mIndex ;
 		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
 		assume (rax.exist ()) ;
@@ -852,7 +849,7 @@ public:
 	}
 
 	void store (RR<AutoRef<Pointer>> item) const override {
-		Scope<Mutex> anonymous (self.mThis->mMutex) ;
+		Scope anonymous (self.mThis->mMutex) ;
 		Index ix = self.mIndex ;
 		const auto r1x = Pin<AutoRef<Pointer>> (self.mThis->mGlobalList[ix].mValue) ;
 		assume (!r1x->exist ()) ;

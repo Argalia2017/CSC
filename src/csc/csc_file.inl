@@ -72,8 +72,10 @@ exports CFat<StreamFileHolder> StreamFileHolder::hold (CR<StreamFileLayout> that
 
 struct StreamFileWriterLayout {
 	StreamFile mStreamFile ;
-	RefBuffer<Byte> mFileBuffer ;
-	AutoRef<Writer> mFileWriter ;
+	Ref<RefBuffer<Byte>> mFileBuffer ;
+	TextWriter mTextWriter ;
+	ByteWriter mByteWriter ;
+	Box<Writer> mWriter ;
 
 public:
 	implicit StreamFileWriterLayout () = default ;
@@ -88,7 +90,7 @@ public:
 	void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> encode) override {
 		self.mStreamFile = StreamFile (file) ;
 		self.mStreamFile.open_w (0) ;
-		self.mFileBuffer = RefBuffer<Byte> (STREAMFILE_CHUNK_STEP::expr) ;
+		self.mFileBuffer = Ref<RefBuffer<Byte>>::make (STREAMFILE_CHUNK_STEP::expr) ;
 		set_writer (encode) ;
 	}
 
@@ -97,31 +99,33 @@ public:
 		if ifdo (act) {
 			if (encode != StreamFileEncode::ByteWriter)
 				discard ;
-			self.mFileWriter = AutoRef<ByteWriter>::make (Ref<RefBuffer<Byte>>::reference (self.mFileBuffer)) ;
+			self.mByteWriter = ByteWriter (self.mFileBuffer.share ()) ;
+			self.mWriter = Box<Writer>::make (self.mByteWriter) ;
 		}
 		if ifdo (act) {
 			if (encode != StreamFileEncode::TextWriter)
 				discard ;
-			self.mFileWriter = AutoRef<TextWriter>::make (Ref<RefBuffer<Byte>>::reference (self.mFileBuffer)) ;
+			self.mTextWriter = TextWriter (self.mFileBuffer.share ()) ;
+			self.mWriter = Box<Writer>::make (self.mTextWriter) ;
 		}
 		auto &&rax = self ;
-		self.mFileWriter->use_overflow ([&] (VR<Writer> writer) {
-			rax.mStreamFile.write (rax.mFileBuffer) ;
-			rax.mFileWriter->reset () ;
+		self.mWriter->use_overflow ([&] (CR<Writer> writer) {
+			rax.mStreamFile.write (rax.mFileBuffer.ref) ;
+			rax.mWriter->reset () ;
 		}) ;
 	}
 
-	VR<Writer> ref_m () leftvalue override {
-		return self.mFileWriter.ref ;
+	CR<Writer> ref_m () leftvalue override {
+		return self.mWriter.ref ;
 	}
 
 	void flush () override {
-		const auto r1x = self.mFileWriter->length () ;
+		const auto r1x = self.mWriter->length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = Flag (self.mFileBuffer.ref) ;
+		const auto r2x = Flag (self.mFileBuffer->ref) ;
 		self.mStreamFile.write (RefBuffer<Byte>::reference (r2x ,r1x)) ;
-		self.mFileWriter->reset () ;
+		self.mWriter->reset () ;
 		self.mStreamFile.flush () ;
 	}
 } ;

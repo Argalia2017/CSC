@@ -22,39 +22,43 @@ struct StringProcHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual String<Stra> stra_from_strw (CR<String<Strw>> a) const = 0 ;
-	virtual String<Stra> stra_from_strs (CR<String<Str>> a) const = 0 ;
 	virtual String<Strw> strw_from_stra (CR<String<Stra>> a) const = 0 ;
-	virtual String<Strw> strw_from_strs (CR<String<Str>> a) const = 0 ;
-	virtual String<Str> strs_from_stra (CR<String<Stra>> a) const = 0 ;
-	virtual String<Str> strs_from_strw (CR<String<Strw>> a) const = 0 ;
 	virtual String<Stru8> stru8_from_stru16 (CR<String<Stru16>> a) const = 0 ;
 	virtual String<Stru8> stru8_from_stru32 (CR<String<Stru32>> a) const = 0 ;
 	virtual String<Stru16> stru16_from_stru8 (CR<String<Stru8>> a) const = 0 ;
 	virtual String<Stru16> stru16_from_stru32 (CR<String<Stru32>> a) const = 0 ;
 	virtual String<Stru32> stru32_from_stru8 (CR<String<Stru8>> a) const = 0 ;
 	virtual String<Stru32> stru32_from_stru16 (CR<String<Stru16>> a) const = 0 ;
-	virtual String<STRUA> strua_from_stra (RR<String<Stra>> a) const = 0 ;
-	virtual String<Stra> stra_from_strua (RR<String<STRUA>> a) const = 0 ;
-	virtual String<STRUW> struw_from_strw (RR<String<Strw>> a) const = 0 ;
-	virtual String<Strw> strw_from_struw (RR<String<STRUW>> a) const = 0 ;
-	virtual String<Stra> stra_from_stru (CR<String<Stru8>> a) const = 0 ;
-	virtual String<Stra> stra_from_stru (CR<String<Stru16>> a) const = 0 ;
-	virtual String<Stra> stra_from_stru (CR<String<Stru32>> a) const = 0 ;
-	virtual String<Strw> strw_from_stru (CR<String<Stru8>> a) const = 0 ;
-	virtual String<Strw> strw_from_stru (CR<String<Stru16>> a) const = 0 ;
-	virtual String<Strw> strw_from_stru (CR<String<Stru32>> a) const = 0 ;
-	virtual String<Str> strs_from_stru (CR<String<Stru8>> a) const = 0 ;
-	virtual String<Str> strs_from_stru (CR<String<Stru16>> a) const = 0 ;
-	virtual String<Str> strs_from_stru (CR<String<Stru32>> a) const = 0 ;
-	virtual String<Stru8> stru8_from_struw (CR<String<STRUW>> a) const = 0 ;
-	virtual String<Stru16> stru16_from_struw (CR<String<STRUW>> a) const = 0 ;
-	virtual String<Stru32> stru32_from_struw (CR<String<STRUW>> a) const = 0 ;
-	virtual String<Stru8> stru8_from_strs (CR<String<Stra>> a) const = 0 ;
-	virtual String<Stru8> stru8_from_strs (CR<String<Strw>> a) const = 0 ;
-	virtual String<Stru16> stru16_from_strs (CR<String<Stra>> a) const = 0 ;
-	virtual String<Stru16> stru16_from_strs (CR<String<Strw>> a) const = 0 ;
-	virtual String<Stru32> stru32_from_strs (CR<String<Stra>> a) const = 0 ;
-	virtual String<Stru32> stru32_from_strs (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stra> stra_from (CR<String<Stra>> a) const = 0 ;
+	virtual String<Stra> stra_from (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stra> stra_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stra> stra_from (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Stra> stra_from (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Strw> strw_from (CR<String<Stra>> a) const = 0 ;
+	virtual String<Strw> strw_from (CR<String<Strw>> a) const = 0 ;
+	virtual String<Strw> strw_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Strw> strw_from (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Strw> strw_from (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Str> strs_from (CR<String<Stra>> a) const = 0 ;
+	virtual String<Str> strs_from (CR<String<Strw>> a) const = 0 ;
+	virtual String<Str> strs_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Str> strs_from (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Str> strs_from (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Stru8> stru8_from (CR<String<Stra>> a) const = 0 ;
+	virtual String<Stru8> stru8_from (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stru8> stru8_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stru8> stru8_from (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Stru8> stru8_from (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Stru16> stru16_from (CR<String<Stra>> a) const = 0 ;
+	virtual String<Stru16> stru16_from (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stru16> stru16_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stru16> stru16_from (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Stru16> stru16_from (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Stru32> stru32_from (CR<String<Stra>> a) const = 0 ;
+	virtual String<Stru32> stru32_from (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stru32> stru32_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stru32> stru32_from (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Stru32> stru32_from (CR<String<Stru32>> a) const = 0 ;
 } ;
 
 class StringProc implement Like<UniqueRef<StringProcLayout>> {
@@ -67,24 +71,8 @@ public:
 		return StringProcHolder::hold (expr)->stra_from_strw (a) ;
 	}
 
-	static String<Stra> stra_from_strs (CR<String<Str>> a) {
-		return StringProcHolder::hold (expr)->stra_from_strs (a) ;
-	}
-
 	static String<Strw> strw_from_stra (CR<String<Stra>> a) {
 		return StringProcHolder::hold (expr)->strw_from_stra (a) ;
-	}
-
-	static String<Strw> strw_from_strs (CR<String<Str>> a) {
-		return StringProcHolder::hold (expr)->strw_from_strs (a) ;
-	}
-
-	static String<Str> strs_from_stra (CR<String<Stra>> a) {
-		return StringProcHolder::hold (expr)->strs_from_stra (a) ;
-	}
-
-	static String<Str> strs_from_strw (CR<String<Strw>> a) {
-		return StringProcHolder::hold (expr)->strs_from_strw (a) ;
 	}
 
 	static String<Stru8> stru8_from_stru16 (CR<String<Stru16>> a) {
@@ -111,92 +99,124 @@ public:
 		return StringProcHolder::hold (expr)->stru32_from_stru16 (a) ;
 	}
 
-	static String<STRUA> strua_from_stra (RR<String<Stra>> a) {
-		return StringProcHolder::hold (expr)->strua_from_stra (move (a)) ;
+	static String<Stra> stra_from (CR<String<Stra>> a) {
+		return StringProcHolder::hold (expr)->stra_from (a) ;
 	}
 
-	static String<Stra> stra_from_strua (RR<String<STRUA>> a) {
-		return StringProcHolder::hold (expr)->stra_from_strua (move (a)) ;
+	static String<Stra> stra_from (CR<String<Strw>> a) {
+		return StringProcHolder::hold (expr)->stra_from (a) ;
 	}
 
-	static String<STRUW> struw_from_strw (RR<String<Strw>> a) {
-		return StringProcHolder::hold (expr)->struw_from_strw (move (a)) ;
+	static String<Stra> stra_from (CR<String<Stru8>> a) {
+		return StringProcHolder::hold (expr)->stra_from (a) ;
 	}
 
-	static String<Strw> strw_from_struw (RR<String<STRUW>> a) {
-		return StringProcHolder::hold (expr)->strw_from_struw (move (a)) ;
+	static String<Stra> stra_from (CR<String<Stru16>> a) {
+		return StringProcHolder::hold (expr)->stra_from (a) ;
 	}
 
-	static String<Stra> stra_from_stru (CR<String<Stru8>> a) {
-		return StringProcHolder::hold (expr)->stra_from_stru (a) ;
+	static String<Stra> stra_from (CR<String<Stru32>> a) {
+		return StringProcHolder::hold (expr)->stra_from (a) ;
 	}
 
-	static String<Stra> stra_from_stru (CR<String<Stru16>> a) {
-		return StringProcHolder::hold (expr)->stra_from_stru (a) ;
+	static String<Strw> strw_from (CR<String<Stra>> a) {
+		return StringProcHolder::hold (expr)->strw_from (a) ;
 	}
 
-	static String<Stra> stra_from_stru (CR<String<Stru32>> a) {
-		return StringProcHolder::hold (expr)->stra_from_stru (a) ;
+	static String<Strw> strw_from (CR<String<Strw>> a) {
+		return StringProcHolder::hold (expr)->strw_from (a) ;
 	}
 
-	static String<Strw> strw_from_stru (CR<String<Stru8>> a) {
-		return StringProcHolder::hold (expr)->strw_from_stru (a) ;
+	static String<Strw> strw_from (CR<String<Stru8>> a) {
+		return StringProcHolder::hold (expr)->strw_from (a) ;
 	}
 
-	static String<Strw> strw_from_stru (CR<String<Stru16>> a) {
-		return StringProcHolder::hold (expr)->strw_from_stru (a) ;
+	static String<Strw> strw_from (CR<String<Stru16>> a) {
+		return StringProcHolder::hold (expr)->strw_from (a) ;
 	}
 
-	static String<Strw> strw_from_stru (CR<String<Stru32>> a) {
-		return StringProcHolder::hold (expr)->strw_from_stru (a) ;
+	static String<Strw> strw_from (CR<String<Stru32>> a) {
+		return StringProcHolder::hold (expr)->strw_from (a) ;
 	}
 
-	static String<Str> strs_from_stru (CR<String<Stru8>> a) {
-		return StringProcHolder::hold (expr)->strs_from_stru (a) ;
+	static String<Str> strs_from (CR<String<Stra>> a) {
+		return StringProcHolder::hold (expr)->strs_from (a) ;
 	}
 
-	static String<Str> strs_from_stru (CR<String<Stru16>> a) {
-		return StringProcHolder::hold (expr)->strs_from_stru (a) ;
+	static String<Str> strs_from (CR<String<Strw>> a) {
+		return StringProcHolder::hold (expr)->strs_from (a) ;
 	}
 
-	static String<Str> strs_from_stru (CR<String<Stru32>> a) {
-		return StringProcHolder::hold (expr)->strs_from_stru (a) ;
+	static String<Str> strs_from (CR<String<Stru8>> a) {
+		return StringProcHolder::hold (expr)->strs_from (a) ;
 	}
 
-	static String<Stru8> stru8_from_struw (CR<String<STRUW>> a) {
-		return StringProcHolder::hold (expr)->stru8_from_struw (a) ;
+	static String<Str> strs_from (CR<String<Stru16>> a) {
+		return StringProcHolder::hold (expr)->strs_from (a) ;
 	}
 
-	static String<Stru16> stru16_from_struw (CR<String<STRUW>> a) {
-		return StringProcHolder::hold (expr)->stru16_from_struw (a) ;
+	static String<Str> strs_from (CR<String<Stru32>> a) {
+		return StringProcHolder::hold (expr)->strs_from (a) ;
 	}
 
-	static String<Stru32> stru32_from_struw (CR<String<STRUW>> a) {
-		return StringProcHolder::hold (expr)->stru32_from_struw (a) ;
+	static String<Stru8> stru8_from (CR<String<Stra>> a) {
+		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
-	static String<Stru8> stru8_from_strs (CR<String<Stra>> a) {
-		return StringProcHolder::hold (expr)->stru8_from_strs (a) ;
+	static String<Stru8> stru8_from (CR<String<Strw>> a) {
+		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
-	static String<Stru8> stru8_from_strs (CR<String<Strw>> a) {
-		return StringProcHolder::hold (expr)->stru8_from_strs (a) ;
+	static String<Stru8> stru8_from (CR<String<Stru8>> a) {
+		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
-	static String<Stru16> stru16_from_strs (CR<String<Stra>> a) {
-		return StringProcHolder::hold (expr)->stru16_from_strs (a) ;
+	static String<Stru8> stru8_from (CR<String<Stru16>> a) {
+		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
-	static String<Stru16> stru16_from_strs (CR<String<Strw>> a) {
-		return StringProcHolder::hold (expr)->stru16_from_strs (a) ;
+	static String<Stru8> stru8_from (CR<String<Stru32>> a) {
+		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
-	static String<Stru32> stru32_from_strs (CR<String<Stra>> a) {
-		return StringProcHolder::hold (expr)->stru32_from_strs (a) ;
+	static String<Stru16> stru16_from (CR<String<Stra>> a) {
+		return StringProcHolder::hold (expr)->stru16_from (a) ;
 	}
 
-	static String<Stru32> stru32_from_strs (CR<String<Strw>> a) {
-		return StringProcHolder::hold (expr)->stru32_from_strs (a) ;
+	static String<Stru16> stru16_from (CR<String<Strw>> a) {
+		return StringProcHolder::hold (expr)->stru16_from (a) ;
+	}
+
+	static String<Stru16> stru16_from (CR<String<Stru8>> a) {
+		return StringProcHolder::hold (expr)->stru16_from (a) ;
+	}
+
+	static String<Stru16> stru16_from (CR<String<Stru16>> a) {
+		return StringProcHolder::hold (expr)->stru16_from (a) ;
+	}
+
+	static String<Stru16> stru16_from (CR<String<Stru32>> a) {
+		return StringProcHolder::hold (expr)->stru16_from (a) ;
+	}
+
+	static String<Stru32> stru32_from (CR<String<Stra>> a) {
+		return StringProcHolder::hold (expr)->stru32_from (a) ;
+	}
+
+	static String<Stru32> stru32_from (CR<String<Strw>> a) {
+		return StringProcHolder::hold (expr)->stru32_from (a) ;
+	}
+
+	static String<Stru32> stru32_from (CR<String<Stru8>> a) {
+		return StringProcHolder::hold (expr)->stru32_from (a) ;
+	}
+
+	static String<Stru32> stru32_from (CR<String<Stru16>> a) {
+		return StringProcHolder::hold (expr)->stru32_from (a) ;
+	}
+
+	static String<Stru32> stru32_from (CR<String<Stru32>> a) {
+		return StringProcHolder::hold (expr)->stru32_from (a) ;
 	}
 } ;
 

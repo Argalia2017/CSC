@@ -81,7 +81,7 @@ struct VectorHolder implement Interface {
 	virtual CR<Flt64> at (CR<Index> y) const leftvalue = 0 ;
 	virtual Bool equal (CR<VectorLayout> that) const = 0 ;
 	virtual Flag compr (CR<VectorLayout> that) const = 0 ;
-	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void visit (CR<Visitor> visitor) const = 0 ;
 	virtual VectorLayout sadd (CR<VectorLayout> that) const = 0 ;
 	virtual VectorLayout ssub (CR<VectorLayout> that) const = 0 ;
 	virtual VectorLayout smul (CR<Flt64> that) const = 0 ;
@@ -206,7 +206,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const {
+	void visit (CR<Visitor> visitor) const {
 		return VectorHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -344,7 +344,7 @@ struct MatrixHolder implement Interface {
 	virtual CR<Flt64> at (CR<Index> x ,CR<Index> y) const leftvalue = 0 ;
 	virtual Bool equal (CR<MatrixLayout> that) const = 0 ;
 	virtual Flag compr (CR<MatrixLayout> that) const = 0 ;
-	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void visit (CR<Visitor> visitor) const = 0 ;
 	virtual MatrixLayout sadd (CR<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout ssub (CR<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout smul (CR<Flt64> that) const = 0 ;
@@ -490,7 +490,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const {
+	void visit (CR<Visitor> visitor) const {
 		return MatrixHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -649,6 +649,8 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_ViewMatrix (CR<Vector> vx ,CR<Vector> vy ,CR<Just<ViewMatrixOption>> option) = 0 ;
 	virtual void make_CrossProductMatrix (CR<Vector> xyz) = 0 ;
 	virtual void make_OuterProductMatrix (CR<Vector> x ,CR<Vector> y) = 0 ;
+	virtual void make_HomographyMatrix (CR<Flt64> d) = 0 ;
+	virtual void make_HomographyMatrix (CR<Vector> t ,CR<Vector> n ,CR<Vector> c) = 0 ;
 } ;
 
 inline Matrix DiagMatrix (CR<Vector> xyz) {
@@ -777,6 +779,18 @@ inline Matrix SymmetryMatrix (CR<Vector> x ,CR<Vector> y) {
 	return move (ret) ;
 }
 
+inline Matrix HomographyMatrix (CR<Flt64> d) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_HomographyMatrix (d) ;
+	return move (ret) ;
+}
+
+inline Matrix HomographyMatrix (CR<Vector> t ,CR<Vector> n ,CR<Vector> c) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_HomographyMatrix (t ,n ,c) ;
+	return move (ret) ;
+}
+
 struct TRSResult {
 	Matrix mT ;
 	Matrix mR ;
@@ -805,6 +819,8 @@ struct MatrixProcHolder implement Interface {
 	imports CFat<MatrixProcHolder> hold (CR<MatrixProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual Array<Flt64> convert (CR<Matrix> a) const = 0 ;
+	virtual Matrix convert (CR<Array<Flt64>> a) const = 0 ;
 	virtual TRSResult solve_trs (CR<Matrix> a) const = 0 ;
 	virtual KRTResult solve_krt (CR<Matrix> a) const = 0 ;
 	virtual SVDResult solve_svd (CR<Matrix> a) const = 0 ;
@@ -888,7 +904,7 @@ struct QuaternionHolder implement Interface {
 	virtual CR<Flt64> at (CR<Index> y) const leftvalue = 0 ;
 	virtual Bool equal (CR<QuaternionLayout> that) const = 0 ;
 	virtual Flag compr (CR<QuaternionLayout> that) const = 0 ;
-	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void visit (CR<Visitor> visitor) const = 0 ;
 	virtual QuaternionLayout smul (CR<QuaternionLayout> that) const = 0 ;
 	virtual Vector vector () const = 0 ;
 	virtual Matrix matrix () const = 0 ;
@@ -964,7 +980,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const {
+	void visit (CR<Visitor> visitor) const {
 		return QuaternionHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -1057,6 +1073,7 @@ struct PointCloudHolder implement Interface {
 	virtual Length size () const = 0 ;
 	virtual void get (CR<Index> index ,VR<Vector> item) const = 0 ;
 	virtual Matrix pca_matrix () const = 0 ;
+	virtual Matrix box_matrix () const = 0 ;
 	virtual Matrix box_matrix (CR<Flt64> ax ,CR<Flt64> ay ,CR<Flt64> az) const = 0 ;
 	virtual Line3F bound () const = 0 ;
 	virtual PointCloudLayout smul (CR<Matrix> that) const = 0 ;
@@ -1102,6 +1119,10 @@ public:
 
 	Matrix pca_matrix () const {
 		return PointCloudHolder::hold (thiz)->pca_matrix () ;
+	}
+
+	Matrix box_matrix () const {
+		return PointCloudHolder::hold (thiz)->box_matrix () ;
 	}
 
 	Matrix box_matrix (CR<Flt64> ax ,CR<Flt64> ay ,CR<Flt64> az) const {

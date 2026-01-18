@@ -74,7 +74,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const override {
+	void visit (CR<Visitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : range (0 ,4)) {
 			inline_visit (visitor ,self.mVector[i]) ;
@@ -262,7 +262,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const override {
+	void visit (CR<Visitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : range (0 ,16)) {
 			inline_visit (visitor ,self.mMatrix[i]) ;
@@ -678,6 +678,23 @@ public:
 		}
 		self = move (ret) ;
 	}
+
+	void make_HomographyMatrix (CR<Flt64> d) override {
+		Matrix ret = Matrix::zero () ;
+		ret[0][0] = d ;
+		ret[1][1] = d ;
+		ret[2][2] = d ;
+		ret[3][2] = 1 ;
+		ret[3][3] = d ;
+		self = move (ret) ;
+	}
+
+	void make_HomographyMatrix (CR<Vector> t ,CR<Vector> n ,CR<Vector> c) override {
+		const auto r1x = (c - t) * n ;
+		const auto r2x = OuterProductMatrix (t ,n) ;
+		const auto r3x = r2x + Matrix::iden () * r1x ;
+		self = r3x ;
+	}
 } ;
 
 exports VFat<MakeMatrixHolder> MakeMatrixHolder::hold (VR<MatrixLayout> that) {
@@ -903,7 +920,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VR<FriendVisitor> visitor) const override {
+	void visit (CR<Visitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : range (0 ,4)) {
 			inline_visit (visitor ,self.mQuaternion[i]) ;
@@ -1291,16 +1308,30 @@ public:
 		return move (ret) ;
 	}
 
+	Matrix box_matrix () const override {
+		const auto r1x = box_center () ;
+		const auto r2x = bound () ;
+		const auto r10x = (Vector (r2x.mMax) - r1x).sabs () ;
+		const auto r11x = (Vector (r2x.mMin) - r1x).sabs () ;
+		const auto r3x = MathProc::max_of (r10x[0] ,r11x[0] ,Flt64 (1)) ;
+		const auto r4x = MathProc::max_of (r10x[1] ,r11x[1] ,Flt64 (1)) ;
+		const auto r5x = MathProc::max_of (r10x[2] ,r11x[2] ,Flt64 (1)) ;
+		const auto r7x = TranslationMatrix (r1x) ;
+		const auto r8x = DiagMatrix (r3x ,r4x ,r5x) ;
+		return r7x * r8x ;
+	}
+
 	Matrix box_matrix (CR<Flt64> ax ,CR<Flt64> ay ,CR<Flt64> az) const override {
 		const auto r1x = box_center () ;
 		const auto r2x = bound () ;
-		const auto r3x = (r2x.mMax.mX - r2x.mMin.mX) * MathProc::inverse (ax) ;
-		const auto r4x = (r2x.mMax.mY - r2x.mMin.mY) * MathProc::inverse (ay) ;
-		const auto r5x = (r2x.mMax.mZ - r2x.mMin.mZ) * MathProc::inverse (az) ;
-		const auto r6x = MathProc::max_of (r3x ,r4x ,r5x) ;
-		const auto r7x = TranslationMatrix (r1x) ;
-		const auto r8x = DiagMatrix (ax * r6x ,ay * r6x ,az * r6x) ;
-		return r7x * r8x ;
+		const auto r3x = Vector (r2x.mMax) - Vector (r2x.mMin) ;
+		const auto r4x = r3x[0] * MathProc::inverse (ax) ;
+		const auto r5x = r3x[1] * MathProc::inverse (ay) ;
+		const auto r6x = r3x[2] * MathProc::inverse (az) ;
+		const auto r7x = MathProc::max_of (r4x ,r5x ,r6x) ;
+		const auto r8x = TranslationMatrix (r1x) ;
+		const auto r9x = DiagMatrix (ax * r7x ,ay * r7x ,az * r7x) ;
+		return r8x * r9x ;
 	}
 
 	Line3F bound () const override {

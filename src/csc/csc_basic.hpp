@@ -221,14 +221,10 @@ using Buffer9 = Buffer<A ,RANK9> ;
 template <class A>
 using BufferX = Buffer<A ,RANKX> ;
 
-struct WrapperLayout {
-	Length mRank ;
-} ;
-
 template <class A ,class B = RANK1>
-class Wrapper implement WrapperLayout {
+class Wrapper implement Proxy {
 protected:
-	using WrapperLayout::mRank ;
+	Length mRank ;
 	Buffer<Flag ,B> mWrapper ;
 
 public:
@@ -239,7 +235,7 @@ public:
 		mWrapper = that ;
 	}
 
-	template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_ANY<IS_SAME<ARG1 ,A> ,ENUM_EQ_ZERO<ARG2>>>>
+	template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_ANY<IS_SAME<ARG1 ,A> ,ENUM_EQ_ZERO<B>>>>
 	implicit operator CR<Wrapper<ARG1 ,ARG2>> () const leftvalue {
 		return Pointer::from (thiz) ;
 	}
@@ -317,7 +313,7 @@ struct FunctionHolder implement Interface {
 } ;
 
 template <class A>
-class FunctionUnknownBinder final implement Fat<FriendUnknown ,void> {
+class FunctionUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -345,7 +341,8 @@ public:
 		require (IS_VOID<R1X>) ;
 		require (IS_SAME<R2X ,TYPE<A...>>) ;
 		FunctionHolder::hold (thiz)->initialize (FunctionUnknownBinder<ARG1> ()) ;
-		keep[TYPE<Box<ARG1>>::expr] (raw ()).remake (move (that)) ;
+		auto &&rax = keep[TYPE<Box<ARG1>>::expr] (raw ()) ;
+		rax.remake (move (that)) ;
 	}
 
 	implicit Function (CR<Function> that) {
@@ -414,7 +411,7 @@ public:
 } ;
 
 template <class A ,class B>
-class RecastUnknownBinder final implement Fat<FriendUnknown ,void> {
+class RecastUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectRecastBinder<A ,B>::expr)
@@ -464,7 +461,7 @@ struct AutoRefHolder implement Interface {
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
 	virtual VR<Pointer> rebind (CR<Clazz> clazz_) leftvalue = 0 ;
 	virtual CR<Pointer> rebind (CR<Clazz> clazz_) const leftvalue = 0 ;
-	virtual AutoRefLayout recast (CR<Unknown> simple) = 0 ;
+	virtual AutoRefLayout recast (CR<Unknown> extend) = 0 ;
 } ;
 
 inline AutoRefLayout::~AutoRefLayout () noexcept {
@@ -491,7 +488,8 @@ public:
 	static AutoRef make (XR<ARG1>...initval) {
 		AutoRef ret ;
 		AutoRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> () ,Clazz (TYPE<A>::expr)) ;
-		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
+		auto &&rax = keep[TYPE<Box<A>>::expr] (ret.raw ()) ;
+		rax.remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 
@@ -596,8 +594,8 @@ struct SharedRefHolder implement Interface {
 	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual Length counter () const = 0 ;
 	virtual VR<Pointer> ref_m () const leftvalue = 0 ;
-	virtual SharedRefLayout recast (CR<Unknown> simple) = 0 ;
-	virtual RefLayout weak () const = 0 ;
+	virtual SharedRefLayout recast (CR<Unknown> extend) = 0 ;
+	virtual SharedRefLayout weak () const = 0 ;
 } ;
 
 inline SharedRefLayout::~SharedRefLayout () noexcept {
@@ -624,7 +622,8 @@ public:
 	static SharedRef make (XR<ARG1>...initval) {
 		SharedRef ret ;
 		SharedRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> ()) ;
-		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
+		auto &&rax = keep[TYPE<Box<A>>::expr] (ret.raw ()) ;
+		rax.remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 
@@ -679,9 +678,9 @@ public:
 		return move (keep[TYPE<SharedRef<ARG1>>::expr] (ret)) ;
 	}
 
-	Ref<A> weak () const {
-		RefLayout ret = SharedRefHolder::hold (thiz)->weak () ;
-		return move (keep[TYPE<Ref<A>>::expr] (ret)) ;
+	SharedRef weak () const {
+		SharedRefLayout ret = SharedRefHolder::hold (thiz)->weak () ;
+		return move (keep[TYPE<SharedRef>::expr] (ret)) ;
 	}
 } ;
 
@@ -722,7 +721,7 @@ struct UniqueRefHolder implement Interface {
 	virtual VR<BoxLayout> raw () leftvalue = 0 ;
 	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
-	virtual UniqueRefLayout recast (CR<Unknown> simple) = 0 ;
+	virtual UniqueRefLayout recast (CR<Unknown> extend) = 0 ;
 } ;
 
 inline UniqueRefLayout::~UniqueRefLayout () noexcept {
@@ -745,8 +744,9 @@ public:
 	explicit UniqueRef (RR<ARG1> ctor ,RR<ARG2> dtor) {
 		auto rax = Function<VR<A>> (move (dtor)) ;
 		UniqueRefHolder::hold (thiz)->initialize (BoxUnknownBinder<A> () ,Pointer::from (rax)) ;
-		keep[TYPE<Box<A>>::expr] (raw ()).remake () ;
-		ctor (BoxHolder::hold (raw ())->ref) ;
+		auto &&rbx = keep[TYPE<Box<A>>::expr] (raw ()) ;
+		rbx.remake () ;
+		ctor (Pointer::from (rbx.ref)) ;
 	}
 
 	template <class...ARG1>
@@ -754,7 +754,8 @@ public:
 		UniqueRef ret ;
 		auto rax = Function<VR<A>> () ;
 		UniqueRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> () ,Pointer::from (rax)) ;
-		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
+		auto &&rbx = keep[TYPE<Box<A>>::expr] (ret.raw ()) ;
+		rbx.remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 
@@ -826,14 +827,12 @@ struct RefBufferTree ;
 
 struct RefBufferLayout {
 	Ref<RefBufferTree> mThis ;
-	Flag mHolder ;
 	Flag mBuffer ;
 	Length mSize ;
 	Length mStep ;
 
 public:
 	implicit RefBufferLayout () noexcept {
-		mHolder = ZERO ;
 		mBuffer = ZERO ;
 		mSize = 0 ;
 		mStep = 0 ;
@@ -881,7 +880,7 @@ inline RefBufferLayout::~RefBufferLayout () noexcept {
 }
 
 template <class A>
-class BufferUnknownBinder final implement Fat<FriendUnknown ,void> {
+class BufferUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -909,7 +908,6 @@ template <class A>
 class RefBuffer implement RefBufferImplLayout<A> {
 protected:
 	using RefBufferImplLayout<A>::mThis ;
-	using RefBufferImplLayout<A>::mHolder ;
 	using RefBufferImplLayout<A>::mBuffer ;
 	using RefBufferImplLayout<A>::mSize ;
 	using RefBufferImplLayout<A>::mStep ;
@@ -1000,15 +998,13 @@ public:
 struct FarBufferTree ;
 
 struct FarBufferLayout {
-	mutable Ref<FarBufferTree> mThis ;
-	Flag mHolder ;
+	Ref<FarBufferTree> mThis ;
 	Flag mBuffer ;
 	Length mSize ;
 	Length mStep ;
 
 public:
 	implicit FarBufferLayout () noexcept {
-		mHolder = ZERO ;
 		mBuffer = ZERO ;
 		mSize = 0 ;
 		mStep = 0 ;
@@ -1049,7 +1045,6 @@ template <class A>
 class FarBuffer implement FarBufferLayout {
 protected:
 	using FarBufferLayout::mThis ;
-	using FarBufferLayout::mHolder ;
 	using FarBufferLayout::mBuffer ;
 	using FarBufferLayout::mSize ;
 	using FarBufferLayout::mStep ;
@@ -1123,15 +1118,13 @@ struct AllocatorNode {
 
 struct AllocatorLayout {
 	RefBuffer<Pointer> mAllocator ;
-	Length mOffset ;
-	Length mWidth ;
+	Flag mOffset ;
 	Length mLength ;
 	Index mFree ;
 
 public:
 	implicit AllocatorLayout () noexcept {
 		mOffset = 0 ;
-		mWidth = 0 ;
 		mLength = 0 ;
 		mFree = 0 ;
 	}
@@ -1182,7 +1175,7 @@ inline AllocatorLayout::~AllocatorLayout () noexcept {
 }
 
 template <class A ,class B>
-class AllocatorUnknownBinder final implement Fat<FriendUnknown ,void> {
+class AllocatorUnknownBinder final implement Fat<UnknownHolder ,void> {
 public:
 	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,B> ;
@@ -1220,7 +1213,6 @@ private:
 protected:
 	using AllocatorImplLayout<A ,B>::mAllocator ;
 	using AllocatorImplLayout<A ,B>::mOffset ;
-	using AllocatorImplLayout<A ,B>::mWidth ;
 	using AllocatorImplLayout<A ,B>::mLength ;
 	using AllocatorImplLayout<A ,B>::mFree ;
 
