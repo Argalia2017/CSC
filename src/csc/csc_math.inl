@@ -434,10 +434,10 @@ public:
 	}
 } ;
 
-exports CR<Like<UniqueRef<MathProcLayout>>> MathProcHolder::expr_m () {
+exports CR<Super<Ref<MathProcLayout>>> MathProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<MathProcLayout>> ret ;
-		ret.mThis = UniqueRef<MathProcLayout>::make () ;
+		Super<Ref<MathProcLayout>> ret ;
+		ret.mThis = Ref<MathProcLayout>::make () ;
 		MathProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -532,14 +532,14 @@ public:
 		const auto r3x = (Quad (rax.mExponent) << 52) & Quad (0X7FF0000000000000) ;
 		const auto r4x = Quad (rax.mMantissa) & Quad (0X000FFFFFFFFFFFFF) ;
 		const auto r5x = r2x | r3x | r4x ;
-		return bitwise[TYPE<Flt64>::expr] (r5x) ;
+		return bitwise (r5x) ;
 	}
 
 	Notation decode (CR<Flt64> float_) const override {
 		Notation ret ;
 		ret.mRadix = 2 ;
 		ret.mPrecision = 0 ;
-		const auto r1x = bitwise[TYPE<Quad>::expr] (float_) ;
+		const auto r1x = Quad (bitwise (float_)) ;
 		const auto r2x = r1x & Quad (0X7FF0000000000000) ;
 		const auto r3x = r1x & Quad (0X000FFFFFFFFFFFFF) ;
 		ret.mSign = ByteProc::any_bit (r1x ,Quad (0X8000000000000000)) ;
@@ -720,10 +720,10 @@ public:
 	}
 } ;
 
-exports CR<Like<UniqueRef<FloatProcLayout>>> FloatProcHolder::expr_m () {
+exports CR<Super<Ref<FloatProcLayout>>> FloatProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<FloatProcLayout>> ret ;
-		ret.mThis = UniqueRef<FloatProcLayout>::make () ;
+		Super<Ref<FloatProcLayout>> ret ;
+		ret.mThis = Ref<FloatProcLayout>::make () ;
 		FloatProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -741,9 +741,9 @@ template class External<FEXP2CacheHolder ,FEXP2CacheLayout> ;
 
 struct FEXP2CacheLayout {} ;
 
-exports CR<Like<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
+exports CR<Super<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<FEXP2CacheLayout>> ret ;
+		Super<UniqueRef<FEXP2CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP2CacheLayout>::make () ;
 		FEXP2CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -762,9 +762,9 @@ template class External<FEXP10CacheHolder ,FEXP10CacheLayout> ;
 
 struct FEXP10CacheLayout {} ;
 
-exports CR<Like<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::expr_m () {
+exports CR<Super<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<FEXP10CacheLayout>> ret ;
+		Super<UniqueRef<FEXP10CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP10CacheLayout>::make () ;
 		FEXP10CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -951,10 +951,10 @@ public:
 	}
 } ;
 
-exports CR<Like<UniqueRef<ByteProcLayout>>> ByteProcHolder::expr_m () {
+exports CR<Super<Ref<ByteProcLayout>>> ByteProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<ByteProcLayout>> ret ;
-		ret.mThis = UniqueRef<ByteProcLayout>::make () ;
+		Super<Ref<ByteProcLayout>> ret ;
+		ret.mThis = Ref<ByteProcLayout>::make () ;
 		ByteProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -1046,7 +1046,8 @@ public:
 		visitor.enter () ;
 		const auto r1x = self.mWidth ;
 		for (auto &&i : range (0 ,r1x)) {
-			visitor.push (get (self ,i)) ;
+			const auto r2x = get (self ,i) ;
+			visitor.push (r2x) ;
 		}
 		visitor.leave () ;
 	}
@@ -2010,10 +2011,10 @@ public:
 	}
 } ;
 
-exports CR<Like<UniqueRef<HashProcLayout>>> HashProcHolder::expr_m () {
+exports CR<Super<Ref<HashProcLayout>>> HashProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<HashProcLayout>> ret ;
-		ret.mThis = UniqueRef<HashProcLayout>::make () ;
+		Super<Ref<HashProcLayout>> ret ;
+		ret.mThis = Ref<HashProcLayout>::make () ;
 		HashProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

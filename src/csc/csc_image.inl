@@ -447,10 +447,10 @@ public:
 	}
 } ;
 
-exports CR<Like<UniqueRef<ColorProcLayout>>> ColorProcHolder::expr_m () {
+exports CR<Super<Ref<ColorProcLayout>>> ColorProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<ColorProcLayout>> ret ;
-		ret.mThis = UniqueRef<ColorProcLayout>::make () ;
+		Super<Ref<ColorProcLayout>> ret ;
+		ret.mThis = Ref<ColorProcLayout>::make () ;
 		ColorProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -470,10 +470,10 @@ struct ImageProcLayout {
 	UniqueRef<Bool> mContext ;
 } ;
 
-exports CR<Like<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
+exports CR<Super<Ref<ImageProcLayout>>> ImageProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<ImageProcLayout>> ret ;
-		ret.mThis = UniqueRef<ImageProcLayout>::make () ;
+		Super<Ref<ImageProcLayout>> ret ;
+		ret.mThis = Ref<ImageProcLayout>::make () ;
 		ImageProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -730,9 +730,9 @@ public:
 
 	Flt64 get_float (CR<Flag> addr) const {
 		if (self.mStride[0] == 4)
-			return bitwise[TYPE<Flt32>::expr] (Pointer::make (addr)) ;
+			return bitwise (Pointer::make (addr)) ;
 		if (self.mStride[0] == 8)
-			return bitwise[TYPE<Flt64>::expr] (Pointer::make (addr)) ;
+			return bitwise (Pointer::make (addr)) ;
 		assert (FALSE) ;
 		return 0 ;
 	}

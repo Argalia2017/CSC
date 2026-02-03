@@ -365,6 +365,18 @@ class StringParse ;
 template <class A>
 class StringBuild ;
 
+struct StringEncode {
+	enum {
+		ANSI ,
+		UTF8 ,
+		UTF16LE ,
+		UTF16BE ,
+		UTF32LE ,
+		UTF32BE ,
+		ETC
+	} ;
+} ;
+
 struct StringLayout {
 	RefBuffer<Pointer> mString ;
 	Flag mEncode ;

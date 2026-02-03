@@ -800,7 +800,7 @@ struct TRSResult {
 struct KRTResult {
 	Matrix mK ;
 	Matrix mR ;
-	Matrix mT ;
+	Vector mT ;
 	Vector mN ;
 	Vector mC ;
 } ;
@@ -814,19 +814,19 @@ struct SVDResult {
 struct MatrixProcLayout ;
 
 struct MatrixProcHolder implement Interface {
-	imports CR<Like<UniqueRef<MatrixProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<MatrixProcLayout>>> expr_m () ;
 	imports VFat<MatrixProcHolder> hold (VR<MatrixProcLayout> that) ;
 	imports CFat<MatrixProcHolder> hold (CR<MatrixProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual Array<Flt64> convert (CR<Matrix> a) const = 0 ;
-	virtual Matrix convert (CR<Array<Flt64>> a) const = 0 ;
+	virtual Array<Flt64> flatten (CR<Matrix> a) const = 0 ;
+	virtual Matrix flatten (CR<Array<Flt64>> a) const = 0 ;
 	virtual TRSResult solve_trs (CR<Matrix> a) const = 0 ;
 	virtual KRTResult solve_krt (CR<Matrix> a) const = 0 ;
 	virtual SVDResult solve_svd (CR<Matrix> a) const = 0 ;
 } ;
 
-class MatrixProc implement Like<UniqueRef<MatrixProcLayout>> {
+class MatrixProc implement Super<Ref<MatrixProcLayout>> {
 public:
 	static CR<MatrixProc> expr_m () {
 		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::expr) ;
@@ -905,7 +905,9 @@ struct QuaternionHolder implement Interface {
 	virtual Bool equal (CR<QuaternionLayout> that) const = 0 ;
 	virtual Flag compr (CR<QuaternionLayout> that) const = 0 ;
 	virtual void visit (CR<Visitor> visitor) const = 0 ;
+	virtual QuaternionLayout sadd (CR<QuaternionLayout> that) const = 0 ;
 	virtual QuaternionLayout smul (CR<QuaternionLayout> that) const = 0 ;
+	virtual QuaternionLayout inverse () const = 0 ;
 	virtual Vector vector () const = 0 ;
 	virtual Matrix matrix () const = 0 ;
 	virtual EulerAngle euler (CR<Just<ViewMatrixOption>> type) const = 0 ;
@@ -984,6 +986,19 @@ public:
 		return QuaternionHolder::hold (thiz)->visit (visitor) ;
 	}
 
+	Quaternion sadd (CR<Quaternion> that) const {
+		QuaternionLayout ret = QuaternionHolder::hold (thiz)->sadd (that) ;
+		return move (keep[TYPE<Quaternion>::expr] (ret)) ;
+	}
+
+	forceinline Quaternion operator+ (CR<Quaternion> that) const {
+		return sadd (that) ;
+	}
+
+	forceinline void operator+= (CR<Quaternion> that) {
+		thiz = sadd (that) ;
+	}
+
 	Quaternion smul (CR<Quaternion> that) const {
 		QuaternionLayout ret = QuaternionHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<Quaternion>::expr] (ret)) ;
@@ -995,6 +1010,11 @@ public:
 
 	forceinline void operator*= (CR<Quaternion> that) {
 		thiz = smul (that) ;
+	}
+
+	Quaternion inverse () const {
+		QuaternionLayout ret = QuaternionHolder::hold (thiz)->inverse () ;
+		return move (keep[TYPE<Quaternion>::expr] (ret)) ;
 	}
 
 	Vector vector () const {
@@ -1013,7 +1033,7 @@ public:
 struct LinearProcLayout ;
 
 struct LinearProcHolder implement Interface {
-	imports CR<Like<UniqueRef<LinearProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<LinearProcLayout>>> expr_m () ;
 	imports VFat<LinearProcHolder> hold (VR<LinearProcLayout> that) ;
 	imports CFat<LinearProcHolder> hold (CR<LinearProcLayout> that) ;
 
@@ -1023,7 +1043,7 @@ struct LinearProcHolder implement Interface {
 	virtual Image<Flt64> solve_inv (CR<Image<Flt64>> a) const = 0 ;
 } ;
 
-class LinearProc implement Like<UniqueRef<LinearProcLayout>> {
+class LinearProc implement Super<Ref<LinearProcLayout>> {
 public:
 	static CR<LinearProc> expr_m () {
 		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::expr) ;
@@ -1045,7 +1065,7 @@ public:
 struct PointCloudKDTreeLayout ;
 
 struct PointCloudKDTreeHolder implement Interface {
-	imports AutoRef<PointCloudKDTreeLayout> create () ;
+	imports Ref<PointCloudKDTreeLayout> create () ;
 	imports VFat<PointCloudKDTreeHolder> hold (VR<PointCloudKDTreeLayout> that) ;
 	imports CFat<PointCloudKDTreeHolder> hold (CR<PointCloudKDTreeLayout> that) ;
 
@@ -1054,7 +1074,23 @@ struct PointCloudKDTreeHolder implement Interface {
 	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const = 0 ;
 } ;
 
-class PointCloudKDTree implement Like<AutoRef<PointCloudKDTreeLayout>> {} ;
+class PointCloudKDTree implement Super<Ref<PointCloudKDTreeLayout>> {
+public:
+	implicit PointCloudKDTree () = default ;
+
+	explicit PointCloudKDTree (CR<Array<Pointer>> pointcloud) {
+		mThis = PointCloudKDTreeHolder::create () ;
+		PointCloudKDTreeHolder::hold (thiz)->initialize (pointcloud) ;
+	}
+
+	Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const {
+		return PointCloudKDTreeHolder::hold (thiz)->search (center ,neighbor) ;
+	}
+
+	Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const {
+		return PointCloudKDTreeHolder::hold (thiz)->search (center ,neighbor ,radius) ;
+	}
+} ;
 
 struct PointCloudLayout {
 	Length mRank ;

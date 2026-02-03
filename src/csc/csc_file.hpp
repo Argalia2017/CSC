@@ -169,14 +169,14 @@ public:
 struct FileProcLayout ;
 
 struct FileProcHolder implement Interface {
-	imports CR<Like<UniqueRef<FileProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<FileProcLayout>>> expr_m () ;
 	imports VFat<FileProcHolder> hold (VR<FileProcLayout> that) ;
 	imports CFat<FileProcHolder> hold (CR<FileProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual RefBuffer<Byte> load_file (CR<String<Str>> file) const = 0 ;
 	virtual void save_file (CR<String<Str>> file ,CR<RefBuffer<Byte>> item) const = 0 ;
-	virtual Ref<RefBuffer<Byte>> load_asset (CR<String<Str>> file) const = 0 ;
+	virtual RefBuffer<Byte> load_asset (CR<String<Str>> file) const = 0 ;
 	virtual void copy_file (CR<String<Str>> dst ,CR<String<Str>> src) const = 0 ;
 	virtual void move_file (CR<String<Str>> dst ,CR<String<Str>> src) const = 0 ;
 	virtual void link_file (CR<String<Str>> dst ,CR<String<Str>> src) const = 0 ;
@@ -188,7 +188,7 @@ struct FileProcHolder implement Interface {
 	virtual Bool lock_dire (CR<String<Str>> dire) const = 0 ;
 } ;
 
-class FileProc implement Like<UniqueRef<FileProcLayout>> {
+class FileProc implement Super<Ref<FileProcLayout>> {
 public:
 	static CR<FileProc> expr_m () {
 		return keep[TYPE<FileProc>::expr] (FileProcHolder::expr) ;
@@ -202,7 +202,7 @@ public:
 		return FileProcHolder::hold (expr)->save_file (file ,item) ;
 	}
 
-	static Ref<RefBuffer<Byte>> load_asset (CR<String<Str>> file) {
+	static RefBuffer<Byte> load_asset (CR<String<Str>> file) {
 		return FileProcHolder::hold (expr)->load_asset (file) ;
 	}
 
@@ -246,7 +246,7 @@ public:
 struct StreamFileLayout ;
 
 struct StreamFileHolder implement Interface {
-	imports AutoRef<StreamFileLayout> create () ;
+	imports Ref<StreamFileLayout> create () ;
 	imports VFat<StreamFileHolder> hold (VR<StreamFileLayout> that) ;
 	imports CFat<StreamFileHolder> hold (CR<StreamFileLayout> that) ;
 
@@ -264,7 +264,7 @@ struct StreamFileHolder implement Interface {
 
 using STREAMFILE_CHUNK_STEP = ENUM<65536> ;
 
-class StreamFile implement Like<AutoRef<StreamFileLayout>> {
+class StreamFile implement Super<Ref<StreamFileLayout>> {
 public:
 	implicit StreamFile () = default ;
 
@@ -314,29 +314,29 @@ struct StreamFileEncode {
 	enum {
 		ByteWriter ,
 		TextWriter ,
-		ECT
+		ETC
 	};
 } ;
 
 struct StreamFileWriterLayout ;
 
 struct StreamFileWriterHolder implement Interface {
-	imports AutoRef<StreamFileWriterLayout> create () ;
+	imports Ref<StreamFileWriterLayout> create () ;
 	imports VFat<StreamFileWriterHolder> hold (VR<StreamFileWriterLayout> that) ;
 	imports CFat<StreamFileWriterHolder> hold (CR<StreamFileWriterLayout> that) ;
 
-	virtual void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> encode) = 0 ;
+	virtual void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> option) = 0 ;
 	virtual CR<Writer> ref_m () leftvalue = 0 ;
 	virtual void flush () = 0 ;
 } ;
 
-class StreamFileWriter implement Like<AutoRef<StreamFileWriterLayout>> {
+class StreamFileWriter implement Super<Ref<StreamFileWriterLayout>> {
 public:
 	implicit StreamFileWriter () = default ;
 
-	explicit StreamFileWriter (CR<String<Str>> file ,CR<Just<StreamFileEncode>> encode) {
+	explicit StreamFileWriter (CR<String<Str>> file ,CR<Just<StreamFileEncode>> option) {
 		mThis = StreamFileWriterHolder::create () ;
-		StreamFileWriterHolder::hold (thiz)->initialize (file ,encode) ;
+		StreamFileWriterHolder::hold (thiz)->initialize (file ,option) ;
 	}
 
 	CR<Writer> ref_m () leftvalue {
@@ -355,7 +355,7 @@ public:
 struct BufferFileLayout ;
 
 struct BufferFileHolder implement Interface {
-	imports AutoRef<BufferFileLayout> create () ;
+	imports Ref<BufferFileLayout> create () ;
 	imports VFat<BufferFileHolder> hold (VR<BufferFileLayout> that) ;
 	imports CFat<BufferFileHolder> hold (CR<BufferFileLayout> that) ;
 
@@ -371,7 +371,7 @@ struct BufferFileHolder implement Interface {
 	virtual void flush () = 0 ;
 } ;
 
-class BufferFile implement Like<AutoRef<BufferFileLayout>> {
+class BufferFile implement Super<Ref<BufferFileLayout>> {
 public:
 	implicit BufferFile () = default ;
 
@@ -420,7 +420,7 @@ public:
 struct UartFileLayout ;
 
 struct UartFileHolder implement Interface {
-	imports AutoRef<UartFileLayout> create () ;
+	imports Ref<UartFileLayout> create () ;
 	imports VFat<UartFileHolder> hold (VR<UartFileLayout> that) ;
 	imports CFat<UartFileHolder> hold (CR<UartFileLayout> that) ;
 
@@ -432,7 +432,7 @@ struct UartFileHolder implement Interface {
 	virtual void read (VR<RefBuffer<Byte>> buffer ,CR<Index> offset ,CR<Length> size_) = 0 ;
 } ;
 
-class UartFile implement Like<AutoRef<UartFileLayout>> {
+class UartFile implement Super<Ref<UartFileLayout>> {
 public:
 	implicit UartFile () = default ;
 
@@ -479,7 +479,7 @@ struct ConsoleOption {
 struct ConsoleLayout ;
 
 struct ConsoleHolder implement Interface {
-	imports CR<Like<SharedRef<ConsoleLayout>>> expr_m () ;
+	imports CR<Super<SharedRef<ConsoleLayout>>> expr_m () ;
 	imports VFat<ConsoleHolder> hold (VR<ConsoleLayout> that) ;
 	imports CFat<ConsoleHolder> hold (CR<ConsoleLayout> that) ;
 
@@ -499,7 +499,7 @@ struct ConsoleHolder implement Interface {
 	virtual void clear () = 0 ;
 } ;
 
-class Console implement Like<SharedRef<ConsoleLayout>> {
+class Console implement Super<SharedRef<ConsoleLayout>> {
 public:
 	static CR<Console> expr_m () {
 		return keep[TYPE<Console>::expr] (ConsoleHolder::expr) ;

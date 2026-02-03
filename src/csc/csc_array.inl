@@ -183,19 +183,19 @@ public:
 		const auto r1x = size_ + 1 ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (step_ != SIZE_OF<Stru8>::expr)
+			if (step_ != 1)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru8>>::expr] (Pointer::from (self.mString)) ;
-			rax = RefBuffer<Stru8> (r1x) ;
+			auto &&rax = keep[TYPE<RefBuffer<Stru>>::expr] (Pointer::from (self.mString)) ;
+			rax = RefBuffer<Stru> (r1x) ;
 		}
 		if ifdo (act) {
-			if (step_ != SIZE_OF<Stru16>::expr)
+			if (step_ != 2)
 				discard ;
 			auto &&rax = keep[TYPE<RefBuffer<Stru16>>::expr] (Pointer::from (self.mString)) ;
 			rax = RefBuffer<Stru16> (r1x) ;
 		}
 		if ifdo (act) {
-			if (step_ != SIZE_OF<Stru32>::expr)
+			if (step_ != 4)
 				discard ;
 			auto &&rax = keep[TYPE<RefBuffer<Stru32>>::expr] (Pointer::from (self.mString)) ;
 			rax = RefBuffer<Stru32> (r1x) ;
@@ -269,22 +269,19 @@ public:
 	void get (CR<Index> index ,VR<Stru32> item) const override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (step () != SIZE_OF<Stru8>::expr)
+			if (step () != 1)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru8>>::expr] (Pointer::from (self.mString)) ;
-			item = rax[index] ;
+			item = Stru (bitwise (self.mString[index])) ;
 		}
 		if ifdo (act) {
-			if (step () != SIZE_OF<Stru16>::expr)
+			if (step () != 2)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru16>>::expr] (Pointer::from (self.mString)) ;
-			item = rax[index] ;
+			item = Stru16 (bitwise (self.mString[index])) ;
 		}
 		if ifdo (act) {
-			if (step () != SIZE_OF<Stru32>::expr)
+			if (step () != 4)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru32>>::expr] (Pointer::from (self.mString)) ;
-			item = rax[index] ;
+			item = Stru32 (bitwise (self.mString[index])) ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
@@ -294,22 +291,19 @@ public:
 	void set (CR<Index> index ,CR<Stru32> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (step () != SIZE_OF<Stru8>::expr)
+			if (step () != 1)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru8>>::expr] (Pointer::from (self.mString)) ;
-			rax[index] = Stru8 (item) ;
+			bitwise (self.mString[index]) = Stru (item) ;
 		}
 		if ifdo (act) {
-			if (step () != SIZE_OF<Stru16>::expr)
+			if (step () != 2)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru16>>::expr] (Pointer::from (self.mString)) ;
-			rax[index] = Stru16 (item) ;
+			bitwise (self.mString[index]) = Stru16 (item) ;
 		}
 		if ifdo (act) {
-			if (step () != SIZE_OF<Stru32>::expr)
+			if (step () != 4)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru32>>::expr] (Pointer::from (self.mString)) ;
-			rax[index] = Stru32 (item) ;
+			bitwise (self.mString[index]) = Stru32 (item) ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
@@ -412,8 +406,7 @@ public:
 			get (i ,rax) ;
 			if (rax == 0)
 				break ;
-			const auto r2x = bitwise[TYPE<Char>::expr] (rax) ;
-			visitor.push (r2x) ;
+			inline_visit (visitor ,rax) ;
 		}
 		visitor.leave () ;
 	}
@@ -2503,19 +2496,20 @@ public:
 		visitor.enter () ;
 		const auto r1x = self.mSet.size () ;
 		for (auto &&i : range (0 ,r1x)) {
-			visitor.push (self.mSet[i]) ;
+			const auto r2x = self.mSet[i] ;
+			visitor.push (r2x) ;
 		}
 		visitor.leave () ;
 	}
 
 	void add (RR<BoxLayout> item) override {
-		const auto r1x = bitwise[TYPE<Index>::expr] (BoxHolder::hold (item)->ref) ;
+		const auto r1x = Index (bitwise (BoxHolder::hold (item)->ref)) ;
 		assume (inline_between (r1x ,0 ,size ())) ;
 		set (r1x ,TRUE) ;
 	}
 
 	Bool contain (CR<Pointer> item) const override {
-		const auto r1x = bitwise[TYPE<Index>::expr] (item) ;
+		const auto r1x = Index (bitwise (item)) ;
 		if (!inline_between (r1x ,0 ,size ()))
 			return FALSE ;
 		Bool ret = FALSE ;
@@ -2524,7 +2518,7 @@ public:
 	}
 
 	void erase (CR<Pointer> item) override {
-		const auto r1x = bitwise[TYPE<Index>::expr] (item) ;
+		const auto r1x = Index (bitwise (item)) ;
 		if (!inline_between (r1x ,0 ,size ()))
 			return ;
 		set (r1x ,FALSE) ;
@@ -2532,7 +2526,7 @@ public:
 
 	void fill (CR<Byte> item) override {
 		for (auto &&i : range (0 ,self.mSet.size ())) {
-			self.mSet[i] = Byte (0X00) ;
+			self.mSet[i] = item ;
 		}
 		check_mask (self) ;
 	}

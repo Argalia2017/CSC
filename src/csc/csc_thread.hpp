@@ -57,7 +57,7 @@ public:
 struct WorkThreadLayout ;
 
 struct WorkThreadHolder implement Interface {
-	imports SharedRef<WorkThreadLayout> create () ;
+	imports Ref<WorkThreadLayout> create () ;
 	imports VFat<WorkThreadHolder> hold (VR<WorkThreadLayout> that) ;
 	imports CFat<WorkThreadHolder> hold (CR<WorkThreadLayout> that) ;
 
@@ -72,7 +72,7 @@ struct WorkThreadHolder implement Interface {
 	virtual void stop () = 0 ;
 } ;
 
-class WorkThread implement Like<SharedRef<WorkThreadLayout>> {
+class WorkThread implement Super<Ref<WorkThreadLayout>> {
 public:
 	implicit WorkThread () = default ;
 
@@ -122,7 +122,7 @@ struct CalcSolution {
 struct CalcThreadLayout ;
 
 struct CalcThreadHolder implement Interface {
-	imports SharedRef<CalcThreadLayout> create () ;
+	imports Ref<CalcThreadLayout> create () ;
 	imports VFat<CalcThreadHolder> hold (VR<CalcThreadLayout> that) ;
 	imports CFat<CalcThreadHolder> hold (CR<CalcThreadLayout> that) ;
 
@@ -138,7 +138,7 @@ struct CalcThreadHolder implement Interface {
 	virtual void stop () = 0 ;
 } ;
 
-class CalcThread implement Like<SharedRef<CalcThreadLayout>> {
+class CalcThread implement Super<Ref<CalcThreadLayout>> {
 public:
 	implicit CalcThread () = default ;
 
@@ -185,7 +185,7 @@ public:
 struct PromiseLayout ;
 
 struct PromiseHolder implement Interface {
-	imports SharedRef<PromiseLayout> create () ;
+	imports Ref<PromiseLayout> create () ;
 	imports VFat<PromiseHolder> hold (VR<PromiseLayout> that) ;
 	imports CFat<PromiseHolder> hold (CR<PromiseLayout> that) ;
 
@@ -204,7 +204,7 @@ struct PromiseHolder implement Interface {
 } ;
 
 template <class A>
-class Promise implement Like<SharedRef<PromiseLayout>> {
+class Promise implement Super<Ref<PromiseLayout>> {
 public:
 	implicit Promise () = default ;
 
@@ -267,7 +267,7 @@ public:
 struct SyntaxLayout ;
 
 struct SyntaxHolder implement Interface {
-	imports SharedRef<SyntaxLayout> create () ;
+	imports Ref<SyntaxLayout> create () ;
 	imports VFat<SyntaxHolder> hold (VR<SyntaxLayout> that) ;
 	imports CFat<SyntaxHolder> hold (CR<SyntaxLayout> that) ;
 
@@ -281,7 +281,7 @@ struct SyntaxHolder implement Interface {
 	virtual void execute () = 0 ;
 } ;
 
-class Syntax implement Like<SharedRef<SyntaxLayout>> {
+class Syntax implement Super<Ref<SyntaxLayout>> {
 public:
 	implicit Syntax () = default ;
 

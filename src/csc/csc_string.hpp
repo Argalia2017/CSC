@@ -16,52 +16,52 @@ namespace CSC {
 struct StringProcLayout ;
 
 struct StringProcHolder implement Interface {
-	imports CR<Like<UniqueRef<StringProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<StringProcLayout>>> expr_m () ;
 	imports VFat<StringProcHolder> hold (VR<StringProcLayout> that) ;
 	imports CFat<StringProcHolder> hold (CR<StringProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual String<Stra> stra_from_strw (CR<String<Strw>> a) const = 0 ;
 	virtual String<Strw> strw_from_stra (CR<String<Stra>> a) const = 0 ;
-	virtual String<Stru8> stru8_from_stru16 (CR<String<Stru16>> a) const = 0 ;
-	virtual String<Stru8> stru8_from_stru32 (CR<String<Stru32>> a) const = 0 ;
-	virtual String<Stru16> stru16_from_stru8 (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stru> stru8_from_stru16 (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Stru> stru8_from_stru32 (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Stru16> stru16_from_stru8 (CR<String<Stru>> a) const = 0 ;
 	virtual String<Stru16> stru16_from_stru32 (CR<String<Stru32>> a) const = 0 ;
-	virtual String<Stru32> stru32_from_stru8 (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stru32> stru32_from_stru8 (CR<String<Stru>> a) const = 0 ;
 	virtual String<Stru32> stru32_from_stru16 (CR<String<Stru16>> a) const = 0 ;
 	virtual String<Stra> stra_from (CR<String<Stra>> a) const = 0 ;
 	virtual String<Stra> stra_from (CR<String<Strw>> a) const = 0 ;
-	virtual String<Stra> stra_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stra> stra_from (CR<String<Stru>> a) const = 0 ;
 	virtual String<Stra> stra_from (CR<String<Stru16>> a) const = 0 ;
 	virtual String<Stra> stra_from (CR<String<Stru32>> a) const = 0 ;
 	virtual String<Strw> strw_from (CR<String<Stra>> a) const = 0 ;
 	virtual String<Strw> strw_from (CR<String<Strw>> a) const = 0 ;
-	virtual String<Strw> strw_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Strw> strw_from (CR<String<Stru>> a) const = 0 ;
 	virtual String<Strw> strw_from (CR<String<Stru16>> a) const = 0 ;
 	virtual String<Strw> strw_from (CR<String<Stru32>> a) const = 0 ;
 	virtual String<Str> strs_from (CR<String<Stra>> a) const = 0 ;
 	virtual String<Str> strs_from (CR<String<Strw>> a) const = 0 ;
-	virtual String<Str> strs_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Str> strs_from (CR<String<Stru>> a) const = 0 ;
 	virtual String<Str> strs_from (CR<String<Stru16>> a) const = 0 ;
 	virtual String<Str> strs_from (CR<String<Stru32>> a) const = 0 ;
-	virtual String<Stru8> stru8_from (CR<String<Stra>> a) const = 0 ;
-	virtual String<Stru8> stru8_from (CR<String<Strw>> a) const = 0 ;
-	virtual String<Stru8> stru8_from (CR<String<Stru8>> a) const = 0 ;
-	virtual String<Stru8> stru8_from (CR<String<Stru16>> a) const = 0 ;
-	virtual String<Stru8> stru8_from (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Stru> stru8_from (CR<String<Stra>> a) const = 0 ;
+	virtual String<Stru> stru8_from (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stru> stru8_from (CR<String<Stru>> a) const = 0 ;
+	virtual String<Stru> stru8_from (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Stru> stru8_from (CR<String<Stru32>> a) const = 0 ;
 	virtual String<Stru16> stru16_from (CR<String<Stra>> a) const = 0 ;
 	virtual String<Stru16> stru16_from (CR<String<Strw>> a) const = 0 ;
-	virtual String<Stru16> stru16_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stru16> stru16_from (CR<String<Stru>> a) const = 0 ;
 	virtual String<Stru16> stru16_from (CR<String<Stru16>> a) const = 0 ;
 	virtual String<Stru16> stru16_from (CR<String<Stru32>> a) const = 0 ;
 	virtual String<Stru32> stru32_from (CR<String<Stra>> a) const = 0 ;
 	virtual String<Stru32> stru32_from (CR<String<Strw>> a) const = 0 ;
-	virtual String<Stru32> stru32_from (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stru32> stru32_from (CR<String<Stru>> a) const = 0 ;
 	virtual String<Stru32> stru32_from (CR<String<Stru16>> a) const = 0 ;
 	virtual String<Stru32> stru32_from (CR<String<Stru32>> a) const = 0 ;
 } ;
 
-class StringProc implement Like<UniqueRef<StringProcLayout>> {
+class StringProc implement Super<Ref<StringProcLayout>> {
 public:
 	static CR<StringProc> expr_m () {
 		return keep[TYPE<StringProc>::expr] (StringProcHolder::expr) ;
@@ -75,15 +75,15 @@ public:
 		return StringProcHolder::hold (expr)->strw_from_stra (a) ;
 	}
 
-	static String<Stru8> stru8_from_stru16 (CR<String<Stru16>> a) {
+	static String<Stru> stru8_from_stru16 (CR<String<Stru16>> a) {
 		return StringProcHolder::hold (expr)->stru8_from_stru16 (a) ;
 	}
 
-	static String<Stru8> stru8_from_stru32 (CR<String<Stru32>> a) {
+	static String<Stru> stru8_from_stru32 (CR<String<Stru32>> a) {
 		return StringProcHolder::hold (expr)->stru8_from_stru32 (a) ;
 	}
 
-	static String<Stru16> stru16_from_stru8 (CR<String<Stru8>> a) {
+	static String<Stru16> stru16_from_stru8 (CR<String<Stru>> a) {
 		return StringProcHolder::hold (expr)->stru16_from_stru8 (a) ;
 	}
 
@@ -91,7 +91,7 @@ public:
 		return StringProcHolder::hold (expr)->stru16_from_stru32 (a) ;
 	}
 
-	static String<Stru32> stru32_from_stru8 (CR<String<Stru8>> a) {
+	static String<Stru32> stru32_from_stru8 (CR<String<Stru>> a) {
 		return StringProcHolder::hold (expr)->stru32_from_stru8 (a) ;
 	}
 
@@ -107,7 +107,7 @@ public:
 		return StringProcHolder::hold (expr)->stra_from (a) ;
 	}
 
-	static String<Stra> stra_from (CR<String<Stru8>> a) {
+	static String<Stra> stra_from (CR<String<Stru>> a) {
 		return StringProcHolder::hold (expr)->stra_from (a) ;
 	}
 
@@ -127,7 +127,7 @@ public:
 		return StringProcHolder::hold (expr)->strw_from (a) ;
 	}
 
-	static String<Strw> strw_from (CR<String<Stru8>> a) {
+	static String<Strw> strw_from (CR<String<Stru>> a) {
 		return StringProcHolder::hold (expr)->strw_from (a) ;
 	}
 
@@ -147,7 +147,7 @@ public:
 		return StringProcHolder::hold (expr)->strs_from (a) ;
 	}
 
-	static String<Str> strs_from (CR<String<Stru8>> a) {
+	static String<Str> strs_from (CR<String<Stru>> a) {
 		return StringProcHolder::hold (expr)->strs_from (a) ;
 	}
 
@@ -159,23 +159,23 @@ public:
 		return StringProcHolder::hold (expr)->strs_from (a) ;
 	}
 
-	static String<Stru8> stru8_from (CR<String<Stra>> a) {
+	static String<Stru> stru8_from (CR<String<Stra>> a) {
 		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
-	static String<Stru8> stru8_from (CR<String<Strw>> a) {
+	static String<Stru> stru8_from (CR<String<Strw>> a) {
 		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
-	static String<Stru8> stru8_from (CR<String<Stru8>> a) {
+	static String<Stru> stru8_from (CR<String<Stru>> a) {
 		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
-	static String<Stru8> stru8_from (CR<String<Stru16>> a) {
+	static String<Stru> stru8_from (CR<String<Stru16>> a) {
 		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
-	static String<Stru8> stru8_from (CR<String<Stru32>> a) {
+	static String<Stru> stru8_from (CR<String<Stru32>> a) {
 		return StringProcHolder::hold (expr)->stru8_from (a) ;
 	}
 
@@ -187,7 +187,7 @@ public:
 		return StringProcHolder::hold (expr)->stru16_from (a) ;
 	}
 
-	static String<Stru16> stru16_from (CR<String<Stru8>> a) {
+	static String<Stru16> stru16_from (CR<String<Stru>> a) {
 		return StringProcHolder::hold (expr)->stru16_from (a) ;
 	}
 
@@ -207,7 +207,7 @@ public:
 		return StringProcHolder::hold (expr)->stru32_from (a) ;
 	}
 
-	static String<Stru32> stru32_from (CR<String<Stru8>> a) {
+	static String<Stru32> stru32_from (CR<String<Stru>> a) {
 		return StringProcHolder::hold (expr)->stru32_from (a) ;
 	}
 
@@ -239,11 +239,11 @@ struct XmlParserHolder implement Interface {
 	virtual XmlParserLayout child () const = 0 ;
 	virtual XmlParserLayout child (CR<Index> index) const = 0 ;
 	virtual XmlParserLayout child (CR<Slice> name) const = 0 ;
-	virtual XmlParserLayout child (CR<String<Stru8>> name) const = 0 ;
+	virtual XmlParserLayout child (CR<String<Stru>> name) const = 0 ;
 	virtual Array<XmlParserLayout> list () const = 0 ;
 	virtual Array<XmlParserLayout> list (CR<Length> size_) const = 0 ;
 	virtual Bool equal (CR<XmlParserLayout> that) const = 0 ;
-	virtual CR<String<Stru8>> name () const leftvalue = 0 ;
+	virtual CR<String<Stru>> name () const leftvalue = 0 ;
 	virtual Bool parse (CR<Bool> def) const = 0 ;
 	virtual Val32 parse (CR<Val32> def) const = 0 ;
 	virtual Val64 parse (CR<Val64> def) const = 0 ;
@@ -251,7 +251,7 @@ struct XmlParserHolder implement Interface {
 	virtual Flt64 parse (CR<Flt64> def) const = 0 ;
 	virtual String<Stra> parse (CR<String<Stra>> def) const = 0 ;
 	virtual String<Strw> parse (CR<String<Strw>> def) const = 0 ;
-	virtual String<Stru8> parse (CR<String<Stru8>> def) const = 0 ;
+	virtual String<Stru> parse (CR<String<Stru>> def) const = 0 ;
 	virtual String<Stru16> parse (CR<String<Stru16>> def) const = 0 ;
 	virtual String<Stru32> parse (CR<String<Stru32>> def) const = 0 ;
 	virtual Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const = 0 ;
@@ -261,7 +261,7 @@ struct XmlParserHolder implement Interface {
 	virtual Array<Flt64> parse (CR<Flt64> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Stra>> parse (CR<String<Stra>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Strw>> parse (CR<String<Strw>> def ,CR<Length> size_) const = 0 ;
-	virtual Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const = 0 ;
 } ;
@@ -312,7 +312,7 @@ public:
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
-	XmlParser child (CR<String<Stru8>> name) const {
+	XmlParser child (CR<String<Stru>> name) const {
 		XmlParserLayout ret = XmlParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
@@ -339,7 +339,7 @@ public:
 		return (!equal (that)) ;
 	}
 
-	CR<String<Stru8>> name () const leftvalue {
+	CR<String<Stru>> name () const leftvalue {
 		return XmlParserHolder::hold (thiz)->name () ;
 	}
 
@@ -371,7 +371,7 @@ public:
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<Stru8> parse (CR<String<Stru8>> def) const {
+	String<Stru> parse (CR<String<Stru>> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
@@ -411,7 +411,7 @@ public:
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const {
+	Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
@@ -443,11 +443,11 @@ struct JsonParserHolder implement Interface {
 	virtual JsonParserLayout child () const = 0 ;
 	virtual JsonParserLayout child (CR<Index> index) const = 0 ;
 	virtual JsonParserLayout child (CR<Slice> name) const = 0 ;
-	virtual JsonParserLayout child (CR<String<Stru8>> name) const = 0 ;
+	virtual JsonParserLayout child (CR<String<Stru>> name) const = 0 ;
 	virtual Array<JsonParserLayout> list () const = 0 ;
 	virtual Array<JsonParserLayout> list (CR<Length> size_) const = 0 ;
 	virtual Bool equal (CR<JsonParserLayout> that) const = 0 ;
-	virtual CR<String<Stru8>> name () const leftvalue = 0 ;
+	virtual CR<String<Stru>> name () const leftvalue = 0 ;
 	virtual Bool parse (CR<Bool> def) const = 0 ;
 	virtual Val32 parse (CR<Val32> def) const = 0 ;
 	virtual Val64 parse (CR<Val64> def) const = 0 ;
@@ -455,7 +455,7 @@ struct JsonParserHolder implement Interface {
 	virtual Flt64 parse (CR<Flt64> def) const = 0 ;
 	virtual String<Stra> parse (CR<String<Stra>> def) const = 0 ;
 	virtual String<Strw> parse (CR<String<Strw>> def) const = 0 ;
-	virtual String<Stru8> parse (CR<String<Stru8>> def) const = 0 ;
+	virtual String<Stru> parse (CR<String<Stru>> def) const = 0 ;
 	virtual String<Stru16> parse (CR<String<Stru16>> def) const = 0 ;
 	virtual String<Stru32> parse (CR<String<Stru32>> def) const = 0 ;
 	virtual Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const = 0 ;
@@ -465,7 +465,7 @@ struct JsonParserHolder implement Interface {
 	virtual Array<Flt64> parse (CR<Flt64> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Stra>> parse (CR<String<Stra>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Strw>> parse (CR<String<Strw>> def ,CR<Length> size_) const = 0 ;
-	virtual Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const = 0 ;
 } ;
@@ -516,7 +516,7 @@ public:
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
-	JsonParser child (CR<String<Stru8>> name) const {
+	JsonParser child (CR<String<Stru>> name) const {
 		JsonParserLayout ret = JsonParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
@@ -543,7 +543,7 @@ public:
 		return (!equal (that)) ;
 	}
 
-	CR<String<Stru8>> name () const leftvalue {
+	CR<String<Stru>> name () const leftvalue {
 		return JsonParserHolder::hold (thiz)->name () ;
 	}
 
@@ -575,7 +575,7 @@ public:
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<Stru8> parse (CR<String<Stru8>> def) const {
+	String<Stru> parse (CR<String<Stru>> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
@@ -615,7 +615,7 @@ public:
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const {
+	Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 

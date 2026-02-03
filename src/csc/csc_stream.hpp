@@ -15,7 +15,7 @@ namespace CSC {
 struct StreamProcLayout ;
 
 struct StreamProcHolder implement Interface {
-	imports CR<Like<UniqueRef<StreamProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<StreamProcLayout>>> expr_m () ;
 	imports VFat<StreamProcHolder> hold (VR<StreamProcLayout> that) ;
 	imports CFat<StreamProcHolder> hold (CR<StreamProcLayout> that) ;
 
@@ -39,7 +39,7 @@ struct StreamProcHolder implement Interface {
 	virtual Stru32 ctrl_from_word (CR<Stru32> str) const = 0 ;
 } ;
 
-class StreamProc implement Like<UniqueRef<StreamProcLayout>> {
+class StreamProc implement Super<Ref<StreamProcLayout>> {
 public:
 	static CR<StreamProc> expr_m () {
 		return keep[TYPE<StreamProc>::expr] (StreamProcHolder::expr) ;
@@ -1487,7 +1487,7 @@ public:
 } ;
 
 template <class A>
-class StringParse {
+class StringParse implement Proxy {
 public:
 	static A make (CR<Slice> text) {
 		return make (String<Str> (text)) ;
@@ -1504,7 +1504,7 @@ public:
 } ;
 
 template <class A>
-class StringBuild {
+class StringBuild implement Proxy {
 public:
 	template <class...ARG1>
 	static String<A> make (CR<ARG1>...params) {
@@ -1608,47 +1608,47 @@ inline Format PrintFormat (CR<ARG1>...params) {
 struct StreamTextProcLayout ;
 
 struct StreamTextProcHolder implement Interface {
-	imports CR<Like<UniqueRef<StreamTextProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<StreamTextProcLayout>>> expr_m () ;
 	imports VFat<StreamTextProcHolder> hold (VR<StreamTextProcLayout> that) ;
 	imports CFat<StreamTextProcHolder> hold (CR<StreamTextProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void read_keyword (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
-	virtual void read_scalar (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
-	virtual void read_escape (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
-	virtual void write_escape (CR<Writer> writer ,CR<String<Stru8>> item) const = 0 ;
-	virtual void read_blank (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
-	virtual void read_endline (CR<Reader> reader ,VR<String<Stru8>> item) const = 0 ;
+	virtual void read_keyword (CR<Reader> reader ,VR<String<Stru>> item) const = 0 ;
+	virtual void read_scalar (CR<Reader> reader ,VR<String<Stru>> item) const = 0 ;
+	virtual void read_escape (CR<Reader> reader ,VR<String<Stru>> item) const = 0 ;
+	virtual void write_escape (CR<Writer> writer ,CR<String<Stru>> item) const = 0 ;
+	virtual void read_blank (CR<Reader> reader ,VR<String<Stru>> item) const = 0 ;
+	virtual void read_endline (CR<Reader> reader ,VR<String<Stru>> item) const = 0 ;
 	virtual void write_aligned (CR<Writer> writer ,CR<Val64> number ,CR<Length> align) const = 0 ;
 } ;
 
-class StreamTextProc implement Like<UniqueRef<StreamTextProcLayout>> {
+class StreamTextProc implement Super<Ref<StreamTextProcLayout>> {
 public:
 	static CR<StreamTextProc> expr_m () {
 		return keep[TYPE<StreamTextProc>::expr] (StreamTextProcHolder::expr) ;
 	}
 
-	static void read_keyword (CR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_keyword (CR<Reader> reader ,VR<String<Stru>> item) {
 		return StreamTextProcHolder::hold (expr)->read_keyword (reader ,item) ;
 	}
 
-	static void read_scalar (CR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_scalar (CR<Reader> reader ,VR<String<Stru>> item) {
 		return StreamTextProcHolder::hold (expr)->read_scalar (reader ,item) ;
 	}
 
-	static void read_escape (CR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_escape (CR<Reader> reader ,VR<String<Stru>> item) {
 		return StreamTextProcHolder::hold (expr)->read_escape (reader ,item) ;
 	}
 
-	static void write_escape (CR<Writer> writer ,CR<String<Stru8>> item) {
+	static void write_escape (CR<Writer> writer ,CR<String<Stru>> item) {
 		return StreamTextProcHolder::hold (expr)->write_escape (writer ,item) ;
 	}
 
-	static void read_blank (CR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_blank (CR<Reader> reader ,VR<String<Stru>> item) {
 		return StreamTextProcHolder::hold (expr)->read_blank (reader ,item) ;
 	}
 
-	static void read_endline (CR<Reader> reader ,VR<String<Stru8>> item) {
+	static void read_endline (CR<Reader> reader ,VR<String<Stru>> item) {
 		return StreamTextProcHolder::hold (expr)->read_endline (reader ,item) ;
 	}
 
@@ -1657,69 +1657,69 @@ public:
 	}
 } ;
 
-class ReadKeywordReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
+class ReadKeywordReadingBinder final implement Fat<ReadingHolder ,String<Stru>> {
 public:
 	void friend_read (CR<Reader> reader) override {
 		return StreamTextProc::read_keyword (reader ,self) ;
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadKeyword (VR<String<Stru8>> that) {
+inline VFat<ReadingHolder> ReadKeyword (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadKeywordReadingBinder () ,that) ;
 }
 
-class ReadScalarReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
+class ReadScalarReadingBinder final implement Fat<ReadingHolder ,String<Stru>> {
 public:
 	void friend_read (CR<Reader> reader) override {
 		return StreamTextProc::read_scalar (reader ,self) ;
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadScalar (VR<String<Stru8>> that) {
+inline VFat<ReadingHolder> ReadScalar (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadScalarReadingBinder () ,that) ;
 }
 
-class ReadEscapeReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
+class ReadEscapeReadingBinder final implement Fat<ReadingHolder ,String<Stru>> {
 public:
 	void friend_read (CR<Reader> reader) override {
 		return StreamTextProc::read_escape (reader ,self) ;
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadEscape (VR<String<Stru8>> that) {
+inline VFat<ReadingHolder> ReadEscape (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadEscapeReadingBinder () ,that) ;
 }
 
-class WriteEscapeWritingBinder final implement Fat<WritingHolder ,String<Stru8>> {
+class WriteEscapeWritingBinder final implement Fat<WritingHolder ,String<Stru>> {
 public:
 	void friend_write (CR<Writer> writer) const override {
 		return StreamTextProc::write_escape (writer ,self) ;
 	}
 } ;
 
-inline CFat<WritingHolder> WriteEscape (CR<String<Stru8>> that) {
+inline CFat<WritingHolder> WriteEscape (CR<String<Stru>> that) {
 	return CFat<WritingHolder> (WriteEscapeWritingBinder () ,that) ;
 }
 
-class ReadBlankReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
+class ReadBlankReadingBinder final implement Fat<ReadingHolder ,String<Stru>> {
 public:
 	void friend_read (CR<Reader> reader) override {
 		return StreamTextProc::read_blank (reader ,self) ;
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadBlank (VR<String<Stru8>> that) {
+inline VFat<ReadingHolder> ReadBlank (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadBlankReadingBinder () ,that) ;
 }
 
-class ReadEndlineReadingBinder final implement Fat<ReadingHolder ,String<Stru8>> {
+class ReadEndlineReadingBinder final implement Fat<ReadingHolder ,String<Stru>> {
 public:
 	void friend_read (CR<Reader> reader) override {
 		return StreamTextProc::read_endline (reader ,self) ;
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadEndline (VR<String<Stru8>> that) {
+inline VFat<ReadingHolder> ReadEndline (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadEndlineReadingBinder () ,that) ;
 }
 
@@ -1737,7 +1737,7 @@ inline CFat<WritingHolder> WriteAligned (CR<Tuple<Val64 ,Length>> that) {
 struct CommaLayout ;
 
 struct CommaHolder implement Interface {
-	imports SharedRef<CommaLayout> create () ;
+	imports Ref<CommaLayout> create () ;
 	imports VFat<CommaHolder> hold (VR<CommaLayout> that) ;
 	imports CFat<CommaHolder> hold (CR<CommaLayout> that) ;
 
@@ -1748,14 +1748,14 @@ struct CommaHolder implement Interface {
 	virtual void tight () = 0 ;
 } ;
 
-class CommaWritingBinder final implement Fat<WritingHolder ,SharedRef<CommaLayout>> {
+class CommaWritingBinder final implement Fat<WritingHolder ,Super<Ref<CommaLayout>>> {
 public:
 	void friend_write (CR<Writer> writer) const override {
 		return CommaHolder::hold (self)->friend_write (writer) ;
 	}
 } ;
 
-class Comma implement Like<SharedRef<CommaLayout>> {
+class Comma implement Super<Ref<CommaLayout>> {
 public:
 	implicit Comma () = default ;
 
@@ -1765,7 +1765,7 @@ public:
 	}
 
 	implicit operator Writing () const leftvalue {
-		return CFat<WritingHolder> (CommaWritingBinder () ,mThis) ;
+		return CFat<WritingHolder> (CommaWritingBinder () ,thiz) ;
 	}
 
 	void friend_write (CR<Writer> writer) const {
@@ -1796,7 +1796,7 @@ public:
 struct RegexLayout ;
 
 struct RegexHolder implement Interface {
-	imports AutoRef<RegexLayout> create () ;
+	imports Ref<RegexLayout> create () ;
 	imports VFat<RegexHolder> hold (VR<RegexLayout> that) ;
 	imports CFat<RegexHolder> hold (CR<RegexLayout> that) ;
 
@@ -1805,7 +1805,7 @@ struct RegexHolder implement Interface {
 	virtual Slice match (CR<Index> index) const = 0 ;
 } ;
 
-class Regex implement Like<AutoRef<RegexLayout>> {
+class Regex implement Super<Ref<RegexLayout>> {
 public:
 	implicit Regex () = default ;
 

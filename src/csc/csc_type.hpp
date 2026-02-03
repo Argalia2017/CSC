@@ -98,6 +98,14 @@ forceinline void operator^= (VR<Byte> a ,CR<Byte> b) noexcept {
 	a = a ^ b ;
 }
 
+forceinline constexpr Byte operator- (CR<Byte> a ,CR<Byte> b) noexcept {
+	return Byte (csc_uint8_t (a) & ~csc_uint8_t (b)) ;
+}
+
+forceinline void operator-= (VR<Byte> a ,CR<Byte> b) noexcept {
+	a = a - b ;
+}
+
 forceinline constexpr Byte operator~ (CR<Byte> a) noexcept {
 	return Byte (~csc_uint8_t (a)) ;
 }
@@ -132,6 +140,14 @@ forceinline constexpr Word operator^ (CR<Word> a ,CR<Word> b) noexcept {
 
 forceinline void operator^= (VR<Word> a ,CR<Word> b) noexcept {
 	a = a ^ b ;
+}
+
+forceinline constexpr Word operator- (CR<Word> a ,CR<Word> b) noexcept {
+	return Word (csc_uint16_t (a) & ~csc_uint16_t (b)) ;
+}
+
+forceinline void operator-= (VR<Word> a ,CR<Word> b) noexcept {
+	a = a - b ;
 }
 
 forceinline constexpr Word operator~ (CR<Word> a) noexcept {
@@ -170,6 +186,14 @@ forceinline void operator^= (VR<Char> a ,CR<Char> b) noexcept {
 	a = a ^ b ;
 }
 
+forceinline constexpr Char operator- (CR<Char> a ,CR<Char> b) noexcept {
+	return Char (csc_uint32_t (a) & ~csc_uint32_t (b)) ;
+}
+
+forceinline void operator-= (VR<Char> a ,CR<Char> b) noexcept {
+	a = a - b ;
+}
+
 forceinline constexpr Char operator~ (CR<Char> a) noexcept {
 	return Char (~csc_uint32_t (a)) ;
 }
@@ -206,6 +230,14 @@ forceinline void operator^= (VR<Quad> a ,CR<Quad> b) noexcept {
 	a = a ^ b ;
 }
 
+forceinline constexpr Quad operator- (CR<Quad> a ,CR<Quad> b) noexcept {
+	return Quad (csc_uint64_t (a) & ~csc_uint64_t (b)) ;
+}
+
+forceinline void operator-= (VR<Quad> a ,CR<Quad> b) noexcept {
+	a = a - b ;
+}
+
 forceinline constexpr Quad operator~ (CR<Quad> a) noexcept {
 	return Quad (~csc_uint64_t (a)) ;
 }
@@ -220,7 +252,7 @@ forceinline constexpr Quad operator>> (CR<Quad> a ,CR<Length> b) noexcept {
 
 using Stra = csc_char_t ;
 using Strw = csc_wchar_t ;
-using Stru8 = csc_char8_t ;
+using Stru = csc_char8_t ;
 using Stru16 = csc_char16_t ;
 using Stru32 = csc_char32_t ;
 
@@ -758,7 +790,7 @@ template <class A>
 trait IS_TEXT_HELP<A ,ALWAYS> {
 	using R1X = IS_SAME<A ,Stra> ;
 	using R2X = IS_SAME<A ,Strw> ;
-	using R3X = IS_SAME<A ,Stru8> ;
+	using R3X = IS_SAME<A ,Stru> ;
 	using R4X = IS_SAME<A ,Stru16> ;
 	using R5X = IS_SAME<A ,Stru32> ;
 	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X> ;
@@ -1292,36 +1324,6 @@ trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
 template <class A>
 using BYTE_BASE = typename BYTE_BASE_HELP<SIZE_OF<A> ,ALIGN_OF<A> ,ALWAYS>::RET ;
 
-template <class...>
-trait TEXT_BASE_HELP ;
-
-template <class SIZE ,class ALIGN>
-trait TEXT_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<Stru8>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<Stru8>>>>> {
-	using RET = Stru8 ;
-} ;
-
-template <class SIZE ,class ALIGN>
-trait TEXT_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<Stru16>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<Stru16>>>>> {
-	using RET = Stru16 ;
-} ;
-
-template <class SIZE ,class ALIGN>
-trait TEXT_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<Stru32>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<Stru32>>>>> {
-	using RET = Stru32 ;
-} ;
-
-template <class A>
-using TEXT_BASE = typename TEXT_BASE_HELP<SIZE_OF<A> ,ALIGN_OF<A> ,ALWAYS>::RET ;
-
-using Strua = TEXT_BASE<Stra> ;
-using Struw = TEXT_BASE<Strw> ;
-
 template <class SIZE ,class ALIGN = RANK1>
 struct Storage {
 	alignas (ALIGN::expr) ARR<Byte ,SIZE> mUnused ;
@@ -1446,7 +1448,7 @@ trait HAS_COMPILE_HELP<A ,B ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).compile 
 template <class A ,class B>
 using HAS_COMPILE = typename HAS_COMPILE_HELP<A ,B ,ALWAYS>::RET ;
 
-class Pointer {
+class Pointer implement Proxy {
 public:
 	implicit Pointer () = delete ;
 

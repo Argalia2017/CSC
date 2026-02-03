@@ -28,10 +28,10 @@ struct FileProcLayout {
 	List<UniqueRef<String<Str>>> mLockDirectory ;
 } ;
 
-exports CR<Like<UniqueRef<FileProcLayout>>> FileProcHolder::expr_m () {
+exports CR<Super<Ref<FileProcLayout>>> FileProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<FileProcLayout>> ret ;
-		ret.mThis = UniqueRef<FileProcLayout>::make () ;
+		Super<Ref<FileProcLayout>> ret ;
+		ret.mThis = Ref<FileProcLayout>::make () ;
 		FileProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -58,8 +58,8 @@ struct StreamFileLayout {
 	Length mShortSize ;
 } ;
 
-exports AutoRef<StreamFileLayout> StreamFileHolder::create () {
-	return AutoRef<StreamFileLayout>::make () ;
+exports Ref<StreamFileLayout> StreamFileHolder::create () {
+	return Ref<StreamFileLayout>::make () ;
 }
 
 exports VFat<StreamFileHolder> StreamFileHolder::hold (VR<StreamFileLayout> that) {
@@ -87,23 +87,23 @@ public:
 
 class StreamFileWriterImplHolder final implement Fat<StreamFileWriterHolder ,StreamFileWriterLayout> {
 public:
-	void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> encode) override {
+	void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> option) override {
 		self.mStreamFile = StreamFile (file) ;
 		self.mStreamFile.open_w (0) ;
 		self.mFileBuffer = Ref<RefBuffer<Byte>>::make (STREAMFILE_CHUNK_STEP::expr) ;
-		set_writer (encode) ;
+		set_writer (option) ;
 	}
 
-	void set_writer (CR<Just<StreamFileEncode>> encode) {
+	void set_writer (CR<Just<StreamFileEncode>> option) {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (encode != StreamFileEncode::ByteWriter)
+			if (option != StreamFileEncode::ByteWriter)
 				discard ;
 			self.mByteWriter = ByteWriter (self.mFileBuffer.share ()) ;
 			self.mWriter = Box<Writer>::make (self.mByteWriter) ;
 		}
 		if ifdo (act) {
-			if (encode != StreamFileEncode::TextWriter)
+			if (option != StreamFileEncode::TextWriter)
 				discard ;
 			self.mTextWriter = TextWriter (self.mFileBuffer.share ()) ;
 			self.mWriter = Box<Writer>::make (self.mTextWriter) ;
@@ -130,8 +130,8 @@ public:
 	}
 } ;
 
-exports AutoRef<StreamFileWriterLayout> StreamFileWriterHolder::create () {
-	return AutoRef<StreamFileWriterLayout>::make () ;
+exports Ref<StreamFileWriterLayout> StreamFileWriterHolder::create () {
+	return Ref<StreamFileWriterLayout>::make () ;
 }
 
 exports VFat<StreamFileWriterHolder> StreamFileWriterHolder::hold (VR<StreamFileWriterLayout> that) {
@@ -175,8 +175,8 @@ struct BufferFileLayout {
 	Val64 mCacheTimer ;
 } ;
 
-exports AutoRef<BufferFileLayout> BufferFileHolder::create () {
-	return AutoRef<BufferFileLayout>::make () ;
+exports Ref<BufferFileLayout> BufferFileHolder::create () {
+	return Ref<BufferFileLayout>::make () ;
 }
 
 exports VFat<BufferFileHolder> BufferFileHolder::hold (VR<BufferFileLayout> that) {
@@ -203,8 +203,8 @@ struct UartFileLayout {
 	Index mRingRead ;
 } ;
 
-exports AutoRef<UartFileLayout> UartFileHolder::create () {
-	return AutoRef<UartFileLayout>::make () ;
+exports Ref<UartFileLayout> UartFileHolder::create () {
+	return Ref<UartFileLayout>::make () ;
 }
 
 exports VFat<UartFileHolder> UartFileHolder::hold (VR<UartFileLayout> that) {
@@ -230,9 +230,9 @@ struct ConsoleLayout {
 	System mCommand ;
 } ;
 
-exports CR<Like<SharedRef<ConsoleLayout>>> ConsoleHolder::expr_m () {
+exports CR<Super<SharedRef<ConsoleLayout>>> ConsoleHolder::expr_m () {
 	return memorize ([&] () {
-		Like<SharedRef<ConsoleLayout>> ret ;
+		Super<SharedRef<ConsoleLayout>> ret ;
 		ret.mThis = SharedRef<ConsoleLayout>::make () ;
 		ConsoleHolder::hold (ret)->initialize () ;
 		return move (ret) ;

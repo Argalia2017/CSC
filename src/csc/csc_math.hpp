@@ -21,7 +21,7 @@ static constexpr auto MATH_LN10 = Flt64 (2.30258509299404568402) ;
 struct MathProcLayout ;
 
 struct MathProcHolder implement Interface {
-	imports CR<Like<UniqueRef<MathProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<MathProcLayout>>> expr_m () ;
 	imports VFat<MathProcHolder> hold (VR<MathProcLayout> that) ;
 	imports CFat<MathProcHolder> hold (CR<MathProcLayout> that) ;
 
@@ -106,7 +106,7 @@ struct MathProcHolder implement Interface {
 	virtual Flt64 min_of (CR<Wrapper<Flt64>> b) const = 0 ;
 } ;
 
-class MathProc implement Like<UniqueRef<MathProcLayout>> {
+class MathProc implement Super<Ref<MathProcLayout>> {
 public:
 	static CR<MathProc> expr_m () {
 		return keep[TYPE<MathProc>::expr] (MathProcHolder::expr) ;
@@ -320,7 +320,7 @@ struct Notation {
 struct FEXP2CacheLayout ;
 
 struct FEXP2CacheHolder implement Interface {
-	imports CR<Like<UniqueRef<FEXP2CacheLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<FEXP2CacheLayout>>> expr_m () ;
 	imports VFat<FEXP2CacheHolder> hold (VR<FEXP2CacheLayout> that) ;
 	imports CFat<FEXP2CacheHolder> hold (CR<FEXP2CacheLayout> that) ;
 
@@ -328,7 +328,7 @@ struct FEXP2CacheHolder implement Interface {
 	virtual void get (CR<Val64> index ,VR<Notation> item) const = 0 ;
 } ;
 
-class FEXP2Cache implement Like<UniqueRef<FEXP2CacheLayout>> {
+class FEXP2Cache implement Super<UniqueRef<FEXP2CacheLayout>> {
 public:
 	static CR<FEXP2Cache> expr_m () {
 		return keep[TYPE<FEXP2Cache>::expr] (FEXP2CacheHolder::expr) ;
@@ -344,7 +344,7 @@ public:
 struct FEXP10CacheLayout ;
 
 struct FEXP10CacheHolder implement Interface {
-	imports CR<Like<UniqueRef<FEXP10CacheLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<FEXP10CacheLayout>>> expr_m () ;
 	imports VFat<FEXP10CacheHolder> hold (VR<FEXP10CacheLayout> that) ;
 	imports CFat<FEXP10CacheHolder> hold (CR<FEXP10CacheLayout> that) ;
 
@@ -352,7 +352,7 @@ struct FEXP10CacheHolder implement Interface {
 	virtual void get (CR<Val64> index ,VR<Notation> item) const = 0 ;
 } ;
 
-class FEXP10Cache implement Like<UniqueRef<FEXP10CacheLayout>> {
+class FEXP10Cache implement Super<UniqueRef<FEXP10CacheLayout>> {
 public:
 	static CR<FEXP10Cache> expr_m () {
 		return keep[TYPE<FEXP10Cache>::expr] (FEXP10CacheHolder::expr) ;
@@ -368,7 +368,7 @@ public:
 struct FloatProcLayout ;
 
 struct FloatProcHolder implement Interface {
-	imports CR<Like<UniqueRef<FloatProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<FloatProcLayout>>> expr_m () ;
 	imports VFat<FloatProcHolder> hold (VR<FloatProcLayout> that) ;
 	imports CFat<FloatProcHolder> hold (CR<FloatProcLayout> that) ;
 
@@ -381,7 +381,7 @@ struct FloatProcHolder implement Interface {
 	virtual Notation fexp10_from_fexp2 (CR<Notation> fexp2) const = 0 ;
 } ;
 
-class FloatProc implement Like<UniqueRef<FloatProcLayout>> {
+class FloatProc implement Super<Ref<FloatProcLayout>> {
 public:
 	static CR<FloatProc> expr_m () {
 		return keep[TYPE<FloatProc>::expr] (FloatProcHolder::expr) ;
@@ -415,7 +415,7 @@ public:
 struct ByteProcLayout ;
 
 struct ByteProcHolder implement Interface {
-	imports CR<Like<UniqueRef<ByteProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<ByteProcLayout>>> expr_m () ;
 	imports VFat<ByteProcHolder> hold (VR<ByteProcLayout> that) ;
 	imports CFat<ByteProcHolder> hold (CR<ByteProcLayout> that) ;
 
@@ -450,7 +450,7 @@ struct ByteProcHolder implement Interface {
 	virtual Length lowcount (CR<Byte> a) const = 0 ;
 } ;
 
-class ByteProc implement Like<UniqueRef<ByteProcLayout>> {
+class ByteProc implement Super<Ref<ByteProcLayout>> {
 public:
 	static CR<ByteProc> expr_m () {
 		return keep[TYPE<ByteProc>::expr] (ByteProcHolder::expr) ;
@@ -979,7 +979,7 @@ public:
 struct HashProcLayout ;
 
 struct HashProcHolder implement Interface {
-	imports CR<Like<UniqueRef<HashProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<HashProcLayout>>> expr_m () ;
 	imports VFat<HashProcHolder> hold (VR<HashProcLayout> that) ;
 	imports CFat<HashProcHolder> hold (CR<HashProcLayout> that) ;
 
@@ -994,7 +994,7 @@ struct HashProcHolder implement Interface {
 	virtual Word crchash16 (CR<Pointer> src ,CR<Length> size_ ,CR<Word> val) const = 0 ;
 } ;
 
-class HashProc implement Like<UniqueRef<HashProcLayout>> {
+class HashProc implement Super<Ref<HashProcLayout>> {
 public:
 	static CR<HashProc> expr_m () {
 		return keep[TYPE<HashProc>::expr] (HashProcHolder::expr) ;

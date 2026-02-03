@@ -224,10 +224,10 @@ public:
 		const auto r10x = r7x * (1 - r8x) ;
 		const auto r11x = (1 - r7x) * (1 - r8x) ;
 		const auto r12x = (1 - r7x) * r8x ;
-		const auto r13x = cvt_colorf (image.at (r5x ,r6x)) ;
-		const auto r14x = cvt_colorf (image.at (r5x ,r4x)) ;
-		const auto r15x = cvt_colorf (image.at (r3x ,r4x)) ;
-		const auto r16x = cvt_colorf (image.at (r3x ,r6x)) ;
+		const auto r13x = cvt_color_t (image.at (r5x ,r6x)) ;
+		const auto r14x = cvt_color_t (image.at (r5x ,r4x)) ;
+		const auto r15x = cvt_color_t (image.at (r3x ,r4x)) ;
+		const auto r16x = cvt_color_t (image.at (r3x ,r6x)) ;
 		auto rax = Buffer<Flt32 ,SIZE_OF<ARG1>> () ;
 		for (auto &&i : range (0 ,rax.size ())) {
 			rax[i] = 0 ;
@@ -237,23 +237,23 @@ public:
 			rax[i] += r16x[i] * r12x ;
 			rax[i] = MathProc::clamp (rax[i] ,Flt32 (0) ,Flt32 (255)) ;
 		}
-		return cvt_colorb (rax) ;
+		return cvt_color_t (rax) ;
 	}
 
-	Buffer1<Flt32> cvt_colorf (CR<Color1B> a) const {
+	Buffer1<Flt32> cvt_color_t (CR<Color1B> a) const {
 		Buffer1<Flt32> ret ;
 		ret[0] = Flt32 (a.mB) ;
 		return move (ret) ;
 	}
 
-	Buffer2<Flt32> cvt_colorf (CR<Color2B> a) const {
+	Buffer2<Flt32> cvt_color_t (CR<Color2B> a) const {
 		Buffer2<Flt32> ret ;
 		ret[0] = Flt32 (a.mB) ;
 		ret[1] = Flt32 (a.mG) ;
 		return move (ret) ;
 	}
 
-	Buffer3<Flt32> cvt_colorf (CR<Color3B> a) const {
+	Buffer3<Flt32> cvt_color_t (CR<Color3B> a) const {
 		Buffer3<Flt32> ret ;
 		ret[0] = Flt32 (a.mB) ;
 		ret[1] = Flt32 (a.mG) ;
@@ -261,7 +261,7 @@ public:
 		return move (ret) ;
 	}
 
-	Buffer4<Flt32> cvt_colorf (CR<Color4B> a) const {
+	Buffer4<Flt32> cvt_color_t (CR<Color4B> a) const {
 		Buffer4<Flt32> ret ;
 		ret[0] = Flt32 (a.mB) ;
 		ret[1] = Flt32 (a.mG) ;
@@ -270,20 +270,20 @@ public:
 		return move (ret) ;
 	}
 
-	Color1B cvt_colorb (CR<Buffer1<Flt32>> a) const {
+	Color1B cvt_color_t (CR<Buffer1<Flt32>> a) const {
 		Color1B ret ;
 		ret.mB = Byte (Val32 (a[0])) ;
 		return move (ret) ;
 	}
 
-	Color2B cvt_colorb (CR<Buffer2<Flt32>> a) const {
+	Color2B cvt_color_t (CR<Buffer2<Flt32>> a) const {
 		Color2B ret ;
 		ret.mB = Byte (Val32 (a[0])) ;
 		ret.mG = Byte (Val32 (a[1])) ;
 		return move (ret) ;
 	}
 
-	Color3B cvt_colorb (CR<Buffer3<Flt32>> a) const {
+	Color3B cvt_color_t (CR<Buffer3<Flt32>> a) const {
 		Color3B ret ;
 		ret.mB = Byte (Val32 (a[0])) ;
 		ret.mG = Byte (Val32 (a[1])) ;
@@ -291,7 +291,7 @@ public:
 		return move (ret) ;
 	}
 
-	Color4B cvt_colorb (CR<Buffer4<Flt32>> a) const {
+	Color4B cvt_color_t (CR<Buffer4<Flt32>> a) const {
 		Color4B ret ;
 		ret.mB = Byte (Val32 (a[0])) ;
 		ret.mG = Byte (Val32 (a[1])) ;

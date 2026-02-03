@@ -323,27 +323,34 @@ struct FUNCTION_invoke {
 
 static constexpr auto invoke = FUNCTION_invoke () ;
 
-template <class A>
-struct FUNCTION_bitwise_impl {
-	template <class ARG1>
-	forceinline A operator() (CR<ARG1> a) const noexcept {
-		require (IS_TRIVIAL<A>) ;
-		using R1X = A ;
-		using R2X = CONDITIONAL<IS_SAME<ARG1 ,Pointer> ,A ,ARG1> ;
-		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<R2X>>) ;
-		A ret ;
-		auto &&rax = keep[TYPE<Storage<SIZE_OF<R1X>>>::expr] (Pointer::from (ret)) ;
-		auto &&rbx = keep[TYPE<Storage<SIZE_OF<R1X>>>::expr] (Pointer::from (a)) ;
-		rax = rbx ;
-		return move (keep[TYPE<A>::expr] (Pointer::from (rax))) ;
+class BitwiseProxy implement Proxy {
+public:
+	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
+	implicit operator ARG1 () const {
+		ARG1 ret ;
+		inline_memcpy (Pointer::from (ret) ,Pointer::from (thiz) ,SIZE_OF<ARG1>::expr) ;
+		return move (ret) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
+	void operator= (CR<ARG1> that) {
+		inline_memcpy (Pointer::from (thiz) ,Pointer::from (that) ,SIZE_OF<ARG1>::expr) ;
 	}
 } ;
 
 struct FUNCTION_bitwise {
 	template <class ARG1>
-	forceinline consteval FUNCTION_bitwise_impl<ARG1> operator[] (TYPE<ARG1>) const noexcept {
-		return FUNCTION_bitwise_impl<ARG1> () ;
+	forceinline VR<BitwiseProxy> operator() (VR<ARG1> item) const noexcept {
+		return Pointer::from (item) ;
 	}
+
+	template <class ARG1>
+	forceinline CR<BitwiseProxy> operator() (CR<ARG1> item) const noexcept {
+		return Pointer::from (item) ;
+	}
+
+	template <class ARG1>
+	forceinline CR<BitwiseProxy> operator()(RR<ARG1>) const noexcept = delete ;
 } ;
 
 static constexpr auto bitwise = FUNCTION_bitwise () ;
@@ -360,7 +367,7 @@ static constexpr auto memorize = FUNCTION_memorize () ;
 
 struct FUNCTION_inline_vptr {
 	forceinline Flag operator() (CR<Interface> binder) const noexcept {
-		return bitwise[TYPE<Flag>::expr] (binder) ;
+		return bitwise (binder) ;
 	}
 } ;
 
@@ -624,7 +631,7 @@ struct FUNCTION_inline_visit {
 
 	template <class ARG1 ,class = REQUIRE<IS_BASIC<ARG1>>>
 	forceinline void visit_impl (CR<typeof (PH3)> ,CR<Visitor> visitor ,CR<ARG1> a) const {
-		const auto r1x = bitwise[TYPE<BYTE_BASE<ARG1>>::expr] (a) ;
+		const auto r1x = BYTE_BASE<ARG1> (bitwise (a)) ;
 		visitor.push (r1x) ;
 	}
 
@@ -1175,7 +1182,7 @@ public:
 
 	explicit Pin (CR<A> that) {
 		const auto r1x = address (that) ;
-		inline_memcpy (Pointer::from (mStorage) ,Pointer::make (r1x) ,SIZE_OF<A>::expr) ;
+		mStorage = bitwise (Pointer::make (r1x)) ;
 		mLayout = r1x ;
 	}
 
@@ -1184,7 +1191,7 @@ public:
 	implicit ~Pin () noexcept {
 		if (mLayout == ZERO)
 			return ;
-		inline_memcpy (Pointer::make (mLayout) ,Pointer::from (mStorage) ,SIZE_OF<A>::expr) ;
+		bitwise (Pointer::make (mLayout)) = mStorage ;
 		mLayout = ZERO ;
 	}
 
@@ -1364,6 +1371,8 @@ struct HeapHolder implement Interface {
 	imports CFat<HeapHolder> hold (CR<HeapLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual void enter () const = 0 ;
+	virtual void leave () const = 0 ;
 	virtual Flag stack (CR<Length> size_) const = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Length length () const = 0 ;
@@ -1379,6 +1388,14 @@ protected:
 public:
 	static CR<Heap> expr_m () {
 		return keep[TYPE<Heap>::expr] (HeapHolder::expr) ;
+	}
+
+	void enter () const {
+		return HeapHolder::hold (thiz)->enter () ;
+	}
+
+	void leave () const {
+		return HeapHolder::hold (thiz)->leave () ;
 	}
 
 	Flag stack (CR<Length> size_) const {
@@ -1588,13 +1605,13 @@ struct FUNCTION_unimplemented {
 static constexpr auto unimplemented = FUNCTION_unimplemented () ;
 
 template <class A>
-struct Like {
+struct Super {
 	A mThis ;
 
 public:
-	implicit Like () = default ;
+	implicit Super () = default ;
 
-	implicit Like (RR<A> that) :mThis (move (that)) {}
+	implicit Super (RR<A> that) :mThis (move (that)) {}
 
 	using ITEM = typeof (nullof (A).ref) ;
 
@@ -1624,7 +1641,7 @@ public:
 		using R1X = typeof (nullof (ARG1).self) ;
 		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<B>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<R1X> ,ALIGN_OF<B>>) ;
-		inline_memcpy (Pointer::from (root_ptr ().mImplHolder) ,Pointer::from (holder) ,SIZE_OF<FatLayout>::expr) ;
+		root_ptr ().mImplHolder = bitwise (holder) ;
 	}
 
 	static VR<ExternalLayout> root_ptr () ;

@@ -35,7 +35,7 @@ struct FUNCTION_calendar_from_timepoint {
 struct FUNCTION_calendar_from_timepoint {
 	forceinline std::tm operator() (CR<std::time_t> time) const {
 		const auto r1x = Flag (std::localtime (&time)) ;
-		return bitwise[TYPE<std::tm>::expr] (Pointer::make (r1x)) ;
+		return bitwise (Pointer::make (r1x)) ;
 	}
 } ;
 #endif
@@ -134,14 +134,14 @@ public:
 		return move (ret) ;
 	}
 
-	Like<Box<TimeLayout ,TimeStorage>> sadd (CR<TimeLayout> that) const override {
-		Like<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
+	Super<Box<TimeLayout ,TimeStorage>> sadd (CR<TimeLayout> that) const override {
+		Super<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
 		ret.mThis->mTime = self.mTime + that.mTime ;
 		return move (ret) ;
 	}
 
-	Like<Box<TimeLayout ,TimeStorage>> ssub (CR<TimeLayout> that) const override {
-		Like<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
+	Super<Box<TimeLayout ,TimeStorage>> ssub (CR<TimeLayout> that) const override {
+		Super<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
 		ret.mThis->mTime = self.mTime - that.mTime ;
 		return move (ret) ;
 	}
@@ -163,10 +163,10 @@ template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 
 struct RuntimeProcLayout {} ;
 
-exports CR<Like<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
+exports CR<Super<Ref<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<RuntimeProcLayout>> ret ;
-		ret.mThis = UniqueRef<RuntimeProcLayout>::make () ;
+		Super<Ref<RuntimeProcLayout>> ret ;
+		ret.mThis = Ref<RuntimeProcLayout>::make () ;
 		RuntimeProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -232,7 +232,7 @@ exports CFat<AtomicHolder> AtomicHolder::hold (CR<AtomicLayout> that) {
 	return CFat<AtomicHolder> (AtomicImplHolder () ,that) ;
 }
 
-class SharedAtomicMutex implement Atomic {
+struct SharedAtomicMutex implement Atomic {
 public:
 	implicit SharedAtomicMutex () = default ;
 
@@ -296,8 +296,8 @@ public:
 	}
 } ;
 
-exports SharedRef<MutexLayout> MutexHolder::create () {
-	return SharedRef<MutexLayout>::make () ;
+exports Ref<MutexLayout> MutexHolder::create () {
+	return Ref<MutexLayout>::make () ;
 }
 
 exports VFat<MutexHolder> MutexHolder::hold (VR<MutexLayout> that) {
@@ -489,8 +489,8 @@ public:
 	}
 } ;
 
-exports AutoRef<ThreadLayout> ThreadHolder::create () {
-	return AutoRef<ThreadLayout>::make () ;
+exports Ref<ThreadLayout> ThreadHolder::create () {
+	return Ref<ThreadLayout>::make () ;
 }
 
 exports VFat<ThreadHolder> ThreadHolder::hold (VR<ThreadLayout> that) {
@@ -509,8 +509,8 @@ struct ProcessLayout {
 	Quad mProcessTime ;
 } ;
 
-exports AutoRef<ProcessLayout> ProcessHolder::create () {
-	return AutoRef<ProcessLayout>::make () ;
+exports Ref<ProcessLayout> ProcessHolder::create () {
+	return Ref<ProcessLayout>::make () ;
 }
 
 exports VFat<ProcessHolder> ProcessHolder::hold (VR<ProcessLayout> that) {
@@ -529,8 +529,8 @@ struct LibraryLayout {
 	Flag mLastError ;
 } ;
 
-exports AutoRef<LibraryLayout> LibraryHolder::create () {
-	return AutoRef<LibraryLayout>::make () ;
+exports Ref<LibraryLayout> LibraryHolder::create () {
+	return Ref<LibraryLayout>::make () ;
 }
 
 exports VFat<LibraryHolder> LibraryHolder::hold (VR<LibraryLayout> that) {
@@ -563,8 +563,8 @@ public:
 	}
 } ;
 
-exports AutoRef<SystemLayout> SystemHolder::create () {
-	return AutoRef<SystemLayout>::make () ;
+exports Ref<SystemLayout> SystemHolder::create () {
+	return Ref<SystemLayout>::make () ;
 }
 
 exports VFat<SystemHolder> SystemHolder::hold (VR<SystemLayout> that) {
@@ -696,27 +696,34 @@ public:
 		return move (ret) ;
 	}
 
-	Flt64 random_normal () override {
-		if ifdo (TRUE) {
-			if (self.mNormal.mOdd)
-				discard ;
-			const auto r1x = random_float () ;
-			const auto r2x = random_float () ;
-			const auto r3x = MathProc::clamp (r1x ,FLT64_EPS ,Flt64 (1)) ;
-			const auto r4x = MathProc::sqrt (Flt64 (-2) * MathProc::log (r3x)) ;
-			const auto r5x = MATH_PI * 2 * r2x ;
-			self.mNormal.mNX = r4x * MathProc::cos (r5x) ;
-			self.mNormal.mNY = r4x * MathProc::sin (r5x) ;
-			self.mNormal.mOdd = TRUE ;
-			return self.mNormal.mNX ;
+	Array<Flt64> random_normal (CR<Length> count) override {
+		Array<Flt64> ret = Array<Flt64> (count) ;
+		for (auto &&i : range (0 ,count)) {
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (self.mNormal.mOdd)
+					discard ;
+				const auto r1x = random_float () ;
+				const auto r2x = random_float () ;
+				const auto r3x = MathProc::clamp (r1x ,FLT64_EPS ,Flt64 (1)) ;
+				const auto r4x = MathProc::sqrt (Flt64 (-2) * MathProc::log (r3x)) ;
+				const auto r5x = MATH_PI * 2 * r2x ;
+				self.mNormal.mNX = r4x * MathProc::cos (r5x) ;
+				self.mNormal.mNY = r4x * MathProc::sin (r5x) ;
+				self.mNormal.mOdd = TRUE ;
+				ret[i] = self.mNormal.mNX ;
+			}
+			if ifdo (act) {
+				ret[i] = self.mNormal.mNY ;
+				self.mNormal.mOdd = FALSE ;
+			}
 		}
-		self.mNormal.mOdd = FALSE ;
-		return self.mNormal.mNY ;
+		return move (ret) ;
 	}
 } ;
 
-exports SharedRef<RandomLayout> RandomHolder::create () {
-	return SharedRef<RandomLayout>::make () ;
+exports Ref<RandomLayout> RandomHolder::create () {
+	return Ref<RandomLayout>::make () ;
 }
 
 exports VFat<RandomHolder> RandomHolder::hold (VR<RandomLayout> that) {
@@ -759,10 +766,10 @@ public:
 	}
 } ;
 
-exports CR<Like<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::expr_m () {
+exports CR<Super<Ref<SingletonProcLayout>>> SingletonProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<SingletonProcLayout>> ret ;
-		ret.mThis = UniqueRef<SingletonProcLayout>::make () ;
+		Super<Ref<SingletonProcLayout>> ret ;
+		ret.mThis = Ref<SingletonProcLayout>::make () ;
 		SingletonProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

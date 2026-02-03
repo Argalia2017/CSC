@@ -9,43 +9,6 @@
 #include "csc_core.hpp"
 
 namespace CSC {
-struct HeapMutexLayout {
-	Flag mHolder ;
-
-public:
-	implicit HeapMutexLayout () noexcept {
-		mHolder = ZERO ;
-	}
-} ;
-
-struct HeapMutexHolder implement Interface {
-	imports CR<HeapMutexLayout> expr_m () ;
-	imports VFat<HeapMutexHolder> hold (VR<HeapMutexLayout> that) ;
-	imports CFat<HeapMutexHolder> hold (CR<HeapMutexLayout> that) ;
-
-	virtual void initialize () = 0 ;
-	virtual void enter () = 0 ;
-	virtual void leave () = 0 ;
-} ;
-
-class HeapMutex implement HeapMutexLayout {
-protected:
-	using HeapMutexLayout::mHolder ;
-
-public:
-	static CR<HeapMutex> expr_m () {
-		return keep[TYPE<HeapMutex>::expr] (HeapMutexHolder::expr) ;
-	}
-
-	void enter () {
-		return HeapMutexHolder::hold (thiz)->enter () ;
-	}
-
-	void leave () {
-		return HeapMutexHolder::hold (thiz)->leave () ;
-	}
-} ;
-
 struct OptionalLayout {
 	Flag mCode ;
 	mutable BoxLayout mValue ;
@@ -722,6 +685,7 @@ struct UniqueRefHolder implement Interface {
 	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
 	virtual UniqueRefLayout recast (CR<Unknown> extend) = 0 ;
+	virtual void recycle () = 0 ;
 } ;
 
 inline UniqueRefLayout::~UniqueRefLayout () noexcept {
@@ -804,6 +768,10 @@ public:
 		const auto r1x = Unknown (RecastUnknownBinder<ARG1 ,A> ()) ;
 		UniqueRefLayout ret = UniqueRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<UniqueRef<ARG1>>::expr] (ret)) ;
+	}
+
+	void recycle () {
+		return UniqueRefHolder::hold (thiz)->recycle () ;
 	}
 } ;
 

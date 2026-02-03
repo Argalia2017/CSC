@@ -7,67 +7,10 @@
 #include "csc_basic.hpp"
 
 #include "csc_end.h"
-#ifdef __CSC_SYSTEM_WINDOWS__
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-#include <Windows.h>
-#endif
-
 #include <mutex>
 #include "csc_begin.h"
 
 namespace CSC {
-struct HeapMutexRoot {
-	Box<std::recursive_mutex> mMutex ;
-} ;
-
-class HeapMutexImplHolder final implement Fat<HeapMutexHolder ,HeapMutexLayout> {
-public:
-	void initialize () override {
-		root_ptr ().mMutex.remake () ;
-	}
-
-	static VR<HeapMutexRoot> root_ptr () {
-		static auto mInstance = HeapMutexRoot () ;
-		return mInstance ;
-	}
-
-	void enter () override {
-		return root_ptr ().mMutex->lock () ;
-	}
-
-	void leave () override {
-		return root_ptr ().mMutex->unlock () ;
-	}
-} ;
-
-exports CR<HeapMutexLayout> HeapMutexHolder::expr_m () {
-	return memorize ([&] () {
-		HeapMutexLayout ret ;
-		ret.mHolder = inline_vptr (HeapMutexImplHolder ()) ;
-		HeapMutexHolder::hold (ret)->initialize () ;
-		return move (ret) ;
-	}) ;
-}
-
-exports VFat<HeapMutexHolder> HeapMutexHolder::hold (VR<HeapMutexLayout> that) {
-	assert (that.mHolder != ZERO) ;
-	auto &&rax = keep[TYPE<HeapMutexImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return VFat<HeapMutexHolder> (rax ,that) ;
-}
-
-exports CFat<HeapMutexHolder> HeapMutexHolder::hold (CR<HeapMutexLayout> that) {
-	assert (that.mHolder != ZERO) ;
-	auto &&rax = keep[TYPE<HeapMutexImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return CFat<HeapMutexHolder> (rax ,that) ;
-}
-
 class OptionalImplHolder final implement Fat<OptionalHolder ,OptionalLayout> {
 public:
 	void initialize (CR<Flag> code) override {
@@ -250,7 +193,7 @@ static constexpr auto SHADERREFIMPLLAYOUT_HEADER = Flag (QUAD_ENDIAN) ;
 
 struct SharedRefTree {
 	Flag mHeader ;
-	HeapMutex mMutex ;
+	Heap mMutex ;
 	Length mCounter ;
 	BoxLayout mValue ;
 } ;
@@ -261,7 +204,7 @@ public:
 		assert (!exist ()) ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<SharedRefTree> () ,holder ,1) ;
 		self.mThis->mHeader = SHADERREFIMPLLAYOUT_HEADER ;
-		self.mThis->mMutex = HeapMutex::expr ;
+		self.mThis->mMutex = Heap::expr ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		self.mLayout = address (BoxHolder::hold (raw ())->ref) ;
 		BoxHolder::hold (raw ())->release () ;
@@ -384,6 +327,7 @@ exports CFat<SharedRefHolder> SharedRefHolder::hold (CR<SharedRefLayout> that) {
 }
 
 struct UniqueRefTree {
+	Flag mHeader ;
 	Function<VR<Pointer>> mOwner ;
 	BoxLayout mValue ;
 } ;
@@ -393,6 +337,7 @@ public:
 	void initialize (CR<Unknown> holder ,CR<Function<VR<Pointer>>> owner) override {
 		assert (!exist ()) ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<UniqueRefTree> () ,holder ,1) ;
+		self.mThis->mHeader = SHADERREFIMPLLAYOUT_HEADER ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		self.mLayout = address (BoxHolder::hold (raw ())->ref) ;
 		BoxHolder::hold (raw ())->release () ;
@@ -409,15 +354,13 @@ public:
 			return ;
 		if (!self.mThis.exclusive ())
 			return ;
-		if ifdo (TRUE) {
-			if (!BoxHolder::hold (raw ())->exist ())
-				discard ;
-			self.mThis->mOwner (BoxHolder::hold (raw ())->ref) ;
-		}
+		recycle () ;
 	}
 
 	Bool exist () const override {
 		if (self.mThis == NULL)
+			return FALSE ;
+		if (self.mThis->mHeader != SHADERREFIMPLLAYOUT_HEADER)
 			return FALSE ;
 		return TRUE ;
 	}
@@ -441,6 +384,17 @@ public:
 		const auto r1x = RFat<ReflectRecast> (extend) ;
 		ret.mLayout = r1x->recast (self.mLayout) ;
 		return move (ret) ;
+	}
+
+	void recycle () override {
+		if (!exist ())
+			return ;
+		if ifdo (TRUE) {
+			if (!BoxHolder::hold (raw ())->exist ())
+				discard ;
+			self.mThis->mOwner (BoxHolder::hold (raw ())->ref) ;
+		}
+		self.mThis->mHeader = ZERO ;
 	}
 } ;
 
@@ -575,7 +529,8 @@ public:
 		const auto r1x = inline_max (size_ ,0) ;
 		if (r1x == size ())
 			return ;
-		assert (!fixed ()) ;
+		assume (!fixed ()) ;
+		assume (self.mThis.exclusive ()) ;
 		const auto r2x = inline_min (r1x ,size ()) ;
 		auto rax = RefBufferLayout () ;
 		rax.mThis.prepare (unknown ()) ;

@@ -468,7 +468,7 @@ public:
 		assume (rax == 0) ;
 	}
 
-	Ref<RefBuffer<Byte>> load_asset (CR<String<Str>> file) const override {
+	RefBuffer<Byte> load_asset (CR<String<Str>> file) const override {
 		const auto r1x = dlopen (NULL ,RTLD_LOCAL) ;
 		assume (r1x != NULL) ;
 		const auto r2x = String<Str>::make (file ,slice ("input_txt_start")) ;
@@ -479,7 +479,7 @@ public:
 		assume (r5x != ZERO) ;
 		const auto r6x = r5x - r4x ;
 		assume (r6x >= 0) ;
-		return Ref<RefBuffer<Byte>>::make (RefBuffer<Byte>::reference (r4x ,r6x)) ;
+		return RefBuffer<Byte>::reference (r4x ,r6x) ;
 	}
 
 	void copy_file (CR<String<Str>> dst ,CR<String<Str>> src) const override {
@@ -1055,7 +1055,7 @@ struct UartFileCOMParams implement TERMIOS_INFO {} ;
 struct UartFileCOMStatus {} ;
 
 class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileLayout> {
-private:
+public:
 	void initialize () override {
 		self.mCOMParams = Ref<UartFileCOMParams>::make () ;
 		self.mCOMStatus = Ref<UartFileCOMStatus>::make () ;

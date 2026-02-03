@@ -62,7 +62,7 @@
 
 	<Type Name="CSC::Pin&lt;*&gt;">
 		<Expand HideRawView="true">
-			<Item Name="[+]" >*($T1*)&amp;mStorage</Item>
+			<Item Name="[+]">*($T1*)&amp;mStorage</Item>
 		</Expand>
 	</Type>
 
@@ -76,7 +76,7 @@
 		<DisplayString Condition="mLayout==0">{{???}}</DisplayString>
 		<DisplayString Condition="(*($T1*)mLayout)==0">{{???}}</DisplayString>
 		<Expand HideRawView="true">
-			<Item Name="[+]" Condition="mLayout!=0">(*($T1*)mLayout)</Item>
+			<Item Name="[+]" Condition="mLayout!=0">*($T1*)mLayout</Item>
 		</Expand>
 	</Type>
 
@@ -95,7 +95,7 @@
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::Like&lt;*&gt;">
+	<Type Name="CSC::Super&lt;*&gt;">
 		<Expand HideRawView="true">
 			<ExpandedItem>mThis</ExpandedItem>
 		</Expand>

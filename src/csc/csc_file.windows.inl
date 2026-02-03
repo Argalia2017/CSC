@@ -422,7 +422,7 @@ public:
 		assume (rax == 0) ;
 	}
 
-	Ref<RefBuffer<Byte>> load_asset (CR<String<Str>> file) const override {
+	RefBuffer<Byte> load_asset (CR<String<Str>> file) const override {
 		const auto r1x = String<Str> (slice (".bin")) ;
 		const auto r2x = FindResource (NULL ,file ,r1x) ;
 		assume (r2x != NULL) ;
@@ -431,7 +431,7 @@ public:
 		const auto r4x = LoadResource (NULL ,r2x) ;
 		assume (r4x != NULL) ;
 		const auto r5x = Flag (LockResource (r4x)) ;
-		return Ref<RefBuffer<Byte>>::make (RefBuffer<Byte>::reference (r5x ,r3x)) ;
+		return RefBuffer<Byte>::reference (r5x ,r3x) ;
 	}
 
 	void copy_file (CR<String<Str>> dst ,CR<String<Str>> src) const override {
@@ -989,7 +989,7 @@ struct UartFileCOMParams implement DCB {} ;
 struct UartFileCOMStatus implement COMSTAT {} ;
 
 class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileLayout> {
-private:
+public:
 	void initialize () override {
 		self.mCOMParams = Ref<UartFileCOMParams>::make () ;
 		self.mCOMStatus = Ref<UartFileCOMStatus>::make () ;

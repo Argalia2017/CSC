@@ -206,8 +206,8 @@ public:
 	}
 } ;
 
-exports SharedRef<WorkThreadLayout> WorkThreadHolder::create () {
-	return SharedRef<WorkThreadLayout>::make () ;
+exports Ref<WorkThreadLayout> WorkThreadHolder::create () {
+	return Ref<WorkThreadLayout>::make () ;
 }
 
 exports VFat<WorkThreadHolder> WorkThreadHolder::hold (VR<WorkThreadLayout> that) {
@@ -477,8 +477,8 @@ public:
 	}
 } ;
 
-exports SharedRef<CalcThreadLayout> CalcThreadHolder::create () {
-	return SharedRef<CalcThreadLayout>::make () ;
+exports Ref<CalcThreadLayout> CalcThreadHolder::create () {
+	return Ref<CalcThreadLayout>::make () ;
 }
 
 exports VFat<CalcThreadHolder> CalcThreadHolder::hold (VR<CalcThreadLayout> that) {
@@ -688,8 +688,8 @@ public:
 	}
 } ;
 
-exports SharedRef<PromiseLayout> PromiseHolder::create () {
-	return SharedRef<PromiseLayout>::make () ;
+exports Ref<PromiseLayout> PromiseHolder::create () {
+	return Ref<PromiseLayout>::make () ;
 }
 
 exports VFat<PromiseHolder> PromiseHolder::hold (VR<PromiseLayout> that) {
@@ -741,8 +741,8 @@ public:
 	}
 } ;
 
-exports SharedRef<SyntaxLayout> SyntaxHolder::create () {
-	return SharedRef<SyntaxLayout>::make () ;
+exports Ref<SyntaxLayout> SyntaxHolder::create () {
+	return Ref<SyntaxLayout>::make () ;
 }
 
 exports VFat<SyntaxHolder> SyntaxHolder::hold (VR<SyntaxLayout> that) {

@@ -93,8 +93,8 @@ public:
 		self.mProcessTime = process_time (r1x ,uid) ;
 	}
 
-	String<Stru8> load_proc_file (CR<Flag> uid) const {
-		String<Stru8> ret = String<Stru8>::make () ;
+	String<Stru> load_proc_file (CR<Flag> uid) const {
+		String<Stru> ret = String<Stru>::make () ;
 		ret.fill (Stru32 (0X00)) ;
 		const auto r1x = String<Str>::make (Format (slice ("/proc/$1/stat")) (uid)) ;
 		try {
@@ -110,15 +110,15 @@ public:
 		return move (ret) ;
 	}
 
-	Quad process_code (CR<String<Stru8>> info ,CR<Flag> uid) const {
+	Quad process_code (CR<String<Stru>> info ,CR<Flag> uid) const {
 		return Quad (getpgid (pid_t (uid))) ;
 	}
 
-	Quad process_time (CR<String<Stru8>> info ,CR<Flag> uid) const {
+	Quad process_time (CR<String<Stru>> info ,CR<Flag> uid) const {
 		if (info.length () == 0)
 			return Quad (0X00) ;
 		auto rax = TextReader (info.borrow ()) ;
-		auto rbx = String<Stru8> () ;
+		auto rbx = String<Stru> () ;
 		rax >> GAP ;
 		rax >> ReadBlank (rbx) ;
 		const auto r1x = StringParse<Val64>::make (rbx) ;
@@ -332,7 +332,7 @@ public:
 		}) ;
 		const auto r3x = Flag (r2x.ref) ;
 		auto rax = SingletonLocal () ;
-		inline_memcpy (Pointer::from (rax) ,Pointer::make (r3x) ,SIZE_OF<SingletonLocal>::expr) ;
+		rax = bitwise (Pointer::make (r3x)) ;
 		assume (rax.mReserve1 == Quad (self.mUid)) ;
 		assume (rax.mAddress1 != Quad (0X00)) ;
 		assume (rax.mAddress1 == rax.mAddress2) ;
@@ -362,7 +362,7 @@ public:
 		assume (rax.mAddress1 == rax.mAddress2) ;
 		assume (rax.mReserve2 == abi_reserve ()) ;
 		assume (rax.mReserve3 == ctx_reserve ()) ;
-		inline_memcpy (Pointer::make (r3x) ,Pointer::from (rax) ,SIZE_OF<SingletonLocal>::expr) ;
+		bitwise (Pointer::make (r3x)) = rax ;
 	}
 
 	Quad abi_reserve () const override {

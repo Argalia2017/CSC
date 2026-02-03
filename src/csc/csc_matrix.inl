@@ -516,15 +516,13 @@ public:
 	}
 
 	void make_UnitaryMatrix (CR<Matrix> trs) override {
-		const auto r1x = DiagMatrix (1 ,1 ,1 ,0) ;
-		const auto r2x = trs * Vector::axis_x () ;
-		const auto r3x = trs * Vector::axis_y () ;
-		const auto r4x = trs * Vector::axis_z () ;
-		const auto r5x = MathProc::inverse (r2x.magnitude ()) * MathProc::sign (r2x[0]) ;
-		const auto r6x = MathProc::inverse (r3x.magnitude ()) * MathProc::sign (r3x[1]) ;
-		const auto r7x = MathProc::inverse (r4x.magnitude ()) * MathProc::sign (r4x[2]) ;
-		const auto r8x = DiagMatrix (r5x ,r6x ,r7x ,1) ;
-		self = trs * r1x * r8x + Matrix::axis_w () ;
+		const auto r1x = trs * Vector::axis_x () ;
+		const auto r2x = trs * Vector::axis_y () ;
+		const auto r3x = trs * Vector::axis_z () ;
+		const auto r4x = Matrix (r1x.normalize () ,r2x.normalize () ,r3x.normalize () ,Vector::axis_w ()) ;
+		const auto r5x = MathProc::sign (r4x.determinant ()) ;
+		const auto r6x = DiagMatrix (r5x ,r5x ,r5x ,1) ;
+		self = r4x * r6x ;
 	}
 
 	void make_TranslationMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) override {
@@ -685,15 +683,14 @@ public:
 		ret[1][1] = d ;
 		ret[2][2] = d ;
 		ret[3][2] = 1 ;
-		ret[3][3] = d ;
+		ret[3][3] = 0 ;
 		self = move (ret) ;
 	}
 
 	void make_HomographyMatrix (CR<Vector> t ,CR<Vector> n ,CR<Vector> c) override {
 		const auto r1x = (c - t) * n ;
-		const auto r2x = OuterProductMatrix (t ,n) ;
-		const auto r3x = r2x + Matrix::iden () * r1x ;
-		self = r3x ;
+		const auto r2x = OuterProductMatrix (t ,n) + Matrix::iden () * r1x ;
+		self = r2x ;
 	}
 } ;
 
@@ -709,10 +706,10 @@ template class External<MatrixProcHolder ,MatrixProcLayout> ;
 
 struct MatrixProcLayout {} ;
 
-exports CR<Like<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
+exports CR<Super<Ref<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<MatrixProcLayout>> ret ;
-		ret.mThis = UniqueRef<MatrixProcLayout>::make () ;
+		Super<Ref<MatrixProcLayout>> ret ;
+		ret.mThis = Ref<MatrixProcLayout>::make () ;
 		MatrixProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -763,11 +760,11 @@ exports CFat<DuplexMatrixHolder> DuplexMatrixHolder::hold (CR<DuplexMatrixLayout
 class QuaternionImplHolder final implement Fat<QuaternionHolder ,QuaternionLayout> {
 public:
 	void initialize (CR<Flt64> w ,CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) override {
+		self.mQuaternion[0] = w ;
 		self.mQuaternion[1] = x ;
 		self.mQuaternion[2] = y ;
 		self.mQuaternion[3] = z ;
-		self.mQuaternion[0] = w ;
-		normalized () ;
+		normalized (self) ;
 	}
 
 	void initialize (CR<Vector> that) override {
@@ -775,11 +772,11 @@ public:
 		const auto r2x = that.normalize () ;
 		const auto r3x = MathProc::sin (r1x / 2) ;
 		const auto r4x = MathProc::cos (r1x / 2) ;
+		self.mQuaternion[0] = r4x ;
 		self.mQuaternion[1] = r2x[0] * r3x ;
 		self.mQuaternion[2] = r2x[1] * r3x ;
 		self.mQuaternion[3] = r2x[2] * r3x ;
-		self.mQuaternion[0] = r4x ;
-		normalized () ;
+		normalized (self) ;
 	}
 
 	void initialize (CR<Matrix> that) override {
@@ -791,10 +788,10 @@ public:
 				discard ;
 			const auto r3x = MathProc::sqrt (r2x) ;
 			const auto r4x = MathProc::inverse (r3x) ;
+			self.mQuaternion[0] = r3x ;
 			self.mQuaternion[1] = (r1x[2][1] - r1x[1][2]) * r4x ;
 			self.mQuaternion[2] = (r1x[0][2] - r1x[2][0]) * r4x ;
 			self.mQuaternion[3] = (r1x[1][0] - r1x[0][1]) * r4x ;
-			self.mQuaternion[0] = r3x ;
 		}
 		if ifdo (act) {
 			const auto r5x = 1 + r1x[0][0] - r1x[1][1] - r1x[2][2] ;
@@ -802,10 +799,10 @@ public:
 				discard ;
 			const auto r6x = MathProc::sqrt (r5x) ;
 			const auto r7x = MathProc::inverse (r6x) ;
+			self.mQuaternion[0] = (r1x[2][1] - r1x[1][2]) * r7x ;
 			self.mQuaternion[1] = r6x ;
 			self.mQuaternion[2] = (r1x[1][0] + r1x[0][1]) * r7x ;
 			self.mQuaternion[3] = (r1x[0][2] + r1x[2][0]) * r7x ;
-			self.mQuaternion[0] = (r1x[2][1] - r1x[1][2]) * r7x ;
 		}
 		if ifdo (act) {
 			const auto r8x = 1 - r1x[0][0] + r1x[1][1] - r1x[2][2] ;
@@ -813,10 +810,10 @@ public:
 				discard ;
 			const auto r9x = MathProc::sqrt (r8x) ;
 			const auto r10x = MathProc::inverse (r9x) ;
+			self.mQuaternion[0] = (r1x[0][2] - r1x[2][0]) * r10x ;
 			self.mQuaternion[1] = (r1x[1][0] + r1x[0][1]) * r10x ;
 			self.mQuaternion[2] = r9x ;
 			self.mQuaternion[3] = (r1x[2][1] + r1x[1][2]) * r10x ;
-			self.mQuaternion[0] = (r1x[0][2] - r1x[2][0]) * r10x ;
 		}
 		if ifdo (act) {
 			const auto r11x = 1 - r1x[0][0] - r1x[1][1] + r1x[2][2] ;
@@ -824,15 +821,15 @@ public:
 				discard ;
 			const auto r12x = MathProc::sqrt (r11x) ;
 			const auto r13x = MathProc::inverse (r12x) ;
+			self.mQuaternion[0] = (r1x[1][0] - r1x[0][1]) * r13x ;
 			self.mQuaternion[1] = (r1x[0][2] + r1x[2][0]) * r13x ;
 			self.mQuaternion[2] = (r1x[2][1] + r1x[1][2]) * r13x ;
 			self.mQuaternion[3] = r12x ;
-			self.mQuaternion[0] = (r1x[1][0] - r1x[0][1]) * r13x ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
 		}
-		normalized () ;
+		normalized (self) ;
 	}
 
 	void initialize (CR<EulerAngle> that) override {
@@ -885,17 +882,17 @@ public:
 		}
 	}
 
-	void normalized () {
-		const auto r1x = MathProc::square (self.mQuaternion[1]) ;
-		const auto r2x = MathProc::square (self.mQuaternion[2]) ;
-		const auto r3x = MathProc::square (self.mQuaternion[3]) ;
-		const auto r4x = MathProc::square (self.mQuaternion[0]) ;
+	void normalized (VR<QuaternionLayout> that) const {
+		const auto r1x = MathProc::square (that.mQuaternion[1]) ;
+		const auto r2x = MathProc::square (that.mQuaternion[2]) ;
+		const auto r3x = MathProc::square (that.mQuaternion[3]) ;
+		const auto r4x = MathProc::square (that.mQuaternion[0]) ;
 		const auto r5x = MathProc::sqrt (r1x + r2x + r3x + r4x) ;
-		const auto r6x = MathProc::inverse (r5x) ;
-		self.mQuaternion[1] *= r6x ;
-		self.mQuaternion[2] *= r6x ;
-		self.mQuaternion[3] *= r6x ;
-		self.mQuaternion[0] *= r6x ;
+		const auto r6x = MathProc::sign (that.mQuaternion[0]) * MathProc::inverse (r5x) ;
+		that.mQuaternion[0] *= r6x ;
+		that.mQuaternion[1] *= r6x ;
+		that.mQuaternion[2] *= r6x ;
+		that.mQuaternion[3] *= r6x ;
 	}
 
 	CR<Flt64> at (CR<Index> y) const leftvalue override {
@@ -928,6 +925,16 @@ public:
 		visitor.leave () ;
 	}
 
+	QuaternionLayout sadd (CR<QuaternionLayout> that) const override {
+		QuaternionLayout ret ;
+		ret.mQuaternion[0] = self.mQuaternion[0] + that.mQuaternion[0] ;
+		ret.mQuaternion[1] = self.mQuaternion[1] + that.mQuaternion[1] ;
+		ret.mQuaternion[2] = self.mQuaternion[2] + that.mQuaternion[2] ;
+		ret.mQuaternion[3] = self.mQuaternion[3] + that.mQuaternion[3] ;
+		normalized (ret) ;
+		return move (ret) ;
+	}
+
 	QuaternionLayout smul (CR<QuaternionLayout> that) const override {
 		QuaternionLayout ret ;
 		const auto r1x = axis (self) ;
@@ -936,15 +943,21 @@ public:
 		const auto r4x = that.mQuaternion[0] ;
 		const auto r5x = r3x * r2x + r4x * r1x + (r1x ^ r2x) ;
 		const auto r6x = r3x * r4x - r1x * r2x ;
+		ret.mQuaternion[0] = r6x ;
 		ret.mQuaternion[1] = r5x[0] ;
 		ret.mQuaternion[2] = r5x[1] ;
 		ret.mQuaternion[3] = r5x[2] ;
-		ret.mQuaternion[0] = r6x ;
+		normalized (ret) ;
 		return move (ret) ;
 	}
 
-	static Vector axis (CR<QuaternionLayout> q) {
-		return Vector (q.mQuaternion[1] ,q.mQuaternion[2] ,q.mQuaternion[3] ,0) ;
+	QuaternionLayout inverse () const override {
+		QuaternionLayout ret ;
+		ret.mQuaternion[0] = self.mQuaternion[0] ;
+		ret.mQuaternion[1] = -self.mQuaternion[1] ;
+		ret.mQuaternion[2] = -self.mQuaternion[2] ;
+		ret.mQuaternion[3] = -self.mQuaternion[3] ;
+		return move (ret) ;
 	}
 
 	Flt64 angle () const {
@@ -963,6 +976,10 @@ public:
 		const auto r1x = axis (self).normalize () ;
 		const auto r2x = angle () ;
 		return RotationMatrix (r1x ,r2x) ;
+	}
+
+	static Vector axis (CR<QuaternionLayout> q) {
+		return Vector (q.mQuaternion[1] ,q.mQuaternion[2] ,q.mQuaternion[3] ,0) ;
 	}
 
 	EulerAngle euler (CR<Just<ViewMatrixOption>> type) const override {
@@ -1160,10 +1177,10 @@ template class External<LinearProcHolder ,LinearProcLayout> ;
 
 struct LinearProcLayout {} ;
 
-exports CR<Like<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
+exports CR<Super<Ref<LinearProcLayout>>> LinearProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<LinearProcLayout>> ret ;
-		ret.mThis = UniqueRef<LinearProcLayout>::make () ;
+		Super<Ref<LinearProcLayout>> ret ;
+		ret.mThis = Ref<LinearProcLayout>::make () ;
 		LinearProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -1187,8 +1204,8 @@ struct PointCloudKDTreeLayout {
 	Ref<KDTreeKNNSearch> mKNNSearch ;
 } ;
 
-exports AutoRef<PointCloudKDTreeLayout> PointCloudKDTreeHolder::create () {
-	return AutoRef<PointCloudKDTreeLayout>::make () ;
+exports Ref<PointCloudKDTreeLayout> PointCloudKDTreeHolder::create () {
+	return Ref<PointCloudKDTreeLayout>::make () ;
 }
 
 exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VR<PointCloudKDTreeLayout> that) {
@@ -1311,14 +1328,14 @@ public:
 	Matrix box_matrix () const override {
 		const auto r1x = box_center () ;
 		const auto r2x = bound () ;
-		const auto r10x = (Vector (r2x.mMax) - r1x).sabs () ;
-		const auto r11x = (Vector (r2x.mMin) - r1x).sabs () ;
-		const auto r3x = MathProc::max_of (r10x[0] ,r11x[0] ,Flt64 (1)) ;
-		const auto r4x = MathProc::max_of (r10x[1] ,r11x[1] ,Flt64 (1)) ;
-		const auto r5x = MathProc::max_of (r10x[2] ,r11x[2] ,Flt64 (1)) ;
-		const auto r7x = TranslationMatrix (r1x) ;
-		const auto r8x = DiagMatrix (r3x ,r4x ,r5x) ;
-		return r7x * r8x ;
+		const auto r3x = (Vector (r2x.mMax) - r1x).sabs () ;
+		const auto r4x = (Vector (r2x.mMin) - r1x).sabs () ;
+		const auto r5x = MathProc::max_of (r3x[0] ,r4x[0] ,Flt64 (1)) ;
+		const auto r6x = MathProc::max_of (r3x[1] ,r4x[1] ,Flt64 (1)) ;
+		const auto r7x = MathProc::max_of (r3x[2] ,r4x[2] ,Flt64 (1)) ;
+		const auto r8x = TranslationMatrix (r1x) ;
+		const auto r9x = DiagMatrix (r5x ,r6x ,r7x) ;
+		return r8x * r9x ;
 	}
 
 	Matrix box_matrix (CR<Flt64> ax ,CR<Flt64> ay ,CR<Flt64> az) const override {
@@ -1368,9 +1385,9 @@ public:
 			if (self.mKDTree.mThis.exist ())
 				discard ;
 			const auto r1x = Pin<PointCloudKDTree> (self.mKDTree) ;
-			PointCloudKDTreeHolder::hold (r1x.ref)->initialize (self.mPointCloud.ref) ;
+			r1x.ref = PointCloudKDTree (self.mPointCloud.ref) ;
 		}
-		return PointCloudKDTreeHolder::hold (self.mKDTree)->search (center ,neighbor) ;
+		return self.mKDTree.search (center ,neighbor) ;
 	}
 
 	Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const override {
@@ -1378,9 +1395,9 @@ public:
 			if (self.mKDTree.mThis.exist ())
 				discard ;
 			const auto r1x = Pin<PointCloudKDTree> (self.mKDTree) ;
-			PointCloudKDTreeHolder::hold (r1x.ref)->initialize (self.mPointCloud.ref) ;
+			r1x.ref = PointCloudKDTree (self.mPointCloud.ref) ;
 		}
-		return PointCloudKDTreeHolder::hold (self.mKDTree)->search (center ,neighbor ,radius) ;
+		return self.mKDTree.search (center ,neighbor ,radius) ;
 	}
 } ;
 

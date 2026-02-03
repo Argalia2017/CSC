@@ -108,68 +108,70 @@ public:
 		return move (ret) ;
 	}
 
-	String<Stru8> stru8_from_stru16 (CR<String<Stru16>> a) const override {
-		String<Stru8> ret = String<Stru8> (a.length () * 3) ;
+	String<Stru> stru8_from_stru16 (CR<String<Stru16>> a) const override {
+		String<Stru> ret = String<Stru> (a.length () * 3) ;
 		Index ix = 0 ;
 		auto rax = Flag (0) ;
-		auto rbx = Stru32 () ;
+		auto rbx = Char () ;
 		for (auto &&i : a.iter ()) {
+			const auto r1x = Char (a[i]) ;
 			if (rax == Flag (99))
-				continue ;
+				break ;
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru16 (0X007F))
+				if (r1x > Char (0X007F))
 					discard ;
-				ret[ix] = Stru8 (a[i]) ;
+				ret[ix] = Stru (r1x) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru16 (0X07FF))
+				if (r1x > Char (0X07FF))
 					discard ;
-				ret[ix] = (Stru8 (a[i] >> 6) & Stru8 (0X1F)) | Stru8 (0XC0) ;
+				ret[ix] = Stru (((r1x >> 6) & Char (0X1F)) | Char (0XC0)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i]) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru ((r1x & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] < Stru16 (0XD800))
+				if (r1x < Char (0XD800))
 					discard ;
-				if (a[i] > Stru16 (0XDBFF))
+				if (r1x > Char (0XDBFF))
 					discard ;
-				rbx = Stru32 (a[i] & Stru16 (0X03FF)) ;
+				rbx = Char (r1x & Char (0X03FF)) ;
 				rax = Flag (1) ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				ret[ix] = (Stru8 (a[i] >> 12) & Stru8 (0X0F)) | Stru8 (0XE0) ;
+				ret[ix] = Stru (((r1x >> 12) & Char (0X0F)) | Char (0XE0)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 6) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 6) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i]) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru ((r1x & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (1))
 					discard ;
-				if (a[i] < Stru16 (0XDC00))
+				if (r1x < Char (0XDC00))
 					discard ;
-				if (a[i] > Stru16 (0XDFFF))
+				if (r1x > Char (0XDFFF))
 					discard ;
-				rbx = Stru32 (((rbx << 10) | (a[i] & Stru16 (0X03FF))) + Stru32 (0X00010000)) ;
-				ret[ix] = (Stru8 (rbx >> 18) & Stru8 (0X07)) | Stru8 (0XF0) ;
+				rbx = Char ((rbx << 10) | (r1x & Char (0X03FF))) ;
+				rbx = Char (Val32 (rbx) + Val32 (0X00010000)) ;
+				ret[ix] = Stru (((rbx >> 18) & Char (0X07)) | Char (0XF0)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (rbx >> 12) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((rbx >> 12) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (rbx >> 6) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((rbx >> 6) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (rbx) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru ((rbx & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
 				rax = Flag (0) ;
 			}
@@ -181,103 +183,105 @@ public:
 		if ifdo (TRUE) {
 			if (rax == Flag (0))
 				discard ;
-			ret[ix] = Stru8 (0X3F) ;
+			ret[ix] = Stru (Char (0X3F)) ;
 			ix++ ;
 		}
 		ret.trunc (ix) ;
 		return move (ret) ;
 	}
 
-	String<Stru8> stru8_from_stru32 (CR<String<Stru32>> a) const override {
+	String<Stru> stru8_from_stru32 (CR<String<Stru32>> a) const override {
 		//@info: 1 bytes [0,0X7F] 0xxxxxxx
 		//@info: 2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
 		//@info: 3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
 		//@info: 4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 		//@info: 5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 		//@info: 6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-		String<Stru8> ret = String<Stru8> (a.length () * 6) ;
+		String<Stru> ret = String<Stru> (a.length () * 6) ;
 		Index ix = 0 ;
 		auto rax = Flag (0) ;
+		auto rbx = Char () ;
 		for (auto &&i : a.iter ()) {
+			const auto r1x = Char (a[i]) ;
 			if (rax == Flag (99))
-				continue ;
+				break ;
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru32 (0X0000007F))
+				if (r1x > Char (0X0000007F))
 					discard ;
-				ret[ix] = Stru8 (a[i]) ;
+				ret[ix] = Stru (r1x) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru32 (0X000007FF))
+				if (r1x > Char (0X000007FF))
 					discard ;
-				ret[ix] = (Stru8 (a[i] >> 6) & Stru8 (0X1F)) | Stru8 (0XC0) ;
+				ret[ix] = Stru (((r1x >> 6) & Char (0X1F)) | Char (0XC0)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i]) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru ((r1x & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru32 (0X0000FFFF))
+				if (r1x > Char (0X0000FFFF))
 					discard ;
-				ret[ix] = (Stru8 (a[i] >> 12) & Stru8 (0X0F)) | Stru8 (0XE0) ;
+				ret[ix] = Stru (((r1x >> 12) & Char (0X0F)) | Char (0XE0)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 6) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 6) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i]) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru ((r1x & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru32 (0X001FFFFF))
+				if (r1x > Char (0X001FFFFF))
 					discard ;
-				ret[ix] = (Stru8 (a[i] >> 18) & Stru8 (0X07)) | Stru8 (0XF0) ;
+				ret[ix] = Stru (((r1x >> 18) & Char (0X07)) | Char (0XF0)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 12) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 12) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 6) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 6) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i]) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru ((r1x & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru32 (0X03FFFFFF))
+				if (r1x > Char (0X03FFFFFF))
 					discard ;
-				ret[ix] = (Stru8 (a[i] >> 24) & Stru8 (0X03)) | Stru8 (0XF8) ;
+				ret[ix] = Stru (((r1x >> 24) & Char (0X03)) | Char (0XF8)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 18) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 18) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 12) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 12) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 6) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 6) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i]) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru ((r1x & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru32 (0X7FFFFFFF))
+				if (r1x > Char (0X7FFFFFFF))
 					discard ;
-				ret[ix] = (Stru8 (a[i] >> 30) & Stru8 (0X01)) | Stru8 (0XFC) ;
+				ret[ix] = Stru (((r1x >> 30) & Char (0X01)) | Char (0XFC)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 24) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 24) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 18) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 18) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 12) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 12) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i] >> 6) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru (((r1x >> 6) & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
-				ret[ix] = (Stru8 (a[i]) & Stru8 (0X3F)) | Stru8 (0X80) ;
+				ret[ix] = Stru ((r1x & Char (0X3F)) | Char (0X80)) ;
 				ix++ ;
 			}
 			if ifdo (act) {
@@ -289,78 +293,79 @@ public:
 		return move (ret) ;
 	}
 
-	String<Stru16> stru16_from_stru8 (CR<String<Stru8>> a) const override {
+	String<Stru16> stru16_from_stru8 (CR<String<Stru>> a) const override {
 		String<Stru16> ret = String<Stru16> (a.length ()) ;
 		Index ix = 0 ;
 		auto rax = Flag (0) ;
-		auto rbx = Stru32 () ;
+		auto rbx = Char () ;
 		for (auto &&i : a.iter ()) {
+			const auto r1x = Char (a[i]) ;
 			if (rax == Flag (99))
-				continue ;
+				break ;
 			if ifdo (TRUE) {
 				auto act = TRUE ;
 				if ifdo (act) {
 					if (rax != Flag (0))
 						discard ;
-					if (a[i] > Stru8 (0X7F))
+					if (r1x > Char (0X7F))
 						discard ;
-					ret[ix] = Stru16 (a[i]) ;
+					ret[ix] = Stru16 (r1x) ;
 					ix++ ;
 				}
 				if ifdo (act) {
 					if (rax != Flag (0))
 						discard ;
-					if (a[i] > Stru8 (0XDF))
+					if (r1x > Char (0XDF))
 						discard ;
-					rbx = Stru32 (a[i] & Stru8 (0X1F)) ;
+					rbx = Char (r1x & Char (0X1F)) ;
 					rax = Flag (1) ;
 				}
 				if ifdo (act) {
 					if (rax != Flag (0))
 						discard ;
-					if (a[i] > Stru8 (0XEF))
+					if (r1x > Char (0XEF))
 						discard ;
-					rbx = Stru32 (a[i] & Stru8 (0X0F)) ;
+					rbx = Char (r1x & Char (0X0F)) ;
 					rax = Flag (2) ;
 				}
 				if ifdo (act) {
 					if (rax != Flag (0))
 						discard ;
-					if (a[i] > Stru8 (0XF7))
+					if (r1x > Char (0XF7))
 						discard ;
-					rbx = Stru32 (a[i] & Stru8 (0X07)) ;
+					rbx = Char (r1x & Char (0X07)) ;
 					rax = Flag (3) ;
 				}
 				if ifdo (act) {
 					if (rax != Flag (0))
 						discard ;
-					if (a[i] > Stru8 (0XFB))
+					if (r1x > Char (0XFB))
 						discard ;
-					rbx = Stru32 (a[i] & Stru8 (0X03)) ;
+					rbx = Char (r1x & Char (0X03)) ;
 					rax = Flag (4) ;
 				}
 				if ifdo (act) {
 					if (rax != Flag (0))
 						discard ;
-					if (a[i] > Stru8 (0XFD))
+					if (r1x > Char (0XFD))
 						discard ;
-					rbx = Stru32 (a[i] & Stru8 (0X01)) ;
+					rbx = Char (r1x & Char (0X01)) ;
 					rax = Flag (5) ;
 				}
 				if ifdo (act) {
 					if (rax != Flag (1))
 						discard ;
-					if (a[i] > Stru8 (0XBF))
+					if (r1x > Char (0XBF))
 						discard ;
-					rbx = Stru32 ((rbx << 6) | (a[i] & Stru8 (0X3F))) ;
+					rbx = Char ((rbx << 6) | (r1x & Char (0X3F))) ;
 					rax = Flag (10) ;
 				}
 				if ifdo (act) {
 					if (!inline_between (rax ,2 ,6))
 						discard ;
-					if (a[i] > Stru8 (0XBF))
+					if (r1x > Char (0XBF))
 						discard ;
-					rbx = Stru32 ((rbx << 6) | (a[i] & Stru8 (0X3F))) ;
+					rbx = Char ((rbx << 6) | (r1x & Char (0X3F))) ;
 					rax-- ;
 				}
 				if ifdo (act) {
@@ -373,26 +378,26 @@ public:
 					discard ;
 				auto act = TRUE ;
 				if ifdo (act) {
-					if (rbx > Stru32 (0X0000FFFF))
+					if (rbx > Char (0X0000FFFF))
 						discard ;
 					ret[ix] = Stru16 (rbx) ;
 					ix++ ;
 					rax = Flag (0) ;
 				}
 				if ifdo (act) {
-					if (rbx > Stru32 (0X0010FFFF))
+					if (rbx > Char (0X0010FFFF))
 						discard ;
-					rbx = Stru32 (rbx - Stru32 (0X00010000)) ;
-					ret[ix] = (Stru16 (rbx >> 10) & Stru16 (0X03FF)) | Stru16 (0XD800) ;
+					rbx = Char (Val32 (rbx) - Val32 (0X00010000)) ;
+					ret[ix] = Stru16 (((rbx >> 10) & Char (0X03FF)) | Char (0XD800)) ;
 					ix++ ;
-					ret[ix] = (Stru16 (rbx) & Stru16 (0X03FF)) | Stru16 (0XDC00) ;
+					ret[ix] = Stru16 ((rbx & Char (0X03FF)) | Char (0XDC00)) ;
 					ix++ ;
 					rax = Flag (0) ;
 				}
 				if ifdo (act) {
-					if (rbx > Stru32 (0X7FFFFFFF))
+					if (rbx > Char (0X7FFFFFFF))
 						discard ;
-					ret[ix] = Stru16 (0X3F) ;
+					ret[ix] = Stru16 (Char (0X3F)) ;
 					ix++ ;
 					rax = Flag (0) ;
 				}
@@ -405,7 +410,7 @@ public:
 		if ifdo (TRUE) {
 			if (rax == Flag (0))
 				discard ;
-			ret[ix] = Stru16 (0X3F) ;
+			ret[ix] = Stru16 (Char (0X3F)) ;
 			ix++ ;
 		}
 		ret.trunc (ix) ;
@@ -418,34 +423,37 @@ public:
 		String<Stru16> ret = String<Stru16> (a.length () * 2) ;
 		Index ix = 0 ;
 		auto rax = Flag (0) ;
+		auto rbx = Char () ;
 		for (auto &&i : a.iter ()) {
+			const auto r1x = Char (a[i]) ;
 			if (rax == Flag (99))
-				continue ;
+				break ;
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru32 (0X0000FFFF))
+				if (r1x > Char (0X0000FFFF))
 					discard ;
-				ret[ix] = Stru16 (a[i]) ;
+				ret[ix] = Stru16 (r1x) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru32 (0X0010FFFF))
+				if (r1x > Char (0X0010FFFF))
 					discard ;
-				ret[ix] = (Stru16 ((a[i] - Stru32 (0X00010000)) >> 10) & Stru16 (0X03FF)) | Stru16 (0XD800) ;
+				rbx = Char (Val32 (r1x) - Val32 (0X00010000)) ;
+				ret[ix] = Stru16 (((rbx >> 10) & Char (0X03FF)) | Char (0XD800)) ;
 				ix++ ;
-				ret[ix] = (Stru16 (a[i] - Stru32 (0X00010000)) & Stru16 (0X03FF)) | Stru16 (0XDC00) ;
+				ret[ix] = Stru16 ((rbx & Char (0X03FF)) | Char (0XDC00)) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru32 (0X7FFFFFFF))
+				if (r1x > Char (0X7FFFFFFF))
 					discard ;
-				ret[ix] = Stru16 (0X3F) ;
+				ret[ix] = Stru16 (Char (0X3F)) ;
 				ix++ ;
 			}
 			if ifdo (act) {
@@ -457,7 +465,7 @@ public:
 		return move (ret) ;
 	}
 
-	String<Stru32> stru32_from_stru8 (CR<String<Stru8>> a) const override {
+	String<Stru32> stru32_from_stru8 (CR<String<Stru>> a) const override {
 		//@info: 1 bytes [0,0X7F] 0xxxxxxx
 		//@info: 2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
 		//@info: 3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
@@ -467,75 +475,76 @@ public:
 		String<Stru32> ret = String<Stru32> (a.length ()) ;
 		Index ix = 0 ;
 		auto rax = Flag (0) ;
-		auto rbx = Stru32 () ;
+		auto rbx = Char () ;
 		for (auto &&i : a.iter ()) {
+			const auto r1x = Char (a[i]) ;
 			if (rax == Flag (99))
-				continue ;
+				break ;
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru8 (0X7F))
+				if (r1x > Char (0X7F))
 					discard ;
-				ret[ix] = Stru32 (a[i]) ;
+				ret[ix] = Stru32 (r1x) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru8 (0XDF))
+				if (r1x > Char (0XDF))
 					discard ;
-				rbx = Stru32 (a[i] & Stru8 (0X1F)) ;
+				rbx = Char (r1x & Char (0X1F)) ;
 				rax = Flag (1) ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru8 (0XEF))
+				if (r1x > Char (0XEF))
 					discard ;
-				rbx = Stru32 (a[i] & Stru8 (0X0F)) ;
+				rbx = Char (r1x & Char (0X0F)) ;
 				rax = Flag (2) ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru8 (0XF7))
+				if (r1x > Char (0XF7))
 					discard ;
-				rbx = Stru32 (a[i] & Stru8 (0X07)) ;
+				rbx = Char (r1x & Char (0X07)) ;
 				rax = Flag (3) ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru8 (0XFB))
+				if (r1x > Char (0XFB))
 					discard ;
-				rbx = Stru32 (a[i] & Stru8 (0X03)) ;
+				rbx = Char (r1x & Char (0X03)) ;
 				rax = Flag (4) ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru8 (0XFD))
+				if (r1x > Char (0XFD))
 					discard ;
-				rbx = Stru32 (a[i] & Stru8 (0X01)) ;
+				rbx = Char (r1x & Char (0X01)) ;
 				rax = Flag (5) ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (1))
 					discard ;
-				if (a[i] > Stru8 (0XBF))
+				if (r1x > Char (0XBF))
 					discard ;
-				rbx = Stru32 ((rbx << 6) | (a[i] & Stru8 (0X3F))) ;
-				ret[ix] = rbx ;
+				rbx = Char ((rbx << 6) | (r1x & Char (0X3F))) ;
+				ret[ix] = Stru32 (rbx) ;
 				ix++ ;
 				rax = Flag (0) ;
 			}
 			if ifdo (act) {
 				if (!inline_between (rax ,2 ,6))
 					discard ;
-				if (a[i] > Stru8 (0XBF))
+				if (r1x > Char (0XBF))
 					discard ;
-				rbx = Stru32 ((rbx << 6) | (a[i] & Stru8 (0X3F))) ;
+				rbx = Char ((rbx << 6) | (r1x & Char (0X3F))) ;
 				rax-- ;
 			}
 			if ifdo (act) {
@@ -559,44 +568,46 @@ public:
 		String<Stru32> ret = String<Stru32> (a.length ()) ;
 		Index ix = 0 ;
 		auto rax = Flag (0) ;
-		auto rbx = Stru32 () ;
+		auto rbx = Char () ;
 		for (auto &&i : a.iter ()) {
+			const auto r1x = Char (a[i]) ;
 			if (rax == Flag (99))
-				continue ;
+				break ;
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] > Stru16 (0X07FF))
+				if (r1x > Char (0X07FF))
 					discard ;
-				ret[ix] = Stru32 (a[i]) ;
+				ret[ix] = Stru32 (r1x) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				if (a[i] < Stru16 (0XD800))
+				if (r1x < Char (0XD800))
 					discard ;
-				if (a[i] > Stru16 (0XDBFF))
+				if (r1x > Char (0XDBFF))
 					discard ;
-				rbx = Stru32 (a[i] & Stru16 (0X03FF)) ;
+				rbx = Char (r1x & Char (0X03FF)) ;
 				rax = Flag (1) ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (0))
 					discard ;
-				ret[ix] = Stru32 (a[i]) ;
+				ret[ix] = Stru32 (r1x) ;
 				ix++ ;
 			}
 			if ifdo (act) {
 				if (rax != Flag (1))
 					discard ;
-				if (a[i] < Stru16 (0XDC00))
+				if (r1x < Char (0XDC00))
 					discard ;
-				if (a[i] > Stru16 (0XDFFF))
+				if (r1x > Char (0XDFFF))
 					discard ;
-				rbx = Stru32 (((rbx << 10) | (a[i] & Stru16 (0X03FF))) + Stru32 (0X00010000)) ;
-				ret[ix] = rbx ;
+				rbx = Char ((rbx << 10) | (r1x & Char (0X03FF))) ;
+				rbx = Char (Val32 (rbx) + Val32 (0X00010000)) ;
+				ret[ix] = Stru32 (rbx) ;
 				ix++ ;
 				rax = Flag (0) ;
 			}
@@ -616,27 +627,27 @@ public:
 	}
 
 	String<Str> strs_from_straw (RR<String<Stra>> a) const {
-		assert (a.step () == ALIGN_OF<Str>::expr) ;
+		assert (a.step () == SIZE_OF<Str>::expr) ;
 		return move (keep[TYPE<String<Str>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Str> strs_from_straw (RR<String<Strw>> a) const {
-		assert (a.step () == ALIGN_OF<Str>::expr) ;
+		assert (a.step () == SIZE_OF<Str>::expr) ;
 		return move (keep[TYPE<String<Str>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<Strw> strw_from_struw (RR<String<Stru8>> a) const {
-		assert (a.step () == ALIGN_OF<Strw>::expr) ;
+	String<Strw> strw_from_struw (RR<String<Stru>> a) const {
+		assert (a.step () == SIZE_OF<Strw>::expr) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Strw> strw_from_struw (RR<String<Stru16>> a) const {
-		assert (a.step () == ALIGN_OF<Strw>::expr) ;
+		assert (a.step () == SIZE_OF<Strw>::expr) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Strw> strw_from_struw (RR<String<Stru32>> a) const {
-		assert (a.step () == ALIGN_OF<Strw>::expr) ;
+		assert (a.step () == SIZE_OF<Strw>::expr) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
@@ -648,7 +659,7 @@ public:
 		return stra_from_strw (a) ;
 	}
 
-	String<Stra> stra_from (CR<String<Stru8>> a) const override {
+	String<Stra> stra_from (CR<String<Stru>> a) const override {
 		return stra_from_strw (strw_from (a)) ;
 	}
 
@@ -668,34 +679,34 @@ public:
 		return a ;
 	}
 
-	String<Strw> strw_from (CR<String<Stru8>> a) const override {
-		if (IS_SAME<Struw ,Stru8>::expr)
+	String<Strw> strw_from (CR<String<Stru>> a) const override {
+		if (SIZE_OF<Strw>::expr == 1)
 			return strw_from_struw (move (a)) ;
-		if (IS_SAME<Struw ,Stru16>::expr)
+		if (SIZE_OF<Strw>::expr == 2)
 			return strw_from_struw (stru16_from_stru8 (a)) ;
-		if (IS_SAME<Struw ,Stru32>::expr)
+		if (SIZE_OF<Strw>::expr == 4)
 			return strw_from_struw (stru32_from_stru8 (a)) ;
 		assert (FALSE) ;
 		return String<Strw> () ;
 	}
 
 	String<Strw> strw_from (CR<String<Stru16>> a) const override {
-		if (IS_SAME<Struw ,Stru8>::expr)
+		if (SIZE_OF<Strw>::expr == 1)
 			return strw_from_struw (stru8_from_stru16 (a)) ;
-		if (IS_SAME<Struw ,Stru16>::expr)
+		if (SIZE_OF<Strw>::expr == 2)
 			return strw_from_struw (move (a)) ;
-		if (IS_SAME<Struw ,Stru32>::expr)
+		if (SIZE_OF<Strw>::expr == 4)
 			return strw_from_struw (stru32_from_stru16 (a)) ;
 		assert (FALSE) ;
 		return String<Strw> () ;
 	}
 
 	String<Strw> strw_from (CR<String<Stru32>> a) const override {
-		if (IS_SAME<Struw ,Stru8>::expr)
+		if (SIZE_OF<Strw>::expr == 1)
 			return strw_from_struw (stru8_from_stru32 (a)) ;
-		if (IS_SAME<Struw ,Stru16>::expr)
+		if (SIZE_OF<Strw>::expr == 2)
 			return strw_from_struw (stru16_from_stru32 (a)) ;
-		if (IS_SAME<Struw ,Stru32>::expr)
+		if (SIZE_OF<Strw>::expr == 4)
 			return strw_from_struw (move (a)) ;
 		assert (FALSE) ;
 		return String<Strw> () ;
@@ -719,7 +730,7 @@ public:
 		return String<Str> () ;
 	}
 
-	String<Str> strs_from (CR<String<Stru8>> a) const override {
+	String<Str> strs_from (CR<String<Stru>> a) const override {
 		return strs_from_straw (strw_from (a)) ;
 	}
 
@@ -731,30 +742,30 @@ public:
 		return strs_from_straw (strw_from (a)) ;
 	}
 
-	String<Stru8> stru8_from (CR<String<Stra>> a) const override {
+	String<Stru> stru8_from (CR<String<Stra>> a) const override {
 		return stru8_from (strw_from_stra (a)) ;
 	}
 
-	String<Stru8> stru8_from (CR<String<Strw>> a) const override {
-		if (IS_SAME<Struw ,Stru8>::expr)
-			return keep[TYPE<String<Stru8>>::expr] (Pointer::from (a)) ;
-		if (IS_SAME<Struw ,Stru16>::expr)
+	String<Stru> stru8_from (CR<String<Strw>> a) const override {
+		if (SIZE_OF<Strw>::expr == 1)
+			return keep[TYPE<String<Stru>>::expr] (Pointer::from (a)) ;
+		if (SIZE_OF<Strw>::expr == 2)
 			return stru8_from_stru16 (Pointer::from (a)) ;
-		if (IS_SAME<Struw ,Stru32>::expr)
+		if (SIZE_OF<Strw>::expr == 4)
 			return stru8_from_stru32 (Pointer::from (a)) ;
 		assert (FALSE) ;
-		return String<Stru8> () ;
+		return String<Stru> () ;
 	}
 
-	String<Stru8> stru8_from (CR<String<Stru8>> a) const override {
+	String<Stru> stru8_from (CR<String<Stru>> a) const override {
 		return a ;
 	}
 
-	String<Stru8> stru8_from (CR<String<Stru16>> a) const override {
+	String<Stru> stru8_from (CR<String<Stru16>> a) const override {
 		return stru8_from_stru16 (a) ;
 	}
 
-	String<Stru8> stru8_from (CR<String<Stru32>> a) const override {
+	String<Stru> stru8_from (CR<String<Stru32>> a) const override {
 		return stru8_from_stru32 (a) ;
 	}
 
@@ -763,17 +774,17 @@ public:
 	}
 
 	String<Stru16> stru16_from (CR<String<Strw>> a) const override {
-		if (IS_SAME<Struw ,Stru8>::expr)
+		if (SIZE_OF<Strw>::expr == 1)
 			return stru16_from_stru8 (Pointer::from (a)) ;
-		if (IS_SAME<Struw ,Stru16>::expr)
+		if (SIZE_OF<Strw>::expr == 2)
 			return keep[TYPE<String<Stru16>>::expr] (Pointer::from (a)) ;
-		if (IS_SAME<Struw ,Stru32>::expr)
+		if (SIZE_OF<Strw>::expr == 4)
 			return stru16_from_stru32 (Pointer::from (a)) ;
 		assert (FALSE) ;
 		return String<Stru16> () ;
 	}
 
-	String<Stru16> stru16_from (CR<String<Stru8>> a) const override {
+	String<Stru16> stru16_from (CR<String<Stru>> a) const override {
 		return stru16_from_stru8 (a) ;
 	}
 
@@ -790,17 +801,17 @@ public:
 	}
 
 	String<Stru32> stru32_from (CR<String<Strw>> a) const override {
-		if (IS_SAME<Struw ,Stru8>::expr)
+		if (SIZE_OF<Strw>::expr == 1)
 			return stru32_from_stru8 (Pointer::from (a)) ;
-		if (IS_SAME<Struw ,Stru16>::expr)
+		if (SIZE_OF<Strw>::expr == 2)
 			return stru32_from_stru16 (Pointer::from (a)) ;
-		if (IS_SAME<Struw ,Stru32>::expr)
+		if (SIZE_OF<Strw>::expr == 4)
 			return keep[TYPE<String<Stru32>>::expr] (Pointer::from (a)) ;
 		assert (FALSE) ;
 		return String<Stru32> () ;
 	}
 
-	String<Stru32> stru32_from (CR<String<Stru8>> a) const override {
+	String<Stru32> stru32_from (CR<String<Stru>> a) const override {
 		return stru32_from_stru8 (a) ;
 	}
 
@@ -813,10 +824,10 @@ public:
 	}
 } ;
 
-exports CR<Like<UniqueRef<StringProcLayout>>> StringProcHolder::expr_m () {
+exports CR<Super<Ref<StringProcLayout>>> StringProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<StringProcLayout>> ret ;
-		ret.mThis = UniqueRef<StringProcLayout>::make () ;
+		Super<Ref<StringProcLayout>> ret ;
+		ret.mThis = Ref<StringProcLayout>::make () ;
 		StringProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -953,10 +964,10 @@ struct XmlParserNodeType {
 } ;
 
 struct XmlParserNode {
-	String<Stru8> mName ;
-	String<Stru8> mValue ;
+	String<Stru> mName ;
+	String<Stru> mValue ;
 	SortedMap<Index> mArrayMap ;
-	SortedMap<String<Stru8>> mObjectMap ;
+	SortedMap<String<Stru>> mObjectMap ;
 	Index mMember ;
 	Just<XmlParserNodeType> mType ;
 	Index mParent ;
@@ -975,10 +986,10 @@ struct MakeXmlParserLayout {
 	List<XmlParserNode> mTree ;
 	SortedMap<Index> mArrayMap ;
 	List<Index> mArrayMemberList ;
-	SortedMap<String<Stru8>> mObjectMap ;
-	List<Set<String<Stru8>>> mObjectMemberList ;
+	SortedMap<String<Stru>> mObjectMap ;
+	List<Set<String<Stru>>> mObjectMemberList ;
 	Index mLastIndex ;
-	String<Stru8> mLastString ;
+	String<Stru> mLastString ;
 } ;
 
 class MakeXmlParser implement MakeXmlParserLayout {
@@ -997,7 +1008,7 @@ public:
 	explicit MakeXmlParser (RR<Ref<RefBuffer<Byte>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mArrayMap = SortedMap<Index> (ALLOCATOR_MIN_SIZE::expr) ;
-		mObjectMap = SortedMap<String<Stru8>> (ALLOCATOR_MIN_SIZE::expr) ;
+		mObjectMap = SortedMap<String<Stru>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
 	XmlParserTree poll () {
@@ -1153,7 +1164,7 @@ public:
 
 	//@info: $7->${[^<>]+}
 	void read_shift_e7 (CR<Index> curr) {
-		auto rax = String<Stru8>::make () ;
+		auto rax = String<Stru>::make () ;
 		Index ix = 0 ;
 		while (TRUE) {
 			if (mReader[0] == Stru32 ('<'))
@@ -1161,7 +1172,7 @@ public:
 			if (mReader[0] == Stru32 ('>'))
 				break ;
 			assume (ix < rax.size ()) ;
-			rax[ix] = Stru8 (mReader[0]) ;
+			rax[ix] = Stru (mReader[0]) ;
 			ix++ ;
 			mReader++ ;
 		}
@@ -1394,7 +1405,7 @@ public:
 		return move (ret) ;
 	}
 
-	XmlParserLayout child (CR<String<Stru8>> name) const override {
+	XmlParserLayout child (CR<String<Stru>> name) const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -1448,7 +1459,7 @@ public:
 		return FALSE ;
 	}
 
-	CR<String<Stru8>> name () const leftvalue override {
+	CR<String<Stru>> name () const leftvalue override {
 		assert (exist ()) ;
 		return self.mThis->mTree[self.mIndex].mName ;
 	}
@@ -1530,7 +1541,7 @@ public:
 		return def ;
 	}
 
-	String<Stru8> parse (CR<String<Stru8>> def) const override {
+	String<Stru> parse (CR<String<Stru>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -1591,7 +1602,7 @@ public:
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const override {
+	Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
@@ -1634,10 +1645,10 @@ struct JsonParserNodeType {
 } ;
 
 struct JsonParserNode {
-	String<Stru8> mName ;
-	String<Stru8> mValue ;
+	String<Stru> mName ;
+	String<Stru> mValue ;
 	SortedMap<Index> mArrayMap ;
-	SortedMap<String<Stru8>> mObjectMap ;
+	SortedMap<String<Stru>> mObjectMap ;
 	Just<JsonParserNodeType> mType ;
 	Index mParent ;
 	Index mBrother ;
@@ -1654,9 +1665,9 @@ struct MakeJsonParserLayout {
 	ScopeCounter mScopeCounter ;
 	List<JsonParserNode> mTree ;
 	SortedMap<Index> mArrayMap ;
-	SortedMap<String<Stru8>> mObjectMap ;
+	SortedMap<String<Stru>> mObjectMap ;
 	Index mLastIndex ;
-	String<Stru8> mLastString ;
+	String<Stru> mLastString ;
 } ;
 
 class MakeJsonParser implement MakeJsonParserLayout {
@@ -1675,7 +1686,7 @@ public:
 	explicit MakeJsonParser (RR<Ref<RefBuffer<Byte>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mArrayMap = SortedMap<Index> (ALLOCATOR_MIN_SIZE::expr) ;
-		mObjectMap = SortedMap<String<Stru8>> (ALLOCATOR_MIN_SIZE::expr) ;
+		mObjectMap = SortedMap<String<Stru>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
 	JsonParserTree poll () {
@@ -1739,19 +1750,19 @@ public:
 			if (mReader[0] != Stru32 ('t'))
 				discard ;
 			mReader >> slice ("true") ;
-			mLastString = String<Stru8>::make (slice ("true")) ;
+			mLastString = String<Stru>::make (slice ("true")) ;
 		}
 		if ifdo (act) {
 			if (mReader[0] != Stru32 ('f'))
 				discard ;
 			mReader >> slice ("false") ;
-			mLastString = String<Stru8>::make (slice ("false")) ;
+			mLastString = String<Stru>::make (slice ("false")) ;
 		}
 		if ifdo (act) {
 			if (mReader[0] != Stru32 ('n'))
 				discard ;
 			mReader >> slice ("null") ;
-			mLastString = String<Stru8> () ;
+			mLastString = String<Stru> () ;
 		}
 		if ifdo (act) {
 			assume (FALSE) ;
@@ -2050,7 +2061,7 @@ public:
 		return move (ret) ;
 	}
 
-	JsonParserLayout child (CR<String<Stru8>> name) const override {
+	JsonParserLayout child (CR<String<Stru>> name) const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -2104,7 +2115,7 @@ public:
 		return FALSE ;
 	}
 
-	CR<String<Stru8>> name () const leftvalue override {
+	CR<String<Stru>> name () const leftvalue override {
 		assert (exist ()) ;
 		return self.mThis->mTree[self.mIndex].mName ;
 	}
@@ -2186,7 +2197,7 @@ public:
 		return def ;
 	}
 
-	String<Stru8> parse (CR<String<Stru8>> def) const override {
+	String<Stru> parse (CR<String<Stru>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -2247,7 +2258,7 @@ public:
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const override {
+	Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
@@ -2297,7 +2308,7 @@ struct PlyParserDataType {
 } ;
 
 struct PlyParserProperty {
-	String<Stru8> mName ;
+	String<Stru> mName ;
 	Just<PlyParserDataType> mType ;
 	Just<PlyParserDataType> mListType ;
 	Length mListSize ;
@@ -2306,12 +2317,12 @@ struct PlyParserProperty {
 } ;
 
 struct PlyParserElement {
-	String<Stru8> mName ;
+	String<Stru> mName ;
 	Length mLineSize ;
 	Length mLineStep ;
 	Length mLineLength ;
 	ArrayList<PlyParserProperty> mPropertyList ;
-	Set<String<Stru8>> mPropertySet ;
+	Set<String<Stru>> mPropertySet ;
 	Length mLastSize ;
 	RefBuffer<Pointer> mPlyBuffer ;
 	Index mPlyIndex ;
@@ -2320,25 +2331,25 @@ struct PlyParserElement {
 } ;
 
 struct PlyParserTree {
-	String<Stru8> mFormat ;
+	String<Stru> mFormat ;
 	ArrayList<PlyParserElement> mElementList ;
-	Set<String<Stru8>> mElementSet ;
+	Set<String<Stru>> mElementSet ;
 } ;
 
 struct MakePlyParserLayout {
 	Ref<RefBuffer<Byte>> mStream ;
 	TextReader mTextReader ;
 	ByteReader mByteReader ;
-	String<Stru8> mFormat ;
+	String<Stru> mFormat ;
 	ArrayList<PlyParserElement> mElementList ;
-	Set<String<Stru8>> mElementSet ;
+	Set<String<Stru>> mElementSet ;
 	Bool mDiffEndianFlag ;
 	StreamShape mBodyBackup ;
 	Index mLastIndex ;
-	String<Stru8> mLastType ;
-	String<Stru8> mLastString ;
-	Set<String<Stru8>> mPropertyType ;
-	Set<String<Stru8>> mPropertyListType ;
+	String<Stru> mLastType ;
+	String<Stru> mLastString ;
+	Set<String<Stru>> mPropertyType ;
+	Set<String<Stru>> mPropertyListType ;
 } ;
 
 class MakePlyParser implement MakePlyParserLayout {
@@ -2527,13 +2538,13 @@ public:
 		for (auto &&i : mElementList.iter ()) {
 			auto &&rax = mElementList[i] ;
 			rax.mPropertyList.remap () ;
-			rax.mPropertySet = Set<String<Stru8>> (rax.mPropertyList.length ()) ;
+			rax.mPropertySet = Set<String<Stru>> (rax.mPropertyList.length ()) ;
 			for (auto &&j : rax.mPropertyList.iter ())
 				rax.mPropertySet.add (rax.mPropertyList[j].mName ,j) ;
 		}
 		if ifdo (TRUE) {
 			mElementList.remap () ;
-			mElementSet = Set<String<Stru8>> (mElementList.length ()) ;
+			mElementSet = Set<String<Stru>> (mElementList.length ()) ;
 			for (auto &&j : mElementList.iter ())
 				mElementSet.add (mElementList[j].mName ,j) ;
 		}
@@ -2595,7 +2606,7 @@ public:
 			if (r1x != PlyParserDataType::Flt32)
 				discard ;
 			const auto r2x = mTextReader.poll (TYPE<Flt32>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r2x) ,SIZE_OF<Flt32>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r2x ;
 			element.mPlyIndex += SIZE_OF<Flt32>::expr ;
 			mTextReader >> GAP ;
 		}
@@ -2603,7 +2614,7 @@ public:
 			if (r1x != PlyParserDataType::Flt64)
 				discard ;
 			const auto r3x = mTextReader.poll (TYPE<Flt64>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r3x) ,SIZE_OF<Flt64>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r3x ;
 			element.mPlyIndex += SIZE_OF<Flt64>::expr ;
 			mTextReader >> GAP ;
 		}
@@ -2611,7 +2622,7 @@ public:
 			if (r1x != PlyParserDataType::Bool)
 				discard ;
 			const auto r4x = mTextReader.poll (TYPE<Bool>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r4x) ,SIZE_OF<Bool>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r4x ;
 			element.mPlyIndex += SIZE_OF<Bool>::expr ;
 			mTextReader >> GAP ;
 		}
@@ -2619,7 +2630,7 @@ public:
 			if (r1x != PlyParserDataType::Val32)
 				discard ;
 			const auto r5x = mTextReader.poll (TYPE<Val32>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r5x) ,SIZE_OF<Val32>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r5x ;
 			element.mPlyIndex += SIZE_OF<Val32>::expr ;
 			mTextReader >> GAP ;
 		}
@@ -2627,7 +2638,7 @@ public:
 			if (r1x != PlyParserDataType::Val64)
 				discard ;
 			const auto r6x = mTextReader.poll (TYPE<Val64>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r6x) ,SIZE_OF<Val64>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r6x ;
 			element.mPlyIndex += SIZE_OF<Val64>::expr ;
 			mTextReader >> GAP ;
 		}
@@ -2637,7 +2648,7 @@ public:
 			const auto r7x = mTextReader.poll (TYPE<Val64>::expr) ;
 			assume (r7x >= 0) ;
 			const auto r8x = Byte (r7x) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r8x) ,SIZE_OF<Byte>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r8x ;
 			element.mPlyIndex += SIZE_OF<Byte>::expr ;
 			mTextReader >> GAP ;
 			if ifdo (TRUE) {
@@ -2652,7 +2663,7 @@ public:
 			const auto r9x = mTextReader.poll (TYPE<Val64>::expr) ;
 			assume (r9x >= 0) ;
 			const auto r10x = Word (r9x) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r10x) ,SIZE_OF<Word>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r10x ;
 			element.mPlyIndex += SIZE_OF<Word>::expr ;
 			mTextReader >> GAP ;
 			if ifdo (TRUE) {
@@ -2667,7 +2678,7 @@ public:
 			const auto r11x = mTextReader.poll (TYPE<Val64>::expr) ;
 			assume (r11x >= 0) ;
 			const auto r12x = Char (r11x) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r12x) ,SIZE_OF<Char>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r12x ;
 			element.mPlyIndex += SIZE_OF<Char>::expr ;
 			mTextReader >> GAP ;
 			if ifdo (TRUE) {
@@ -2682,7 +2693,7 @@ public:
 			const auto r13x = mTextReader.poll (TYPE<Val64>::expr) ;
 			assume (r13x >= 0) ;
 			const auto r14x = Quad (r13x) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r14x) ,SIZE_OF<Quad>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r14x ;
 			element.mPlyIndex += SIZE_OF<Quad>::expr ;
 			mTextReader >> GAP ;
 		}
@@ -2703,7 +2714,7 @@ public:
 			element.mExtBuffer.resize (r4x) ;
 		}
 		const auto r5x = Length (element.mExtIndex) ;
-		inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r5x) ,SIZE_OF<Length>::expr) ;
+		bitwise (element.mPlyBuffer[element.mPlyIndex]) = r5x ;
 		element.mPlyIndex += SIZE_OF<Length>::expr ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -2713,7 +2724,7 @@ public:
 			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
 				const auto r6x = mTextReader.poll (TYPE<Val32>::expr) ;
-				inline_memcpy (element.mExtBuffer[element.mExtIndex] ,Pointer::from (r6x) ,SIZE_OF<Val32>::expr) ;
+				bitwise (element.mExtBuffer[element.mExtIndex]) = r6x ;
 				element.mExtIndex += SIZE_OF<Val32>::expr ;
 				mTextReader >> GAP ;
 			}
@@ -2725,13 +2736,13 @@ public:
 			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
 				const auto r7x = mTextReader.poll (TYPE<Val64>::expr) ;
-				inline_memcpy (element.mExtBuffer[element.mExtIndex] ,Pointer::from (r7x) ,SIZE_OF<Val64>::expr) ;
+				bitwise (element.mExtBuffer[element.mExtIndex]) = r7x ;
 				element.mExtIndex += SIZE_OF<Val64>::expr ;
 				mTextReader >> GAP ;
 			}
 		}
 		const auto r8x = Length (element.mExtIndex) ;
-		inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r8x) ,SIZE_OF<Length>::expr) ;
+		bitwise (element.mPlyBuffer[element.mPlyIndex]) = r8x ;
 		element.mPlyIndex += SIZE_OF<Length>::expr ;
 	}
 
@@ -2762,42 +2773,42 @@ public:
 			if (r1x != PlyParserDataType::Flt32)
 				discard ;
 			const auto r2x = mByteReader.poll (TYPE<Flt32>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r2x) ,SIZE_OF<Flt32>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r2x ;
 			element.mPlyIndex += SIZE_OF<Flt32>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Flt64)
 				discard ;
 			const auto r3x = mByteReader.poll (TYPE<Flt64>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r3x) ,SIZE_OF<Flt64>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r3x ;
 			element.mPlyIndex += SIZE_OF<Flt64>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Bool)
 				discard ;
 			const auto r4x = mByteReader.poll (TYPE<Bool>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r4x) ,SIZE_OF<Bool>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r4x ;
 			element.mPlyIndex += SIZE_OF<Bool>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Val32)
 				discard ;
 			const auto r5x = mByteReader.poll (TYPE<Val32>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r5x) ,SIZE_OF<Val32>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r5x ;
 			element.mPlyIndex += SIZE_OF<Val32>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Val64)
 				discard ;
 			const auto r6x = mByteReader.poll (TYPE<Val64>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r6x) ,SIZE_OF<Val64>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r6x ;
 			element.mPlyIndex += SIZE_OF<Val64>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Byte)
 				discard ;
 			const auto r7x = mByteReader.poll (TYPE<Byte>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r7x) ,SIZE_OF<Byte>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r7x ;
 			element.mPlyIndex += SIZE_OF<Byte>::expr ;
 			if ifdo (TRUE) {
 				if (property.mListType == PlyParserDataType::Null)
@@ -2809,7 +2820,7 @@ public:
 			if (r1x != PlyParserDataType::Word)
 				discard ;
 			const auto r8x = mByteReader.poll (TYPE<Word>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r8x) ,SIZE_OF<Word>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r8x ;
 			element.mPlyIndex += SIZE_OF<Word>::expr ;
 			if ifdo (TRUE) {
 				if (property.mListType == PlyParserDataType::Null)
@@ -2821,7 +2832,7 @@ public:
 			if (r1x != PlyParserDataType::Char)
 				discard ;
 			const auto r9x = mByteReader.poll (TYPE<Char>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r9x) ,SIZE_OF<Char>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r9x ;
 			element.mPlyIndex += SIZE_OF<Char>::expr ;
 			if ifdo (TRUE) {
 				if (property.mListType == PlyParserDataType::Null)
@@ -2833,7 +2844,7 @@ public:
 			if (r1x != PlyParserDataType::Quad)
 				discard ;
 			const auto r10x = mByteReader.poll (TYPE<Quad>::expr) ;
-			inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r10x) ,SIZE_OF<Quad>::expr) ;
+			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r10x ;
 			element.mPlyIndex += SIZE_OF<Quad>::expr ;
 		}
 	}
@@ -2853,7 +2864,7 @@ public:
 			element.mExtBuffer.resize (r4x) ;
 		}
 		const auto r5x = Length (element.mExtIndex) ;
-		inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r5x) ,SIZE_OF<Length>::expr) ;
+		bitwise (element.mPlyBuffer[element.mPlyIndex]) = r5x ;
 		element.mPlyIndex += SIZE_OF<Length>::expr ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -2862,7 +2873,7 @@ public:
 			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
 				const auto r6x = mByteReader.poll (TYPE<Val32>::expr) ;
-				inline_memcpy (element.mExtBuffer[element.mExtIndex] ,Pointer::from (r6x) ,SIZE_OF<Val32>::expr) ;
+				bitwise (element.mExtBuffer[element.mExtIndex]) = r6x ;
 				element.mExtIndex += SIZE_OF<Val32>::expr ;
 			}
 		}
@@ -2872,12 +2883,12 @@ public:
 			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
 				const auto r7x = mByteReader.poll (TYPE<Val64>::expr) ;
-				inline_memcpy (element.mExtBuffer[element.mExtIndex] ,Pointer::from (r7x) ,SIZE_OF<Val64>::expr) ;
+				bitwise (element.mExtBuffer[element.mExtIndex]) = r7x ;
 				element.mExtIndex += SIZE_OF<Val64>::expr ;
 			}
 		}
 		const auto r8x = Length (element.mExtIndex) ;
-		inline_memcpy (element.mPlyBuffer[element.mPlyIndex] ,Pointer::from (r8x) ,SIZE_OF<Length>::expr) ;
+		bitwise (element.mPlyBuffer[element.mPlyIndex]) = r8x ;
 		element.mPlyIndex += SIZE_OF<Length>::expr ;
 	}
 } ;
@@ -2957,9 +2968,9 @@ public:
 					discard ;
 				if (rax.mPropertyList[jx].mListType == PlyParserDataType::Null)
 					discard ;
-				self.mGuide.mPlyBegin = bitwise[TYPE<Length>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+				self.mGuide.mPlyBegin = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 				self.mGuide.mPlyIndex += SIZE_OF<Length>::expr ;
-				self.mGuide.mPlyEnd = bitwise[TYPE<Length>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+				self.mGuide.mPlyEnd = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 				self.mGuide.mPlyIndex = self.mGuide.mPlyBegin ;
 				self.mGuide.mPlyListMode = TRUE ;
 			}
@@ -3000,7 +3011,7 @@ public:
 		Index jx = self.mGuide.mProperty[self.mGuide.mCol] ;
 		auto &&rax = self.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Bool) ;
-		item = bitwise[TYPE<Bool>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+		item = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 		self.mGuide.mPlyIndex += SIZE_OF<Bool>::expr ;
 	}
 
@@ -3014,13 +3025,13 @@ public:
 				discard ;
 			auto &&rax = self.mThis->mElementList[ix] ;
 			assume (rax.mPropertyList[jx].mType == PlyParserDataType::Val32) ;
-			item = bitwise[TYPE<Val32>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+			item = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 			self.mGuide.mPlyIndex += SIZE_OF<Val32>::expr ;
 		}
 		if ifdo (act) {
 			auto &&rax = self.mThis->mElementList[ix] ;
 			assume (rax.mPropertyList[jx].mListType == PlyParserDataType::Val32) ;
-			item = bitwise[TYPE<Val32>::expr] (rax.mExtBuffer[self.mGuide.mPlyIndex]) ;
+			item = bitwise (rax.mExtBuffer[self.mGuide.mPlyIndex]) ;
 			self.mGuide.mPlyIndex += SIZE_OF<Val32>::expr ;
 		}
 	}
@@ -3035,13 +3046,13 @@ public:
 				discard ;
 			auto &&rax = self.mThis->mElementList[ix] ;
 			assume (rax.mPropertyList[jx].mType == PlyParserDataType::Val64) ;
-			item = bitwise[TYPE<Val64>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+			item = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 			self.mGuide.mPlyIndex += SIZE_OF<Val64>::expr ;
 		}
 		if ifdo (act) {
 			auto &&rax = self.mThis->mElementList[ix] ;
 			assume (rax.mPropertyList[jx].mListType == PlyParserDataType::Val64) ;
-			item = bitwise[TYPE<Val64>::expr] (rax.mExtBuffer[self.mGuide.mPlyIndex]) ;
+			item = bitwise (rax.mExtBuffer[self.mGuide.mPlyIndex]) ;
 			self.mGuide.mPlyIndex += SIZE_OF<Val64>::expr ;
 		}
 	}
@@ -3052,7 +3063,7 @@ public:
 		Index jx = self.mGuide.mProperty[self.mGuide.mCol] ;
 		auto &&rax = self.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Flt32) ;
-		item = bitwise[TYPE<Flt32>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+		item = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 		self.mGuide.mPlyIndex += SIZE_OF<Flt32>::expr ;
 	}
 
@@ -3062,7 +3073,7 @@ public:
 		Index jx = self.mGuide.mProperty[self.mGuide.mCol] ;
 		auto &&rax = self.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Flt64) ;
-		item = bitwise[TYPE<Flt64>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+		item = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 		self.mGuide.mPlyIndex += SIZE_OF<Flt64>::expr ;
 	}
 
@@ -3072,7 +3083,7 @@ public:
 		Index jx = self.mGuide.mProperty[self.mGuide.mCol] ;
 		auto &&rax = self.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Byte) ;
-		item = bitwise[TYPE<Byte>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+		item = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 		self.mGuide.mPlyIndex += SIZE_OF<Byte>::expr ;
 	}
 
@@ -3082,7 +3093,7 @@ public:
 		Index jx = self.mGuide.mProperty[self.mGuide.mCol] ;
 		auto &&rax = self.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Word) ;
-		item = bitwise[TYPE<Word>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+		item = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 		self.mGuide.mPlyIndex += SIZE_OF<Word>::expr ;
 	}
 
@@ -3092,7 +3103,7 @@ public:
 		Index jx = self.mGuide.mProperty[self.mGuide.mCol] ;
 		auto &&rax = self.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Char) ;
-		item = bitwise[TYPE<Char>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+		item = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 		self.mGuide.mPlyIndex += SIZE_OF<Char>::expr ;
 	}
 
@@ -3102,7 +3113,7 @@ public:
 		Index jx = self.mGuide.mProperty[self.mGuide.mCol] ;
 		auto &&rax = self.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Quad) ;
-		item = bitwise[TYPE<Quad>::expr] (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
+		item = bitwise (rax.mPlyBuffer[self.mGuide.mPlyIndex]) ;
 		self.mGuide.mPlyIndex += SIZE_OF<Quad>::expr ;
 	}
 } ;

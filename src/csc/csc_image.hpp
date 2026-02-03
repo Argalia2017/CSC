@@ -341,7 +341,7 @@ static constexpr auto COLOR_CYAN = Color3B ({Byte (0XFF) ,Byte (0XFF) ,Byte (0X0
 struct ColorProcLayout ;
 
 struct ColorProcHolder implement Interface {
-	imports CR<Like<UniqueRef<ColorProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<ColorProcLayout>>> expr_m () ;
 	imports VFat<ColorProcHolder> hold (VR<ColorProcLayout> that) ;
 	imports CFat<ColorProcHolder> hold (CR<ColorProcLayout> that) ;
 
@@ -354,7 +354,7 @@ struct ColorProcHolder implement Interface {
 	virtual Color3B bgr_from_hsv (CR<Color3W> a) const = 0 ;
 } ;
 
-class ColorProc implement Like<UniqueRef<ColorProcLayout>> {
+class ColorProc implement Super<Ref<ColorProcLayout>> {
 public:
 	static CR<ColorProc> expr_m () {
 		return keep[TYPE<ColorProc>::expr] (ColorProcHolder::expr) ;
@@ -388,7 +388,7 @@ public:
 struct ImageProcLayout ;
 
 struct ImageProcHolder implement Interface {
-	imports CR<Like<UniqueRef<ImageProcLayout>>> expr_m () ;
+	imports CR<Super<Ref<ImageProcLayout>>> expr_m () ;
 	imports VFat<ImageProcHolder> hold (VR<ImageProcLayout> that) ;
 	imports CFat<ImageProcHolder> hold (CR<ImageProcLayout> that) ;
 
@@ -408,7 +408,7 @@ struct ImageProcHolder implement Interface {
 	virtual Flt64 sampler (CR<Image<Flt64>> image ,CR<Flt64> x ,CR<Flt64> y) const = 0 ;
 } ;
 
-class ImageProc implement Like<UniqueRef<ImageProcLayout>> {
+class ImageProc implement Super<Ref<ImageProcLayout>> {
 public:
 	static CR<ImageProc> expr_m () {
 		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::expr) ;

@@ -19,6 +19,7 @@
 #include <typeinfo>
 #include <initializer_list>
 #include <atomic>
+#include <mutex>
 #include "csc_begin.h"
 
 namespace CSC {
@@ -350,7 +351,8 @@ public:
 	}
 
 	Bool exclusive () const override {
-		assert (exist ()) ;
+		if (!exist ())
+			return TRUE ;
 		if (!ownership ())
 			return FALSE ;
 		const auto r1x = ptr (self).mCounter.load () ;
@@ -423,6 +425,7 @@ struct FUNCTION_memsize {
 static constexpr auto memsize = FUNCTION_memsize () ;
 
 struct HeapRoot {
+	Box<std::recursive_mutex> mMutex ;
 	Box<std::atomic<Val>> mStack ;
 	Box<std::atomic<Val>> mWidth ;
 	Box<std::atomic<Val>> mLength ;
@@ -431,6 +434,7 @@ struct HeapRoot {
 class HeapImplHolder final implement Fat<HeapHolder ,HeapLayout> {
 public:
 	void initialize () override {
+		root_ptr ().mMutex.remake () ;
 		root_ptr ().mStack.remake () ;
 		root_ptr ().mWidth.remake () ;
 		root_ptr ().mLength.remake () ;
@@ -440,6 +444,14 @@ public:
 	static VR<HeapRoot> root_ptr () {
 		static auto mInstance = HeapRoot () ;
 		return mInstance ;
+	}
+
+	void enter () const override {
+		return root_ptr ().mMutex->lock () ;
+	}
+
+	void leave () const override {
+		return root_ptr ().mMutex->unlock () ;
 	}
 
 	Flag stack (CR<Length> size_) const override {
@@ -521,19 +533,19 @@ public:
 	void get (CR<Index> index ,VR<Stru32> item) const override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mStep != SIZE_OF<Stru8>::expr)
+			if (self.mStep != 1)
 				discard ;
-			item = bitwise[TYPE<Stru8>::expr] (at (index)) ;
+			item = Stru (bitwise (at (index))) ;
 		}
 		if ifdo (act) {
-			if (self.mStep != SIZE_OF<Stru16>::expr)
+			if (self.mStep != 2)
 				discard ;
-			item = bitwise[TYPE<Stru16>::expr] (at (index)) ;
+			item = Stru16 (bitwise (at (index))) ;
 		}
 		if ifdo (act) {
-			if (self.mStep != SIZE_OF<Stru32>::expr)
+			if (self.mStep != 4)
 				discard ;
-			item = bitwise[TYPE<Stru32>::expr] (at (index)) ;
+			item = Stru32 (bitwise (at (index))) ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;

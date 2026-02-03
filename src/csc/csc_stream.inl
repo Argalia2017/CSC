@@ -33,7 +33,7 @@ public:
 
 	Bool big_endian () const override {
 		const auto r1x = QUAD_ENDIAN ;
-		const auto r2x = bitwise[TYPE<Buffer<Char ,RANK2>>::expr] (r1x) ;
+		const auto r2x = Buffer<Char ,RANK2> (bitwise (r1x)) ;
 		return r2x[0] != CHAR_ENDIAN ;
 	}
 
@@ -188,10 +188,10 @@ public:
 	}
 } ;
 
-exports CR<Like<UniqueRef<StreamProcLayout>>> StreamProcHolder::expr_m () {
+exports CR<Super<Ref<StreamProcLayout>>> StreamProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<StreamProcLayout>> ret ;
-		ret.mThis = UniqueRef<StreamProcLayout>::make () ;
+		Super<Ref<StreamProcLayout>> ret ;
+		ret.mThis = Ref<StreamProcLayout>::make () ;
 		StreamProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -260,31 +260,31 @@ public:
 	void read (VR<Bool> item) override {
 		auto rax = BYTE_BASE<Bool> () ;
 		read (rax) ;
-		item = bitwise[TYPE<Bool>::expr] (rax) ;
+		item = bitwise (rax) ;
 	}
 
 	void read (VR<Val32> item) override {
 		auto rax = BYTE_BASE<Val32> () ;
 		read (rax) ;
-		item = bitwise[TYPE<Val32>::expr] (rax) ;
+		item = bitwise (rax) ;
 	}
 
 	void read (VR<Val64> item) override {
 		auto rax = BYTE_BASE<Val64> () ;
 		read (rax) ;
-		item = bitwise[TYPE<Val64>::expr] (rax) ;
+		item = bitwise (rax) ;
 	}
 
 	void read (VR<Flt32> item) override {
 		auto rax = BYTE_BASE<Flt32> () ;
 		read (rax) ;
-		item = bitwise[TYPE<Flt32>::expr] (rax) ;
+		item = bitwise (rax) ;
 	}
 
 	void read (VR<Flt64> item) override {
 		auto rax = BYTE_BASE<Flt64> () ;
 		read (rax) ;
-		item = bitwise[TYPE<Flt64>::expr] (rax) ;
+		item = bitwise (rax) ;
 	}
 
 	void read (VR<Byte> item) override {
@@ -323,7 +323,7 @@ public:
 		for (auto &&i : range (0 ,rax.size ())) {
 			read (rax[i]) ;
 		}
-		item = bitwise[TYPE<ARG1>::expr] (rax) ;
+		item = bitwise (rax) ;
 		if ifdo (TRUE) {
 			if (!self.mDiffEndian)
 				discard ;
@@ -358,20 +358,20 @@ public:
 	void read (VR<StringLayout> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			auto &&rax = keep[TYPE<String<Stru8>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru8>::expr)
+			auto &&rax = keep[TYPE<String<Stru>>::expr] (item) ;
+			if (rax.step () != 1)
 				discard ;
 			read_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru16>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru16>::expr)
+			if (rax.step () != 2)
 				discard ;
 			read_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru32>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru32>::expr)
+			if (rax.step () != 4)
 				discard ;
 			read_string_impl (rax) ;
 		}
@@ -720,30 +720,27 @@ public:
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru8>::expr)
+			if (self.mStream->step () != 1)
 				discard ;
 			if (self.mRead >= self.mWrite)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru8>>::expr] (Pointer::from (self.mStream.ref)) ;
-			item = rax[self.mRead] ;
+			item = Stru (bitwise (self.mStream.ref[self.mRead])) ;
 			self.mRead++ ;
 		}
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru16>::expr)
+			if (self.mStream->step () != 2)
 				discard ;
 			if (self.mRead >= self.mWrite)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru16>>::expr] (Pointer::from (self.mStream.ref)) ;
-			item = rax[self.mRead] ;
+			item = Stru16 (bitwise (self.mStream.ref[self.mRead])) ;
 			self.mRead++ ;
 		}
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru32>::expr)
+			if (self.mStream->step () != 4)
 				discard ;
 			if (self.mRead >= self.mWrite)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru32>>::expr] (Pointer::from (self.mStream.ref)) ;
-			item = rax[self.mRead] ;
+			item = Stru32 (bitwise (self.mStream.ref[self.mRead])) ;
 			self.mRead++ ;
 		}
 		if ifdo (act) {
@@ -777,20 +774,20 @@ public:
 	void read (VR<StringLayout> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			auto &&rax = keep[TYPE<String<Stru8>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru8>::expr)
+			auto &&rax = keep[TYPE<String<Stru>>::expr] (item) ;
+			if (rax.step () != 1)
 				discard ;
 			read_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru16>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru16>::expr)
+			if (rax.step () != 2)
 				discard ;
 			read_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru32>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru32>::expr)
+			if (rax.step () != 4)
 				discard ;
 			read_string_impl (rax) ;
 		}
@@ -811,7 +808,7 @@ public:
 		const auto r1x = shape () ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru8>::expr)
+			if (self.mStream->step () != 1)
 				discard ;
 			read (rax) ;
 			if (rax != Stru32 (0XEF))
@@ -825,7 +822,7 @@ public:
 			noop (rax) ;
 		}
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru16>::expr)
+			if (self.mStream->step () != 2)
 				discard ;
 			read (rax) ;
 			if (rax != Stru32 (0XFEFF))
@@ -834,7 +831,7 @@ public:
 			self.mDiffEndian = rax != Stru32 (0XFEFF) ;
 		}
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru32>::expr)
+			if (self.mStream->step () != 4)
 				discard ;
 			read (rax) ;
 			if (rax != Stru32 (0X0000FEFF))
@@ -947,27 +944,27 @@ public:
 	}
 
 	void write (CR<Bool> item) override {
-		const auto r1x = bitwise[TYPE<BYTE_BASE<Bool>>::expr] (item) ;
+		const auto r1x = BYTE_BASE<Bool> (bitwise (item)) ;
 		write (r1x) ;
 	}
 
 	void write (CR<Val32> item) override {
-		const auto r1x = bitwise[TYPE<BYTE_BASE<Val32>>::expr] (item) ;
+		const auto r1x = BYTE_BASE<Val32> (bitwise (item)) ;
 		write (r1x) ;
 	}
 
 	void write (CR<Val64> item) override {
-		const auto r1x = bitwise[TYPE<BYTE_BASE<Val64>>::expr] (item) ;
+		const auto r1x = BYTE_BASE<Val64> (bitwise (item)) ;
 		write (r1x) ;
 	}
 
 	void write (CR<Flt32> item) override {
-		const auto r1x = bitwise[TYPE<BYTE_BASE<Flt32>>::expr] (item) ;
+		const auto r1x = BYTE_BASE<Flt32> (bitwise (item)) ;
 		write (r1x) ;
 	}
 
 	void write (CR<Flt64> item) override {
-		const auto r1x = bitwise[TYPE<BYTE_BASE<Flt64>>::expr] (item) ;
+		const auto r1x = BYTE_BASE<Flt64> (bitwise (item)) ;
 		write (r1x) ;
 	}
 
@@ -981,33 +978,45 @@ public:
 		if ifdo (act) {
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Byte>>::expr] (Pointer::from (self.mStream.ref)) ;
-			rax[self.mWrite] = item ;
+			self.mStream.ref[self.mWrite] = item ;
 			self.mWrite++ ;
 		}
 	}
 
 	void write (CR<Word> item) override {
-		write_byte_impl (item) ;
-	}
-
-	void write (CR<Char> item) override {
-		write_byte_impl (item) ;
-	}
-
-	void write (CR<Quad> item) override {
-		write_byte_impl (item) ;
-	}
-
-	template <class ARG1>
-	forceinline void write_byte_impl (CR<ARG1> item) {
 		auto rax = item ;
 		if ifdo (TRUE) {
 			if (!self.mDiffEndian)
 				discard ;
 			rax = ByteProc::reverse (rax) ;
 		}
-		const auto r1x = bitwise[TYPE<Buffer<Byte ,SIZE_OF<ARG1>>>::expr] (rax) ;
+		const auto r1x = Buffer<Byte ,SIZE_OF<Word>> (bitwise (rax)) ;
+		for (auto &&i : range (0 ,r1x.size ())) {
+			write (r1x[i]) ;
+		}
+	}
+
+	void write (CR<Char> item) override {
+		auto rax = item ;
+		if ifdo (TRUE) {
+			if (!self.mDiffEndian)
+				discard ;
+			rax = ByteProc::reverse (rax) ;
+		}
+		const auto r1x = Buffer<Byte ,SIZE_OF<Char>> (bitwise (rax)) ;
+		for (auto &&i : range (0 ,r1x.size ())) {
+			write (r1x[i]) ;
+		}
+	}
+
+	void write (CR<Quad> item) override {
+		auto rax = item ;
+		if ifdo (TRUE) {
+			if (!self.mDiffEndian)
+				discard ;
+			rax = ByteProc::reverse (rax) ;
+		}
+		const auto r1x = Buffer<Byte ,SIZE_OF<Quad>> (bitwise (rax)) ;
 		for (auto &&i : range (0 ,r1x.size ())) {
 			write (r1x[i]) ;
 		}
@@ -1036,20 +1045,20 @@ public:
 	void write (CR<StringLayout> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			auto &&rax = keep[TYPE<String<Stru8>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru8>::expr)
+			auto &&rax = keep[TYPE<String<Stru>>::expr] (item) ;
+			if (rax.step () != 1)
 				discard ;
 			write_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru16>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru16>::expr)
+			if (rax.step () != 2)
 				discard ;
 			write_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru32>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru32>::expr)
+			if (rax.step () != 4)
 				discard ;
 			write_string_impl (rax) ;
 		}
@@ -1110,7 +1119,7 @@ exports CFat<ByteWriterHolder> ByteWriterHolder::hold (CR<ByteWriterLayout> that
 }
 
 struct WriteValueBuffer {
-	Buffer<Stru8 ,ENUM<64>> mBuffer ;
+	Buffer<Stru ,ENUM<64>> mBuffer ;
 	Index mWrite ;
 } ;
 
@@ -1227,7 +1236,7 @@ public:
 			for (auto &&i : range (0 ,r1x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
@@ -1336,7 +1345,7 @@ public:
 			for (auto &&i : range (r7x ,r4x - 1)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
 				wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('0')) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
@@ -1346,7 +1355,7 @@ public:
 			wvb.mBuffer[wvb.mWrite] = Stru32 ('.') ;
 			wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('.')) ;
 			wvb.mWrite-- ;
-			wvb.mBuffer[wvb.mWrite] = Stru8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+			wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
 			fexp10.mMantissa /= 10 ;
 			fexp10.mExponent++ ;
 			fexp10.mPrecision-- ;
@@ -1363,7 +1372,7 @@ public:
 			for (auto &&i : range (0 ,r4x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
@@ -1386,7 +1395,7 @@ public:
 			for (auto &&i : range (r8x ,-r5x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
 				wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('0')) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
@@ -1398,7 +1407,7 @@ public:
 			for (auto &&i : range (0 ,r4x + r5x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
@@ -1421,7 +1430,7 @@ public:
 			for (auto &&i : range (r9x ,r4x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
 				wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('0')) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
@@ -1492,30 +1501,27 @@ public:
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru8>::expr)
+			if (self.mStream->step () != 1)
 				discard ;
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru8>>::expr] (Pointer::from (self.mStream.ref)) ;
-			rax[self.mWrite] = Stru8 (item) ;
+			bitwise (self.mStream.ref[self.mWrite]) = Stru (item) ;
 			self.mWrite++ ;
 		}
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru16>::expr)
+			if (self.mStream->step () != 2)
 				discard ;
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru16>>::expr] (Pointer::from (self.mStream.ref)) ;
-			rax[self.mWrite] = Stru16 (item) ;
+			bitwise (self.mStream.ref[self.mWrite]) = Stru16 (item) ;
 			self.mWrite++ ;
 		}
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru32>::expr)
+			if (self.mStream->step () != 4)
 				discard ;
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru32>>::expr] (Pointer::from (self.mStream.ref)) ;
-			rax[self.mWrite] = Stru32 (item) ;
+			bitwise (self.mStream.ref[self.mWrite]) = Stru32 (item) ;
 			self.mWrite++ ;
 		}
 	}
@@ -1530,20 +1536,20 @@ public:
 	void write (CR<StringLayout> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			auto &&rax = keep[TYPE<String<Stru8>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru8>::expr)
+			auto &&rax = keep[TYPE<String<Stru>>::expr] (item) ;
+			if (rax.step () != 1)
 				discard ;
 			write_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru16>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru16>::expr)
+			if (rax.step () != 2)
 				discard ;
 			write_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru32>>::expr] (item) ;
-			if (rax.step () != SIZE_OF<Stru32>::expr)
+			if (rax.step () != 4)
 				discard ;
 			write_string_impl (rax) ;
 		}
@@ -1561,19 +1567,19 @@ public:
 	void write (CR<typeof (BOM)>) override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru8>::expr)
+			if (self.mStream->step () != 1)
 				discard ;
 			write (Stru32 (0XEF)) ;
 			write (Stru32 (0XBB)) ;
 			write (Stru32 (0XBF)) ;
 		}
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru16>::expr)
+			if (self.mStream->step () != 2)
 				discard ;
 			write (Stru32 (0XFEFF)) ;
 		}
 		if ifdo (act) {
-			if (self.mStream->step () != SIZE_OF<Stru32>::expr)
+			if (self.mStream->step () != 4)
 				discard ;
 			write (Stru32 (0X0000FEFF)) ;
 		}
@@ -1717,7 +1723,7 @@ public:
 		noop () ;
 	}
 
-	void read_keyword (CR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_keyword (CR<Reader> reader ,VR<String<Stru>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1736,11 +1742,11 @@ public:
 			}
 		}
 		reader.reset (r1x) ;
-		item = String<Stru8> (rbx) ;
+		item = String<Stru> (rbx) ;
 		reader.read (item) ;
 	}
 
-	void read_scalar (CR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_scalar (CR<Reader> reader ,VR<String<Stru>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1791,11 +1797,11 @@ public:
 			}
 		}
 		reader.reset (r1x) ;
-		item = String<Stru8> (rbx) ;
+		item = String<Stru> (rbx) ;
 		reader.read (item) ;
 	}
 
-	void read_escape (CR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_escape (CR<Reader> reader ,VR<String<Stru>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1819,7 +1825,7 @@ public:
 			assume (rax == Stru32 ('\"')) ;
 		}
 		reader.reset (r1x) ;
-		item = String<Stru8> (rbx) ;
+		item = String<Stru> (rbx) ;
 		reader.read (rax) ;
 		for (auto &&i : range (0 ,rbx)) {
 			reader.read (rax) ;
@@ -1829,12 +1835,12 @@ public:
 				reader.read (rax) ;
 				rax = StreamProc::ctrl_from_word (rax) ;
 			}
-			item[i] = Stru8 (rax) ;
+			item[i] = Stru (rax) ;
 		}
 		reader.read (rax) ;
 	}
 
-	void write_escape (CR<Writer> writer ,CR<String<Stru8>> item) const override {
+	void write_escape (CR<Writer> writer ,CR<String<Stru>> item) const override {
 		writer.write (Stru32 ('\"')) ;
 		for (auto &&i : item) {
 			auto act = TRUE ;
@@ -1852,7 +1858,7 @@ public:
 		writer.write (Stru32 ('\"')) ;
 	}
 
-	void read_blank (CR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_blank (CR<Reader> reader ,VR<String<Stru>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1868,11 +1874,11 @@ public:
 			}
 		}
 		reader.reset (r1x) ;
-		item = String<Stru8> (rbx) ;
+		item = String<Stru> (rbx) ;
 		reader.read (item) ;
 	}
 
-	void read_endline (CR<Reader> reader ,VR<String<Stru8>> item) const override {
+	void read_endline (CR<Reader> reader ,VR<String<Stru>> item) const override {
 		auto rax = Stru32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.shape () ;
@@ -1888,7 +1894,7 @@ public:
 			}
 		}
 		reader.reset (r1x) ;
-		item = String<Stru8> (rbx) ;
+		item = String<Stru> (rbx) ;
 		reader.read (item) ;
 	}
 
@@ -1900,7 +1906,7 @@ public:
 		for (auto &&i : range (0 ,align)) {
 			noop (i) ;
 			rax.mWrite-- ;
-			rax.mBuffer[rax.mWrite] = Stru8 (Stru32 ('0') + rbx % 10) ;
+			rax.mBuffer[rax.mWrite] = Stru (Stru32 ('0') + rbx % 10) ;
 			rbx /= 10 ;
 		}
 		for (auto &&i : range (rax.mWrite ,rax.mBuffer.size ())) {
@@ -1909,10 +1915,10 @@ public:
 	}
 } ;
 
-exports CR<Like<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
+exports CR<Super<Ref<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
 	return memorize ([&] () {
-		Like<UniqueRef<StreamTextProcLayout>> ret ;
-		ret.mThis = UniqueRef<StreamTextProcLayout>::make () ;
+		Super<Ref<StreamTextProcLayout>> ret ;
+		ret.mThis = Ref<StreamTextProcLayout>::make () ;
 		StreamTextProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -1997,8 +2003,8 @@ public:
 	}
 } ;
 
-exports SharedRef<CommaLayout> CommaHolder::create () {
-	return SharedRef<CommaLayout>::make () ;
+exports Ref<CommaLayout> CommaHolder::create () {
+	return Ref<CommaLayout>::make () ;
 }
 
 exports VFat<CommaHolder> CommaHolder::hold (VR<CommaLayout> that) {
@@ -2042,8 +2048,8 @@ public:
 	}
 } ;
 
-exports AutoRef<RegexLayout> RegexHolder::create () {
-	return AutoRef<RegexLayout>::make () ;
+exports Ref<RegexLayout> RegexHolder::create () {
+	return Ref<RegexLayout>::make () ;
 }
 
 exports VFat<RegexHolder> RegexHolder::hold (VR<RegexLayout> that) {

@@ -288,7 +288,7 @@ public:
 		}) ;
 		const auto r3x = Flag (r2x.ref) ;
 		auto rax = SingletonLocal () ;
-		inline_memcpy (Pointer::from (rax) ,Pointer::make (r3x) ,SIZE_OF<SingletonLocal>::expr) ;
+		rax = bitwise (Pointer::make (r3x)) ;
 		assume (rax.mReserve1 == Quad (self.mUid)) ;
 		assume (rax.mAddress1 != Quad (0X00)) ;
 		assume (rax.mAddress1 == rax.mAddress2) ;
@@ -317,7 +317,7 @@ public:
 		assume (rax.mAddress1 == rax.mAddress2) ;
 		assume (rax.mReserve2 == abi_reserve ()) ;
 		assume (rax.mReserve3 == ctx_reserve ()) ;
-		inline_memcpy (Pointer::make (r3x) ,Pointer::from (rax) ,SIZE_OF<SingletonLocal>::expr) ;
+		bitwise (Pointer::make (r3x)) = rax ;
 	}
 
 	Quad abi_reserve () const override {
