@@ -691,7 +691,7 @@ public:
 	void destroy () override {
 		if (!exist ())
 			return ;
-		const auto r1x = inline_alignas (self.mLength + 1 ,ALLOCATOR_MIN_SIZE::expr) ;
+		const auto r1x = inline_alignas (self.mLength ,ALLOCATOR_MIN_SIZE::expr) ;
 		const auto r2x = inline_min (r1x ,size ()) ;
 		const auto r3x = RFat<ReflectDestroy> (unknown ()) ;
 		for (auto &&i : range (0 ,r2x)) {

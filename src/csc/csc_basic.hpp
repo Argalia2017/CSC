@@ -1162,11 +1162,14 @@ public:
 template <class A ,class B>
 struct AllocatorImplLayout implement AllocatorLayout {
 public:
-	implicit AllocatorImplLayout () noexcept {
-		noop (RefBuffer<UnionPair<A ,B>> ()) ;
-		AllocatorHolder::hold (thiz)->prepare (AllocatorUnknownBinder<A ,B> ()) ;
-	}
+	implicit AllocatorImplLayout () noexcept ;
 } ;
+
+template <class A ,class B>
+inline AllocatorImplLayout<A ,B>::AllocatorImplLayout () noexcept {
+	noop (RefBuffer<UnionPair<A ,B>> ()) ;
+	AllocatorHolder::hold (thiz)->prepare (AllocatorUnknownBinder<A ,B> ()) ;
+}
 
 template <class B>
 struct AllocatorImplLayout<Pointer ,B> implement AllocatorLayout {} ;

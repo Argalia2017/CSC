@@ -597,11 +597,6 @@ public:
 		self.mStride[0] = r1x ;
 		for (auto &&i : range (1 ,self.mStride.size ()))
 			self.mStride[i] = size_ * r1x ;
-		for (auto &&i : range (0 ,size_)) {
-			const auto r3x = self.mBuffer + i * r1x ;
-			auto &&rbx = keep[TYPE<Flt64>::expr] (Pointer::make (r3x)) ;
-			rbx = Flt64 (i) ;
-		}
 	}
 
 	Unknown choose_unknown (CR<Just<TensorType>> dst ,CR<Just<TensorType>> src) const {
@@ -730,9 +725,9 @@ public:
 
 	Flt64 get_float (CR<Flag> addr) const {
 		if (self.mStride[0] == 4)
-			return bitwise (Pointer::make (addr)) ;
+			return Flt32 (bitwise (Pointer::make (addr))) ;
 		if (self.mStride[0] == 8)
-			return bitwise (Pointer::make (addr)) ;
+			return Flt64 (bitwise (Pointer::make (addr))) ;
 		assert (FALSE) ;
 		return 0 ;
 	}

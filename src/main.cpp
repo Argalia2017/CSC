@@ -15,6 +15,8 @@ using namespace ROUTINE ;
 */
 
 int main () {
-
+	auto rax = Set<Index> ({1 ,2 ,3 ,4 ,5 ,6}) ;
+	notice (rax) ;
+	notice (rax) ;
 	return 0 ;
 }

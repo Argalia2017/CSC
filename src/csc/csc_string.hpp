@@ -252,8 +252,6 @@ struct XmlParserHolder implement Interface {
 	virtual String<Stra> parse (CR<String<Stra>> def) const = 0 ;
 	virtual String<Strw> parse (CR<String<Strw>> def) const = 0 ;
 	virtual String<Stru> parse (CR<String<Stru>> def) const = 0 ;
-	virtual String<Stru16> parse (CR<String<Stru16>> def) const = 0 ;
-	virtual String<Stru32> parse (CR<String<Stru32>> def) const = 0 ;
 	virtual Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const = 0 ;
 	virtual Array<Val32> parse (CR<Val32> def ,CR<Length> size_) const = 0 ;
 	virtual Array<Val64> parse (CR<Val64> def ,CR<Length> size_) const = 0 ;
@@ -262,8 +260,6 @@ struct XmlParserHolder implement Interface {
 	virtual Array<String<Stra>> parse (CR<String<Stra>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Strw>> parse (CR<String<Strw>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const = 0 ;
-	virtual Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const = 0 ;
-	virtual Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const = 0 ;
 } ;
 
 class XmlParser implement XmlParserLayout {
@@ -375,14 +371,6 @@ public:
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<Stru16> parse (CR<String<Stru16>> def) const {
-		return XmlParserHolder::hold (thiz)->parse (def) ;
-	}
-
-	String<Stru32> parse (CR<String<Stru32>> def) const {
-		return XmlParserHolder::hold (thiz)->parse (def) ;
-	}
-
 	Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
@@ -412,14 +400,6 @@ public:
 	}
 
 	Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const {
-		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
-	}
-
-	Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const {
-		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
-	}
-
-	Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 } ;
@@ -456,8 +436,6 @@ struct JsonParserHolder implement Interface {
 	virtual String<Stra> parse (CR<String<Stra>> def) const = 0 ;
 	virtual String<Strw> parse (CR<String<Strw>> def) const = 0 ;
 	virtual String<Stru> parse (CR<String<Stru>> def) const = 0 ;
-	virtual String<Stru16> parse (CR<String<Stru16>> def) const = 0 ;
-	virtual String<Stru32> parse (CR<String<Stru32>> def) const = 0 ;
 	virtual Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const = 0 ;
 	virtual Array<Val32> parse (CR<Val32> def ,CR<Length> size_) const = 0 ;
 	virtual Array<Val64> parse (CR<Val64> def ,CR<Length> size_) const = 0 ;
@@ -466,8 +444,6 @@ struct JsonParserHolder implement Interface {
 	virtual Array<String<Stra>> parse (CR<String<Stra>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Strw>> parse (CR<String<Strw>> def ,CR<Length> size_) const = 0 ;
 	virtual Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const = 0 ;
-	virtual Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const = 0 ;
-	virtual Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const = 0 ;
 } ;
 
 class JsonParser implement JsonParserLayout {
@@ -579,14 +555,6 @@ public:
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<Stru16> parse (CR<String<Stru16>> def) const {
-		return JsonParserHolder::hold (thiz)->parse (def) ;
-	}
-
-	String<Stru32> parse (CR<String<Stru32>> def) const {
-		return JsonParserHolder::hold (thiz)->parse (def) ;
-	}
-
 	Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
@@ -616,14 +584,6 @@ public:
 	}
 
 	Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const {
-		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
-	}
-
-	Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const {
-		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
-	}
-
-	Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 } ;

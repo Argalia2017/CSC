@@ -1552,28 +1552,6 @@ public:
 		return def ;
 	}
 
-	String<Stru16> parse (CR<String<Stru16>> def) const override {
-		if (!exist ())
-			return def ;
-		try {
-			return StringProc::stru16_from (self.mThis->mTree[self.mIndex].mValue) ;
-		} catch (CR<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<Stru32> parse (CR<String<Stru32>> def) const override {
-		if (!exist ())
-			return def ;
-		try {
-			return StringProc::stru32_from (self.mThis->mTree[self.mIndex].mValue) ;
-		} catch (CR<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
 	Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
@@ -1603,14 +1581,6 @@ public:
 	}
 
 	Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const override {
-		return parse_impl (def ,size_) ;
-	}
-
-	Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const override {
-		return parse_impl (def ,size_) ;
-	}
-
-	Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
@@ -2208,28 +2178,6 @@ public:
 		return def ;
 	}
 
-	String<Stru16> parse (CR<String<Stru16>> def) const override {
-		if (!exist ())
-			return def ;
-		try {
-			return StringProc::stru16_from (self.mThis->mTree[self.mIndex].mValue) ;
-		} catch (CR<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<Stru32> parse (CR<String<Stru32>> def) const override {
-		if (!exist ())
-			return def ;
-		try {
-			return StringProc::stru32_from (self.mThis->mTree[self.mIndex].mValue) ;
-		} catch (CR<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
 	Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
@@ -2259,14 +2207,6 @@ public:
 	}
 
 	Array<String<Stru>> parse (CR<String<Stru>> def ,CR<Length> size_) const override {
-		return parse_impl (def ,size_) ;
-	}
-
-	Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const override {
-		return parse_impl (def ,size_) ;
-	}
-
-	Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 

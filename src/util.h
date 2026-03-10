@@ -17,26 +17,6 @@
 namespace ROUTINE {
 using namespace CSC ;
 
-using BOOL = Bool ;
-using VAL32 = Val32 ;
-using VAL64 = Val64 ;
-using VAL = Val ;
-using INDEX = Index ;
-using LENGTH = Length ;
-using FLAG = Flag ;
-using FLT32 = Flt32 ;
-using FLT64 = Flt64 ;
-using BYTE = Byte ;
-using WORD = Word ;
-using CHAR = Char ;
-using QUAD = Quad ;
-using STRA = Stra ;
-using STRW = Strw ;
-using STRU = Stru ;
-using STRU16 = Stru16 ;
-using STRU32 = Stru32 ;
-using STR = Str ;
-
 using CSC::move ;
 using CSC::swap ;
 
