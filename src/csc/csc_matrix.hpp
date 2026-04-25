@@ -1109,8 +1109,8 @@ struct PointCloudHolder implement Interface {
 	virtual Length size () const = 0 ;
 	virtual void get (CR<Index> index ,VR<Vector> item) const = 0 ;
 	virtual Matrix pca_matrix () const = 0 ;
-	virtual Matrix box_matrix () const = 0 ;
-	virtual Matrix box_matrix (CR<Flt64> ax ,CR<Flt64> ay ,CR<Flt64> az) const = 0 ;
+	virtual Matrix box_matrix (CR<Flt64> bx ,CR<Flt64> by ,CR<Flt64> bz) const = 0 ;
+	virtual Matrix cut_matrix (CR<Flt64> sx ,CR<Flt64> sy ,CR<Flt64> sz) const = 0 ;
 	virtual Line3F bound () const = 0 ;
 	virtual PointCloudLayout smul (CR<Matrix> that) const = 0 ;
 	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const = 0 ;
@@ -1157,12 +1157,12 @@ public:
 		return PointCloudHolder::hold (thiz)->pca_matrix () ;
 	}
 
-	Matrix box_matrix () const {
-		return PointCloudHolder::hold (thiz)->box_matrix () ;
+	Matrix box_matrix (CR<Flt64> bx ,CR<Flt64> by ,CR<Flt64> bz) const {
+		return PointCloudHolder::hold (thiz)->box_matrix (bx ,by ,bz) ;
 	}
 
-	Matrix box_matrix (CR<Flt64> ax ,CR<Flt64> ay ,CR<Flt64> az) const {
-		return PointCloudHolder::hold (thiz)->box_matrix (ax ,ay ,az) ;
+	Matrix cut_matrix (CR<Flt64> sx ,CR<Flt64> sy ,CR<Flt64> sz) const {
+		return PointCloudHolder::hold (thiz)->cut_matrix (sx ,sy ,sz) ;
 	}
 
 	Line3F bound () const {

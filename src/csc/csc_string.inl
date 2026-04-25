@@ -9,6 +9,7 @@
 #include "csc_end.h"
 #include <cstdlib>
 #include <clocale>
+#include <regex>
 #include "csc_begin.h"
 
 namespace CSC {
@@ -627,27 +628,32 @@ public:
 	}
 
 	String<Str> strs_from_straw (RR<String<Stra>> a) const {
-		assert (a.step () == SIZE_OF<Str>::expr) ;
+		const auto r1x = a.step () ;
+		assert (a.step () * r1x == SIZE_OF<Str>::expr * r1x) ;
 		return move (keep[TYPE<String<Str>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Str> strs_from_straw (RR<String<Strw>> a) const {
-		assert (a.step () == SIZE_OF<Str>::expr) ;
+		const auto r1x = a.step () ;
+		assert (a.step () * r1x == SIZE_OF<Str>::expr * r1x) ;
 		return move (keep[TYPE<String<Str>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Strw> strw_from_struw (RR<String<Stru>> a) const {
-		assert (a.step () == SIZE_OF<Strw>::expr) ;
+		const auto r1x = a.step () ;
+		assert (a.step () * r1x == SIZE_OF<Strw>::expr * r1x) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Strw> strw_from_struw (RR<String<Stru16>> a) const {
-		assert (a.step () == SIZE_OF<Strw>::expr) ;
+		const auto r1x = a.step () ;
+		assert (a.step () * r1x == SIZE_OF<Strw>::expr * r1x) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Strw> strw_from_struw (RR<String<Stru32>> a) const {
-		assert (a.step () == SIZE_OF<Strw>::expr) ;
+		const auto r1x = a.step () ;
+		assert (a.step () * r1x == SIZE_OF<Strw>::expr * r1x) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
@@ -839,6 +845,51 @@ exports VFat<StringProcHolder> StringProcHolder::hold (VR<StringProcLayout> that
 
 exports CFat<StringProcHolder> StringProcHolder::hold (CR<StringProcLayout> that) {
 	return CFat<StringProcHolder> (StringProcImplHolder () ,that) ;
+}
+
+struct RegexLayout {
+	std::basic_regex<Str> mRegex ;
+	std::match_results<PTR<CR<Str>>> mMatch ;
+	Ref<String<Str>> mText ;
+} ;
+
+class RegexImplHolder final implement Fat<RegexHolder ,RegexLayout> {
+public:
+	void initialize (CR<String<Str>> format) override {
+		self.mRegex = std::basic_regex<Str> (format) ;
+	}
+
+	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) override {
+		self.mText = move (text) ;
+		const auto r1x = (&self.mText.ref[offset]) ;
+		const auto r2x = std::regex_search (r1x ,self.mMatch ,self.mRegex) ;
+		if (!r2x)
+			return NONE ;
+		const auto r3x = Flag (self.mMatch[0].first) ;
+		const auto r4x = (r3x - Flag (r1x)) / SIZE_OF<Str>::expr ;
+		return offset + r4x ;
+	}
+
+	Slice match (CR<Index> index) const override {
+		assert (!self.mMatch.empty ()) ;
+		assert (inline_between (index ,0 ,self.mMatch.size ())) ;
+		const auto r1x = Flag (self.mMatch[index].first) ;
+		const auto r2x = Flag (self.mMatch[index].second) ;
+		const auto r3x = (r2x - r1x) / SIZE_OF<Str>::expr ;
+		return Slice (r1x ,r3x ,SIZE_OF<Str>::expr) ;
+	}
+} ;
+
+exports Ref<RegexLayout> RegexHolder::create () {
+	return Ref<RegexLayout>::make () ;
+}
+
+exports VFat<RegexHolder> RegexHolder::hold (VR<RegexLayout> that) {
+	return VFat<RegexHolder> (RegexImplHolder () ,that) ;
+}
+
+exports CFat<RegexHolder> RegexHolder::hold (CR<RegexLayout> that) {
+	return CFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 
 struct RegularReaderLayout {

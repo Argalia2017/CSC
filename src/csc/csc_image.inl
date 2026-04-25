@@ -237,6 +237,17 @@ public:
 		noop () ;
 	}
 
+	Color3B bgr (CR<Flt64> b ,CR<Flt64> g ,CR<Flt64> r) const override {
+		Color3B ret ;
+		const auto r1x = MathProc::clamp (MathProc::round (b) ,Flt64 (0) ,Flt64 (255)) ;
+		const auto r2x = MathProc::clamp (MathProc::round (g) ,Flt64 (0) ,Flt64 (255)) ;
+		const auto r3x = MathProc::clamp (MathProc::round (r) ,Flt64 (0) ,Flt64 (255)) ;
+		ret.mB = Byte (Val32 (r1x)) ;
+		ret.mG = Byte (Val32 (r2x)) ;
+		ret.mR = Byte (Val32 (r3x)) ;
+		return move (ret) ;
+	}
+
 	Flt64 byte_norm (CR<Byte> c) const {
 		return Flt64 (Val32 (c)) * MathProc::inverse (Flt64 (255)) ;
 	}

@@ -326,14 +326,14 @@ static constexpr auto invoke = FUNCTION_invoke () ;
 class BitwiseProxy implement Proxy {
 public:
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
-	implicit operator ARG1 () const {
+	forceinline operator ARG1 () const {
 		ARG1 ret ;
 		inline_memcpy (Pointer::from (ret) ,Pointer::from (thiz) ,SIZE_OF<ARG1>::expr) ;
 		return move (ret) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
-	void operator= (CR<ARG1> that) {
+	forceinline void operator= (CR<ARG1> that) {
 		inline_memcpy (Pointer::from (thiz) ,Pointer::from (that) ,SIZE_OF<ARG1>::expr) ;
 	}
 } ;
@@ -397,7 +397,7 @@ public:
 		return Pointer::from (thiz) ;
 	}
 
-	implicit operator CR<UnknownHolder> () const leftvalue {
+	forceinline operator CR<UnknownHolder> () const leftvalue {
 		return ref ;
 	}
 

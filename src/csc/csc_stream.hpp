@@ -400,7 +400,7 @@ public:
 		ByteReaderHolder::hold (thiz)->initialize (move (stream)) ;
 	}
 
-	implicit operator Reader () leftvalue {
+	forceinline operator Reader () leftvalue {
 		return ByteReaderHolder::hold (thiz) ;
 	}
 
@@ -620,7 +620,7 @@ public:
 		TextReaderHolder::hold (thiz)->initialize (move (stream)) ;
 	}
 
-	implicit operator Reader () leftvalue {
+	forceinline operator Reader () leftvalue {
 		return TextReaderHolder::hold (thiz) ;
 	}
 
@@ -1083,7 +1083,7 @@ public:
 		ByteWriterHolder::hold (thiz)->initialize (move (stream)) ;
 	}
 
-	implicit operator Writer () leftvalue {
+	forceinline operator Writer () leftvalue {
 		return ByteWriterHolder::hold (thiz) ;
 	}
 
@@ -1296,7 +1296,7 @@ public:
 		TextWriterHolder::hold (thiz)->initialize (move (stream)) ;
 	}
 
-	implicit operator Writer () leftvalue {
+	forceinline operator Writer () leftvalue {
 		return TextWriterHolder::hold (thiz) ;
 	}
 
@@ -1574,7 +1574,7 @@ public:
 		FormatHolder::hold (thiz)->initialize (format) ;
 	}
 
-	implicit operator Writing () const leftvalue {
+	forceinline operator Writing () const leftvalue {
 		return CFat<WritingHolder> (FormatWritingBinder () ,thiz) ;
 	}
 
@@ -1604,6 +1604,65 @@ inline Format PrintFormat (CR<ARG1>...params) {
 	ret (params...) ;
 	return move (ret) ;
 }
+
+struct CommaLayout ;
+
+struct CommaHolder implement Interface {
+	imports Ref<CommaLayout> create () ;
+	imports VFat<CommaHolder> hold (VR<CommaLayout> that) ;
+	imports CFat<CommaHolder> hold (CR<CommaLayout> that) ;
+
+	virtual void initialize (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) = 0 ;
+	virtual void friend_write (CR<Writer> writer) = 0 ;
+	virtual void increase () = 0 ;
+	virtual void decrease () = 0 ;
+	virtual void tight () = 0 ;
+} ;
+
+class CommaWritingBinder final implement Fat<WritingHolder ,Super<Ref<CommaLayout>>> {
+public:
+	void friend_write (CR<Writer> writer) const override {
+		return CommaHolder::hold (self)->friend_write (writer) ;
+	}
+} ;
+
+class Comma implement Super<Ref<CommaLayout>> {
+public:
+	implicit Comma () = default ;
+
+	explicit Comma (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) {
+		mThis = CommaHolder::create () ;
+		CommaHolder::hold (thiz)->initialize (indent ,comma ,endline) ;
+	}
+
+	forceinline operator Writing () const leftvalue {
+		return CFat<WritingHolder> (CommaWritingBinder () ,thiz) ;
+	}
+
+	void friend_write (CR<Writer> writer) const {
+		return CommaHolder::hold (thiz)->friend_write (writer) ;
+	}
+
+	void increase () const {
+		return CommaHolder::hold (thiz)->increase () ;
+	}
+
+	forceinline void operator++ (int) const {
+		return increase () ;
+	}
+
+	void decrease () const {
+		return CommaHolder::hold (thiz)->decrease () ;
+	}
+
+	forceinline void operator-- (int) const {
+		return decrease () ;
+	}
+
+	void tight () const {
+		return CommaHolder::hold (thiz)->tight () ;
+	}
+} ;
 
 struct StreamTextProcLayout ;
 
@@ -1664,7 +1723,7 @@ public:
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadKeyword (VR<String<Stru>> that) {
+inline Reading ReadKeyword (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadKeywordReadingBinder () ,that) ;
 }
 
@@ -1675,7 +1734,7 @@ public:
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadScalar (VR<String<Stru>> that) {
+inline Reading ReadScalar (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadScalarReadingBinder () ,that) ;
 }
 
@@ -1686,7 +1745,7 @@ public:
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadEscape (VR<String<Stru>> that) {
+inline Reading ReadEscape (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadEscapeReadingBinder () ,that) ;
 }
 
@@ -1697,7 +1756,7 @@ public:
 	}
 } ;
 
-inline CFat<WritingHolder> WriteEscape (CR<String<Stru>> that) {
+inline Writing WriteEscape (CR<String<Stru>> that) {
 	return CFat<WritingHolder> (WriteEscapeWritingBinder () ,that) ;
 }
 
@@ -1708,7 +1767,7 @@ public:
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadBlank (VR<String<Stru>> that) {
+inline Reading ReadBlank (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadBlankReadingBinder () ,that) ;
 }
 
@@ -1719,7 +1778,7 @@ public:
 	}
 } ;
 
-inline VFat<ReadingHolder> ReadEndline (VR<String<Stru>> that) {
+inline Reading ReadEndline (VR<String<Stru>> that) {
 	return VFat<ReadingHolder> (ReadEndlineReadingBinder () ,that) ;
 }
 
@@ -1730,96 +1789,24 @@ public:
 	}
 } ;
 
-inline CFat<WritingHolder> WriteAligned (CR<Tuple<Val64 ,Length>> that) {
-	return CFat<WritingHolder> (WriteAlignedWritingBinder () ,that) ;
+class LazyWriteAligned implement Proxy {
+protected:
+	Tuple<Val64 ,Length> mThat ;
+
+public:
+	implicit LazyWriteAligned () = delete ;
+
+	explicit LazyWriteAligned (CR<Val64> number ,CR<Length> align_) {
+		mThat.m1st = number ;
+		mThat.m2nd = align_ ;
+	}
+
+	forceinline operator Writing () const leftvalue {
+		return CFat<WritingHolder> (WriteAlignedWritingBinder () ,mThat) ;
+	}
+} ;
+
+inline LazyWriteAligned WriteAligned (CR<Val64> number ,CR<Length> align_) {
+	return LazyWriteAligned (number ,align_) ;
 }
-
-struct CommaLayout ;
-
-struct CommaHolder implement Interface {
-	imports Ref<CommaLayout> create () ;
-	imports VFat<CommaHolder> hold (VR<CommaLayout> that) ;
-	imports CFat<CommaHolder> hold (CR<CommaLayout> that) ;
-
-	virtual void initialize (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) = 0 ;
-	virtual void friend_write (CR<Writer> writer) = 0 ;
-	virtual void increase () = 0 ;
-	virtual void decrease () = 0 ;
-	virtual void tight () = 0 ;
-} ;
-
-class CommaWritingBinder final implement Fat<WritingHolder ,Super<Ref<CommaLayout>>> {
-public:
-	void friend_write (CR<Writer> writer) const override {
-		return CommaHolder::hold (self)->friend_write (writer) ;
-	}
-} ;
-
-class Comma implement Super<Ref<CommaLayout>> {
-public:
-	implicit Comma () = default ;
-
-	explicit Comma (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) {
-		mThis = CommaHolder::create () ;
-		CommaHolder::hold (thiz)->initialize (indent ,comma ,endline) ;
-	}
-
-	implicit operator Writing () const leftvalue {
-		return CFat<WritingHolder> (CommaWritingBinder () ,thiz) ;
-	}
-
-	void friend_write (CR<Writer> writer) const {
-		return CommaHolder::hold (thiz)->friend_write (writer) ;
-	}
-
-	void increase () const {
-		return CommaHolder::hold (thiz)->increase () ;
-	}
-
-	forceinline void operator++ (int) const {
-		return increase () ;
-	}
-
-	void decrease () const {
-		return CommaHolder::hold (thiz)->decrease () ;
-	}
-
-	forceinline void operator-- (int) const {
-		return decrease () ;
-	}
-
-	void tight () const {
-		return CommaHolder::hold (thiz)->tight () ;
-	}
-} ;
-
-struct RegexLayout ;
-
-struct RegexHolder implement Interface {
-	imports Ref<RegexLayout> create () ;
-	imports VFat<RegexHolder> hold (VR<RegexLayout> that) ;
-	imports CFat<RegexHolder> hold (CR<RegexLayout> that) ;
-
-	virtual void initialize (CR<String<Str>> format) = 0 ;
-	virtual Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) = 0 ;
-	virtual Slice match (CR<Index> index) const = 0 ;
-} ;
-
-class Regex implement Super<Ref<RegexLayout>> {
-public:
-	implicit Regex () = default ;
-
-	explicit Regex (CR<String<Str>> format) {
-		mThis = RegexHolder::create () ;
-		RegexHolder::hold (thiz)->initialize (format) ;
-	}
-
-	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) {
-		return RegexHolder::hold (thiz)->search (move (text) ,offset) ;
-	}
-
-	Slice match (CR<Index> index) const {
-		return RegexHolder::hold (thiz)->match (index) ;
-	}
-} ;
 } ;

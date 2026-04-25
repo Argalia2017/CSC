@@ -1542,7 +1542,7 @@ public:
 	explicit VFat (CR<ARG1> holder ,VR<ARG2> that) ;
 
 	template <class ARG1 ,class = REQUIRE<IS_EXTEND<ARG1 ,A>>>
-	implicit operator CR<VFat<ARG1>> () const leftvalue {
+	forceinline operator CR<VFat<ARG1>> () const leftvalue {
 		return Pointer::from (thiz) ;
 	}
 
@@ -1571,7 +1571,7 @@ public:
 	explicit CFat (CR<ARG1> holder ,CR<ARG2> that) ;
 
 	template <class ARG1 ,class = REQUIRE<IS_EXTEND<ARG1 ,A>>>
-	implicit operator CR<CFat<ARG1>> () const leftvalue {
+	forceinline operator CR<CFat<ARG1>> () const leftvalue {
 		return Pointer::from (thiz) ;
 	}
 

@@ -74,7 +74,6 @@
 
 	<Type Name="CSC::Ref&lt;*&gt;">
 		<DisplayString Condition="mLayout==0">{{???}}</DisplayString>
-		<DisplayString Condition="(*($T1*)mLayout)==0">{{???}}</DisplayString>
 		<Expand HideRawView="true">
 			<Item Name="[+]" Condition="mLayout!=0">*($T1*)mLayout</Item>
 		</Expand>

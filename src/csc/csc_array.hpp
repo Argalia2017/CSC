@@ -1912,7 +1912,7 @@ class HashcodeVisitor implement HashcodeVisitorLayout {
 public:
 	implicit HashcodeVisitor () = default ;
 
-	implicit operator Visitor () leftvalue {
+	forceinline operator Visitor () leftvalue {
 		return HashcodeVisitorHolder::hold (thiz) ;
 	}
 } ;

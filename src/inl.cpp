@@ -70,7 +70,7 @@
 #include <csc_image.opencv.inl>
 
 #ifdef __CSC_PLATFORM_X64__
-#pragma comment (lib ,"opencv_world470.lib")
+#pragma comment (lib ,"opencv_world4120.lib")
 #endif
 #endif
 #endif

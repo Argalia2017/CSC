@@ -199,7 +199,7 @@ public:
 	}
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_ANY<IS_SAME<ARG1 ,A> ,ENUM_EQ_ZERO<B>>>>
-	implicit operator CR<Wrapper<ARG1 ,ARG2>> () const leftvalue {
+	forceinline operator CR<Wrapper<ARG1 ,ARG2>> () const leftvalue {
 		return Pointer::from (thiz) ;
 	}
 

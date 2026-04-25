@@ -1300,10 +1300,14 @@ public:
 			return move (ret) ;
 		}) ;
 		const auto r4x = MatrixProc::solve_svd (r2x) ;
-		const auto r5x = TranslationMatrix (r1x) ;
-		const auto r6x = UnitaryMatrix (r4x.mV) ;
-		const auto r7x = DiagMatrix (sqrt_fix (r4x.mS[0][0]) ,sqrt_fix (r4x.mS[1][1]) ,sqrt_fix (r4x.mS[2][2])) ;
-		return r5x * r6x * r7x ;
+		const auto r5x = MathProc::inverse (Flt64 (size ())) ;
+		const auto r6x = r4x.mS[0][0] * r5x ;
+		const auto r7x = r4x.mS[1][1] * r5x ;
+		const auto r8x = r4x.mS[2][2] * r5x ;
+		const auto r9x = TranslationMatrix (r1x) ;
+		const auto r10x = UnitaryMatrix (r4x.mV) ;
+		const auto r11x = DiagMatrix (sqrt_fix (r6x) ,sqrt_fix (r7x) ,sqrt_fix (r8x)) ;
+		return r9x * r10x * r11x ;
 	}
 
 	Flt64 sqrt_fix (CR<Flt64> a) const {
@@ -1312,43 +1316,46 @@ public:
 		return MathProc::sqrt (a) ;
 	}
 
-	Vector box_center () const {
+	Vector box_center (CR<Line3F> a) const {
 		Vector ret = Vector::zero () ;
-		Index ix = (size () - 1) / 2 ;
-		Index iy = size () / 2 ;
-		auto rax = Vector () ;
-		get (ix ,rax) ;
-		ret += rax ;
-		get (iy ,rax) ;
-		ret += rax ;
+		ret += Vector (a.mMin) ;
+		ret += Vector (a.mMax) ;
 		ret = ret.projection () ;
 		return move (ret) ;
 	}
 
-	Matrix box_matrix () const override {
-		const auto r1x = box_center () ;
-		const auto r2x = bound () ;
-		const auto r3x = (Vector (r2x.mMax) - r1x).sabs () ;
-		const auto r4x = (Vector (r2x.mMin) - r1x).sabs () ;
-		const auto r5x = MathProc::max_of (r3x[0] ,r4x[0] ,Flt64 (1)) ;
-		const auto r6x = MathProc::max_of (r3x[1] ,r4x[1] ,Flt64 (1)) ;
-		const auto r7x = MathProc::max_of (r3x[2] ,r4x[2] ,Flt64 (1)) ;
-		const auto r8x = TranslationMatrix (r1x) ;
-		const auto r9x = DiagMatrix (r5x ,r6x ,r7x) ;
-		return r8x * r9x ;
+	Matrix box_matrix (CR<Flt64> bx ,CR<Flt64> by ,CR<Flt64> bz) const override {
+		const auto r1x = bound () ;
+		const auto r2x = box_center (r1x) ;
+		const auto r3x = (Vector (r1x.mMax) - Vector (r1x.mMin)) * Flt64 (0.5) ;
+		const auto r4x = MathProc::max_of (MathProc::square (r3x[0] + bx)) ;
+		const auto r5x = MathProc::max_of (MathProc::square (r3x[1] + by)) ;
+		const auto r6x = MathProc::max_of (MathProc::square (r3x[2] + bz)) ;
+		const auto r7x = TranslationMatrix (r2x) ;
+		const auto r8x = DiagMatrix (sqrt_fix (r4x) ,sqrt_fix (r5x) ,sqrt_fix (r6x)) ;
+		return r7x * r8x ;
 	}
 
-	Matrix box_matrix (CR<Flt64> ax ,CR<Flt64> ay ,CR<Flt64> az) const override {
-		const auto r1x = box_center () ;
-		const auto r2x = bound () ;
-		const auto r3x = Vector (r2x.mMax) - Vector (r2x.mMin) ;
-		const auto r4x = r3x[0] * MathProc::inverse (ax) ;
-		const auto r5x = r3x[1] * MathProc::inverse (ay) ;
-		const auto r6x = r3x[2] * MathProc::inverse (az) ;
-		const auto r7x = MathProc::max_of (r4x ,r5x ,r6x) ;
-		const auto r8x = TranslationMatrix (r1x) ;
-		const auto r9x = DiagMatrix (ax * r7x ,ay * r7x ,az * r7x) ;
-		return r8x * r9x ;
+	Vector cut_matrix () const {
+		Vector ret ;
+		assume (size () % 2 == 1) ;
+		Index ix = (size () - 1) / 2 ;
+		get (ix ,ret) ;
+		return move (ret) ;
+	}
+
+	Matrix cut_matrix (CR<Flt64> sx ,CR<Flt64> sy ,CR<Flt64> sz) const override {
+		const auto r1x = bound () ;
+		const auto r2x = cut_matrix () ;
+		const auto r3x = (Vector (r1x.mMin) - r2x).sabs () ;
+		const auto r4x = (Vector (r1x.mMax) - r2x).sabs () ;
+		const auto r5x = MathProc::min_of (r3x[0] ,r4x[0]) * MathProc::inverse (sx) ;
+		const auto r6x = MathProc::min_of (r3x[1] ,r4x[1]) * MathProc::inverse (sy) ;
+		const auto r7x = MathProc::min_of (r3x[2] ,r4x[2]) * MathProc::inverse (sz) ;
+		const auto r8x = MathProc::max_of (r5x ,r6x ,r7x) ;
+		const auto r9x = TranslationMatrix (r2x) ;
+		const auto r10x = DiagMatrix (sx * r8x ,sy * r8x ,sz * r8x) ;
+		return r9x * r10x ;
 	}
 
 	Line3F bound () const override {

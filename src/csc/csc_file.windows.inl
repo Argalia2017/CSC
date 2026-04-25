@@ -1085,11 +1085,11 @@ public:
 		self.mLogWriter << slice ("[") ;
 		const auto r1x = CurrentTime () ;
 		const auto r2x = r1x.calendar () ;
-		self.mLogWriter << WriteAligned ({r2x.mHour ,2}) ;
+		self.mLogWriter << WriteAligned (r2x.mHour ,2) ;
 		self.mLogWriter << slice (":") ;
-		self.mLogWriter << WriteAligned ({r2x.mMinute ,2}) ;
+		self.mLogWriter << WriteAligned (r2x.mMinute ,2) ;
 		self.mLogWriter << slice (":") ;
-		self.mLogWriter << WriteAligned ({r2x.mSecond ,2}) ;
+		self.mLogWriter << WriteAligned (r2x.mSecond ,2) ;
 		self.mLogWriter << slice ("][") ;
 		self.mLogWriter << tag ;
 		self.mLogWriter << slice ("] : ") ;

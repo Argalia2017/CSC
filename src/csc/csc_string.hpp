@@ -220,6 +220,58 @@ public:
 	}
 } ;
 
+class LazyWriteEscape implement Proxy {
+protected:
+	String<Stru> mThat ;
+
+public:
+	implicit LazyWriteEscape () = delete ;
+
+	template <class ARG1>
+	explicit LazyWriteEscape (CR<String<ARG1>> that) {
+		mThat = StringProc::stru8_from (that) ;
+	}
+
+	forceinline operator Writing () const leftvalue {
+		return CFat<WritingHolder> (WriteEscapeWritingBinder () ,mThat) ;
+	}
+} ;
+
+template <class ARG1>
+inline LazyWriteEscape WriteEscape (CR<String<ARG1>> that) {
+	return LazyWriteEscape (that) ;
+}
+
+struct RegexLayout ;
+
+struct RegexHolder implement Interface {
+	imports Ref<RegexLayout> create () ;
+	imports VFat<RegexHolder> hold (VR<RegexLayout> that) ;
+	imports CFat<RegexHolder> hold (CR<RegexLayout> that) ;
+
+	virtual void initialize (CR<String<Str>> format) = 0 ;
+	virtual Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) = 0 ;
+	virtual Slice match (CR<Index> index) const = 0 ;
+} ;
+
+class Regex implement Super<Ref<RegexLayout>> {
+public:
+	implicit Regex () = default ;
+
+	explicit Regex (CR<String<Str>> format) {
+		mThis = RegexHolder::create () ;
+		RegexHolder::hold (thiz)->initialize (format) ;
+	}
+
+	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) {
+		return RegexHolder::hold (thiz)->search (move (text) ,offset) ;
+	}
+
+	Slice match (CR<Index> index) const {
+		return RegexHolder::hold (thiz)->match (index) ;
+	}
+} ;
+
 struct XmlParserTree ;
 
 struct XmlParserLayout {

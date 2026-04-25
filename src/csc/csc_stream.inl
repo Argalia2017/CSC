@@ -6,10 +6,6 @@
 
 #include "csc_stream.hpp"
 
-#include "csc_end.h"
-#include <regex>
-#include "csc_begin.h"
-
 namespace CSC {
 struct StreamProcLayout {
 	Slice mBlankSlice ;
@@ -1627,6 +1623,7 @@ class FormatImplHolder final implement Fat<FormatHolder ,FormatLayout> {
 public:
 	void initialize (CR<Slice> format) override {
 		self.mFormat = format ;
+		self.mWrite = 0 ;
 	}
 
 	void friend_write (CR<Writer> writer) const override {
@@ -1696,6 +1693,7 @@ public:
 	}
 
 	void once (CR<Wrapper<FatLayout>> params) const override {
+		assert (params.rank () <= self.mParams.size ()) ;
 		const auto r1x = Pin<BufferX<FatLayout>> (self.mParams) ;
 		const auto r2x = Pin<Length> (self.mWrite) ;
 		Index ix = 0 ;
@@ -1713,6 +1711,89 @@ exports VFat<FormatHolder> FormatHolder::hold (VR<FormatLayout> that) {
 
 exports CFat<FormatHolder> FormatHolder::hold (CR<FormatLayout> that) {
 	return CFat<FormatHolder> (FormatImplHolder () ,that) ;
+}
+
+struct CommaLayout {
+	Slice mIndent ;
+	Slice mComma ;
+	Slice mEndline ;
+	Length mDepth ;
+	Deque<Bool> mFirst ;
+	Length mTight ;
+	Length mLastTight ;
+} ;
+
+class CommaImplHolder final implement Fat<CommaHolder ,CommaLayout> {
+public:
+	void initialize (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) override {
+		self.mIndent = indent ;
+		self.mComma = comma ;
+		self.mEndline = endline ;
+		self.mDepth = 0 ;
+		self.mTight = 255 ;
+		self.mLastTight = 0 ;
+	}
+
+	void friend_write (CR<Writer> writer) override {
+		if ifdo (TRUE) {
+			if (self.mDepth >= self.mTight + self.mLastTight)
+				discard ;
+			writer.write (self.mEndline) ;
+		}
+		if ifdo (TRUE) {
+			if (self.mFirst.empty ())
+				discard ;
+			Index ix = self.mFirst.tail () ;
+			if ifdo (TRUE) {
+				if (self.mFirst[ix])
+					discard ;
+				writer.write (self.mComma) ;
+			}
+			self.mFirst[ix] = FALSE ;
+		}
+		if ifdo (TRUE) {
+			if (self.mDepth >= self.mTight + self.mLastTight)
+				discard ;
+			for (auto &&i : range (0 ,self.mDepth)) {
+				noop (i) ;
+				writer.write (self.mIndent) ;
+			}
+		}
+		self.mLastTight = 0 ;
+	}
+
+	void increase () override {
+		self.mDepth++ ;
+		if ifdo (TRUE) {
+			if (self.mFirst.empty ())
+				discard ;
+			self.mFirst[self.mFirst.tail ()] = TRUE ;
+		}
+		self.mFirst.add (TRUE) ;
+	}
+
+	void decrease () override {
+		self.mFirst.pop () ;
+		self.mDepth-- ;
+		self.mLastTight = self.mTight - 256 ;
+		self.mTight = 255 ;
+	}
+
+	void tight () override {
+		self.mTight = inline_min (self.mTight ,self.mDepth) ;
+	}
+} ;
+
+exports Ref<CommaLayout> CommaHolder::create () {
+	return Ref<CommaLayout>::make () ;
+}
+
+exports VFat<CommaHolder> CommaHolder::hold (VR<CommaLayout> that) {
+	return VFat<CommaHolder> (CommaImplHolder () ,that) ;
+}
+
+exports CFat<CommaHolder> CommaHolder::hold (CR<CommaLayout> that) {
+	return CFat<CommaHolder> (CommaImplHolder () ,that) ;
 }
 
 struct StreamTextProcLayout {} ;
@@ -1930,133 +2011,5 @@ exports VFat<StreamTextProcHolder> StreamTextProcHolder::hold (VR<StreamTextProc
 
 exports CFat<StreamTextProcHolder> StreamTextProcHolder::hold (CR<StreamTextProcLayout> that) {
 	return CFat<StreamTextProcHolder> (StreamTextProcImplHolder () ,that) ;
-}
-
-struct CommaLayout {
-	Slice mIndent ;
-	Slice mComma ;
-	Slice mEndline ;
-	Length mDepth ;
-	Deque<Bool> mFirst ;
-	Length mTight ;
-	Length mLastTight ;
-} ;
-
-class CommaImplHolder final implement Fat<CommaHolder ,CommaLayout> {
-public:
-	void initialize (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) override {
-		self.mIndent = indent ;
-		self.mComma = comma ;
-		self.mEndline = endline ;
-		self.mDepth = 0 ;
-		self.mTight = 255 ;
-		self.mLastTight = 0 ;
-	}
-
-	void friend_write (CR<Writer> writer) override {
-		if ifdo (TRUE) {
-			if (self.mDepth >= self.mTight + self.mLastTight)
-				discard ;
-			writer.write (self.mEndline) ;
-		}
-		if ifdo (TRUE) {
-			if (self.mFirst.empty ())
-				discard ;
-			Index ix = self.mFirst.tail () ;
-			if ifdo (TRUE) {
-				if (self.mFirst[ix])
-					discard ;
-				writer.write (self.mComma) ;
-			}
-			self.mFirst[ix] = FALSE ;
-		}
-		if ifdo (TRUE) {
-			if (self.mDepth >= self.mTight + self.mLastTight)
-				discard ;
-			for (auto &&i : range (0 ,self.mDepth)) {
-				noop (i) ;
-				writer.write (self.mIndent) ;
-			}
-		}
-		self.mLastTight = 0 ;
-	}
-
-	void increase () override {
-		self.mDepth++ ;
-		if ifdo (TRUE) {
-			if (self.mFirst.empty ())
-				discard ;
-			self.mFirst[self.mFirst.tail ()] = TRUE ;
-		}
-		self.mFirst.add (TRUE) ;
-	}
-
-	void decrease () override {
-		self.mFirst.pop () ;
-		self.mDepth-- ;
-		self.mLastTight = self.mTight - 256 ;
-		self.mTight = 255 ;
-	}
-
-	void tight () override {
-		self.mTight = inline_min (self.mTight ,self.mDepth) ;
-	}
-} ;
-
-exports Ref<CommaLayout> CommaHolder::create () {
-	return Ref<CommaLayout>::make () ;
-}
-
-exports VFat<CommaHolder> CommaHolder::hold (VR<CommaLayout> that) {
-	return VFat<CommaHolder> (CommaImplHolder () ,that) ;
-}
-
-exports CFat<CommaHolder> CommaHolder::hold (CR<CommaLayout> that) {
-	return CFat<CommaHolder> (CommaImplHolder () ,that) ;
-}
-
-struct RegexLayout {
-	std::basic_regex<Str> mRegex ;
-	std::match_results<PTR<CR<Str>>> mMatch ;
-	Ref<String<Str>> mText ;
-} ;
-
-class RegexImplHolder final implement Fat<RegexHolder ,RegexLayout> {
-public:
-	void initialize (CR<String<Str>> format) override {
-		self.mRegex = std::basic_regex<Str> (format) ;
-	}
-
-	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) override {
-		self.mText = move (text) ;
-		const auto r1x = (&self.mText.ref[offset]) ;
-		const auto r2x = std::regex_search (r1x ,self.mMatch ,self.mRegex) ;
-		if (!r2x)
-			return NONE ;
-		const auto r3x = Flag (self.mMatch[0].first) ;
-		const auto r4x = (r3x - Flag (r1x)) / SIZE_OF<Str>::expr ;
-		return offset + r4x ;
-	}
-
-	Slice match (CR<Index> index) const override {
-		assert (!self.mMatch.empty ()) ;
-		assert (inline_between (index ,0 ,self.mMatch.size ())) ;
-		const auto r1x = Flag (self.mMatch[index].first) ;
-		const auto r2x = Flag (self.mMatch[index].second) ;
-		const auto r3x = (r2x - r1x) / SIZE_OF<Str>::expr ;
-		return Slice (r1x ,r3x ,SIZE_OF<Str>::expr) ;
-	}
-} ;
-
-exports Ref<RegexLayout> RegexHolder::create () {
-	return Ref<RegexLayout>::make () ;
-}
-
-exports VFat<RegexHolder> RegexHolder::hold (VR<RegexLayout> that) {
-	return VFat<RegexHolder> (RegexImplHolder () ,that) ;
-}
-
-exports CFat<RegexHolder> RegexHolder::hold (CR<RegexLayout> that) {
-	return CFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 } ;

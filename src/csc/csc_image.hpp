@@ -346,6 +346,7 @@ struct ColorProcHolder implement Interface {
 	imports CFat<ColorProcHolder> hold (CR<ColorProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual Color3B bgr (CR<Flt64> b ,CR<Flt64> g ,CR<Flt64> r) const = 0 ;
 	virtual Flt64 gray_from_bgr (CR<Color3B> a) const = 0 ;
 	virtual Color3B bgr_from_gray (CR<Flt64> a) const = 0 ;
 	virtual Color3B jet_from_norm (CR<Flt64> a) const = 0 ;
@@ -358,6 +359,10 @@ class ColorProc implement Super<Ref<ColorProcLayout>> {
 public:
 	static CR<ColorProc> expr_m () {
 		return keep[TYPE<ColorProc>::expr] (ColorProcHolder::expr) ;
+	}
+
+	static Color3B bgr (CR<Flt64> b ,CR<Flt64> g ,CR<Flt64> r) {
+		return ColorProcHolder::hold (expr)->bgr (b ,g ,r) ;
 	}
 
 	static Flt64 gray_from_bgr (CR<Color3B> a) {
