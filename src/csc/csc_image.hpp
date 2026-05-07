@@ -328,15 +328,22 @@ struct Color4W {
 	Word mA ;
 } ;
 
-static constexpr auto COLOR_BLACK = Color3B ({Byte (0X00) ,Byte (0X00) ,Byte (0X00)}) ;
-static constexpr auto COLOR_WHITE = Color3B ({Byte (0XFF) ,Byte (0XFF) ,Byte (0XFF)}) ;
-static constexpr auto COLOR_GRAY = Color3B ({Byte (0X80) ,Byte (0X80) ,Byte (0X80)}) ;
-static constexpr auto COLOR_RED = Color3B ({Byte (0X00) ,Byte (0X00) ,Byte (0XFF)}) ;
-static constexpr auto COLOR_GREEN = Color3B ({Byte (0X00) ,Byte (0XFF) ,Byte (0X00)}) ;
-static constexpr auto COLOR_BLUE = Color3B ({Byte (0XFF) ,Byte (0X00) ,Byte (0X00)}) ;
-static constexpr auto COLOR_YELLOW = Color3B ({Byte (0X00) ,Byte (0XFF) ,Byte (0XFF)}) ;
-static constexpr auto COLOR_PURPLE = Color3B ({Byte (0XFF) ,Byte (0X00) ,Byte (0XFF)}) ;
-static constexpr auto COLOR_CYAN = Color3B ({Byte (0XFF) ,Byte (0XFF) ,Byte (0X00)}) ;
+inline constexpr Color3B cvt_color3b_h32 (CR<uint32_t> c) {
+	return Color3B ({
+		Byte (Char (c) >> 16) ,
+		Byte (Char (c) >> 8) ,
+		Byte (Char (c))}) ;
+}
+
+static constexpr auto COLOR_BLACK = cvt_color3b_h32 (0X00000000) ;
+static constexpr auto COLOR_WHITE = cvt_color3b_h32 (0XFFFFFFFF) ;
+static constexpr auto COLOR_GRAY = cvt_color3b_h32 (0XFF808080) ;
+static constexpr auto COLOR_RED = cvt_color3b_h32 (0XFFFF0000) ;
+static constexpr auto COLOR_GREEN = cvt_color3b_h32 (0XFF00FF00) ;
+static constexpr auto COLOR_BLUE = cvt_color3b_h32 (0XFF0000FF) ;
+static constexpr auto COLOR_YELLOW = cvt_color3b_h32 (0XFFFFFF00) ;
+static constexpr auto COLOR_PURPLE = cvt_color3b_h32 (0XFFFF00FF) ;
+static constexpr auto COLOR_CYAN = cvt_color3b_h32 (0XFF00FFFF) ;
 
 struct ColorProcLayout ;
 

@@ -29,6 +29,7 @@ struct PathHolder implement Interface {
 	virtual void initialize (CR<Deque<String<Str>>> pathname) = 0 ;
 	virtual void initialize (CR<PathLayout> that) = 0 ;
 	virtual String<Str> fetch () const = 0 ;
+	virtual PathLayout parent () const = 0 ;
 	virtual PathLayout child (CR<Slice> name) const = 0 ;
 	virtual PathLayout child (CR<Format> name) const = 0 ;
 	virtual PathLayout child (CR<String<Str>> name) const = 0 ;
@@ -41,7 +42,6 @@ struct PathHolder implement Interface {
 	virtual PathLayout symbolic () const = 0 ;
 	virtual PathLayout absolute () const = 0 ;
 	virtual Deque<String<Str>> decouple () const = 0 ;
-	virtual String<Str> path () const = 0 ;
 	virtual String<Str> name () const = 0 ;
 	virtual String<Str> stem () const = 0 ;
 	virtual String<Str> extension () const = 0 ;
@@ -84,6 +84,11 @@ public:
 
 	forceinline operator String<Str> () const {
 		return fetch () ;
+	}
+
+	Path parent () const {
+		PathLayout ret = PathHolder::hold (thiz)->parent () ;
+		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
 	Path child (CR<Slice> name) const {
@@ -147,10 +152,6 @@ public:
 
 	Deque<String<Str>> decouple () const {
 		return PathHolder::hold (thiz)->decouple () ;
-	}
-
-	String<Str> path () const {
-		return PathHolder::hold (thiz)->path () ;
 	}
 
 	String<Str> name () const {

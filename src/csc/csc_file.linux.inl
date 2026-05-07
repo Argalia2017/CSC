@@ -127,6 +127,17 @@ public:
 		return self.mThis->mPathName ;
 	}
 
+	PathLayout parent () const override {
+		if (self.mThis == NULL)
+			return Path () ;
+		const auto r1x = self.mThis->mSeparator.length () ;
+		if (r1x == 0)
+			return Path () ;
+		Index ix = self.mThis->mSeparator[0] + 1 ;
+		Index iy = self.mThis->mSeparator[r1x - 2] + 1 ;
+		return Path (self.mThis->mPathName.segment (ix ,iy)) ;
+	}
+
 	PathLayout child (CR<Slice> name) const override {
 		return Path (String<Str>::make (fetch () ,slice ("/") ,name)) ;
 	}
@@ -340,22 +351,20 @@ public:
 	}
 
 	Deque<String<Str>> decouple () const override {
-		const auto r1x = self.mThis->mSeparator.length () ;
-		Deque<String<Str>> ret = Deque<String<Str>> (r1x) ;
-		for (auto &&i : range (0 ,r1x - 1)) {
-			Index ix = self.mThis->mSeparator[i] + 1 ;
-			Index iy = self.mThis->mSeparator[i + 1] ;
-			const auto r2x = self.mThis->mPathName.segment (ix ,iy) ;
-			ret.add (r2x) ;
+		Deque<String<Str>> ret ;
+		if ifdo (TRUE) {
+			if (self.mThis == NULL)
+				discard ;
+			const auto r1x = self.mThis->mSeparator.length () ;
+			ret = Deque<String<Str>> (r1x) ;
+			for (auto &&i : range (0 ,r1x - 1)) {
+				Index ix = self.mThis->mSeparator[i] + 1 ;
+				Index iy = self.mThis->mSeparator[i + 1] ;
+				const auto r2x = self.mThis->mPathName.segment (ix ,iy) ;
+				ret.add (r2x) ;
+			}
 		}
 		return move (ret) ;
-	}
-
-	String<Str> path () const override {
-		const auto r1x = self.mThis->mSeparator.length () ;
-		Index ix = self.mThis->mSeparator[0] + 1 ;
-		Index iy = self.mThis->mSeparator[r1x - 2] + 1 ;
-		return self.mThis->mPathName.segment (ix ,iy) ;
 	}
 
 	String<Str> name () const override {
