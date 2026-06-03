@@ -49,12 +49,11 @@ struct CoreProcHolder implement Interface {
 	virtual Bool inline_debug () const = 0 ;
 	virtual void inline_abort () const = 0 ;
 	virtual void inline_notice (CR<Flag> name ,CR<Flag> addr) const = 0 ;
-	virtual Flag inline_type_name (CR<Pointer> squalor ,CR<Flag> func_) const = 0 ;
+	virtual Flag inline_type_name (CR<Interface> squalor ,CR<Flag> func_) const = 0 ;
 	virtual Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const = 0 ;
 	virtual void inline_memset (VR<Pointer> dst ,CR<Length> size_) const = 0 ;
 	virtual void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const = 0 ;
 	virtual Flag inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const = 0 ;
-	virtual Index inline_guid () const = 0 ;
 } ;
 
 struct FUNCTION_inline_debug {
@@ -83,7 +82,7 @@ struct FUNCTION_inline_notice {
 static constexpr auto inline_notice = FUNCTION_inline_notice () ;
 
 struct FUNCTION_inline_type_name {
-	forceinline Flag operator() (CR<Pointer> squalor ,CR<Flag> func_) const noexcept {
+	forceinline Flag operator() (CR<Interface> squalor ,CR<Flag> func_) const noexcept {
 		return CoreProcHolder::expr.inline_type_name (squalor ,func_) ;
 	}
 } ;
@@ -136,14 +135,6 @@ struct FUNCTION_inline_memcmp {
 } ;
 
 static constexpr auto inline_memcmp = FUNCTION_inline_memcmp () ;
-
-struct FUNCTION_inline_guid {
-	forceinline Flag operator() () const noexcept {
-		return CoreProcHolder::expr.inline_guid () ;
-	}
-} ;
-
-static constexpr auto inline_guid = FUNCTION_inline_guid () ;
 
 template <class...>
 trait FUNCTION_keep_impl_HELP ;
@@ -305,10 +296,10 @@ static constexpr auto assign = FUNCTION_assign () ;
 
 struct FUNCTION_replace {
 	template <class ARG1 ,class ARG2>
-	forceinline void operator() (VR<ARG1> a ,CR<ARG1> expect ,CR<ARG2> item) const noexcept {
-		if (a != expect)
+	forceinline void operator() (VR<ARG1> a ,CR<ARG1> from ,CR<ARG2> into) const noexcept {
+		if (a != from)
 			return ;
-		a = ARG1 (item) ;
+		a = ARG1 (into) ;
 	}
 } ;
 
@@ -358,7 +349,7 @@ static constexpr auto bitwise = FUNCTION_bitwise () ;
 struct FUNCTION_memorize {
 	template <class ARG1>
 	forceinline CR<FUNCTION_RETURN<ARG1>> operator() (CR<ARG1> func) const {
-		static const auto mInstance = func () ;
+		static auto mInstance = func () ;
 		return mInstance ;
 	}
 } ;
@@ -568,6 +559,26 @@ struct FUNCTION_inline_compr {
 } ;
 
 static constexpr auto inline_compr = FUNCTION_inline_compr () ;
+
+struct FUNCTION_inline_guid {
+	template <class ARG1>
+	forceinline Flag operator() (TYPE<ARG1>) const noexcept {
+		return guid_impl (PHX ,TYPE<ARG1>::expr) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (ARG1::expr)>>>
+	forceinline Flag guid_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
+		return address (ARG1::expr) ;
+	}
+
+	template <class ARG1>
+	forceinline Flag guid_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
+		assert (FALSE) ;
+		return ZERO ;
+	}
+} ;
+
+static constexpr auto inline_guid = FUNCTION_inline_guid () ;
 
 struct VisitorHolder implement Interface {
 	virtual void reset () = 0 ;
@@ -897,33 +908,6 @@ class ReflectAssignBinder final implement Fat<ReflectAssign ,void> {
 public:
 	void assign (VR<Pointer> a ,VR<Pointer> b) const noexcept override {
 		CSC::assign (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
-	}
-} ;
-
-struct ReflectCompile implement Interface {
-	virtual void compile (VR<Pointer> a ,VR<Pointer> b) const = 0 ;
-
-	forceinline static consteval Flag expr_m () noexcept {
-		return 104 ;
-	}
-} ;
-
-template <class A>
-class ReflectCompileBinder final implement Fat<ReflectCompile ,void> {
-public:
-	void compile (VR<Pointer> a ,VR<Pointer> b) const override {
-		auto &&rax = keep[TYPE<A>::expr] (a) ;
-		return compile_impl (PHX ,rax ,b) ;
-	}
-
-	template <class ARG1 ,class ARG2 ,class = REQUIRE<HAS_COMPILE<ARG1 ,ARG2>>>
-	void compile_impl (CR<typeof (PH2)> ,VR<ARG1> a ,VR<ARG2> b) const {
-		a.compile (b) ;
-	}
-
-	template <class ARG1 ,class ARG2>
-	void compile_impl (CR<typeof (PH1)> ,VR<ARG1> a ,VR<ARG2> b) const {
-		noop () ;
 	}
 } ;
 
@@ -1373,12 +1357,12 @@ struct HeapHolder implement Interface {
 	virtual void initialize () = 0 ;
 	virtual void enter () const = 0 ;
 	virtual void leave () const = 0 ;
-	virtual Flag stack (CR<Length> size_) const = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Length length () const = 0 ;
+	virtual Flag stack (CR<Length> size_) const = 0 ;
 	virtual Flag alloc (CR<Length> size_) const = 0 ;
 	virtual Flag alloc (CR<Length> size_ ,CR<Length> align_) const = 0 ;
-	virtual void free (CR<Flag> layout) const = 0 ;
+	virtual void free (CR<Flag> layout ,CR<Length> size_) const = 0 ;
 } ;
 
 class Heap implement HeapLayout {
@@ -1398,16 +1382,16 @@ public:
 		return HeapHolder::hold (thiz)->leave () ;
 	}
 
-	Flag stack (CR<Length> size_) const {
-		return HeapHolder::hold (thiz)->stack (size_) ;
-	}
-
 	Length size () const {
 		return HeapHolder::hold (thiz)->size () ;
 	}
 
 	Length length () const {
 		return HeapHolder::hold (thiz)->length () ;
+	}
+
+	Flag stack (CR<Length> size_) const {
+		return HeapHolder::hold (thiz)->stack (size_) ;
 	}
 
 	Flag alloc (CR<Length> size_) const {
@@ -1418,8 +1402,8 @@ public:
 		return HeapHolder::hold (thiz)->alloc (size_ ,align_) ;
 	}
 
-	void free (CR<Flag> layout) const {
-		return HeapHolder::hold (thiz)->free (layout) ;
+	void free (CR<Flag> layout ,CR<Length> size_) const {
+		return HeapHolder::hold (thiz)->free (layout ,size_) ;
 	}
 } ;
 
@@ -1738,9 +1722,7 @@ public:
 	}
 
 	Flag type_guid () const override {
-		return memorize ([&] () {
-			return inline_guid () ;
-		}) ;
+		return inline_guid (TYPE<A>::expr) ;
 	}
 } ;
 
@@ -1756,7 +1738,7 @@ template <class A>
 class ReflectNameBinder final implement Fat<ReflectName ,void> {
 public:
 	Slice type_name () const override {
-		const auto r1x = inline_type_name (Pointer::from (thiz) ,address (__macro_type_rtti)) ;
+		const auto r1x = inline_type_name (thiz ,address (__macro_type_rtti)) ;
 		return Slice (r1x ,SLICE_MAX_SIZE::expr ,1).eos () ;
 	}
 } ;
@@ -1803,6 +1785,10 @@ protected:
 
 public:
 	implicit Clazz () = default ;
+
+	explicit Clazz (CR<Unknown> holder) {
+		ClazzHolder::hold (thiz)->initialize (holder) ;
+	}
 
 	template <class ARG1>
 	explicit Clazz (TYPE<ARG1>) {

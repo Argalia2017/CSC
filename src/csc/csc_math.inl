@@ -67,6 +67,30 @@ public:
 		return 0 ;
 	}
 
+	Val32 relu (CR<Val32> a) const override {
+		if (a > 0)
+			return a ;
+		return 0 ;
+	}
+
+	Val64 relu (CR<Val64> a) const override {
+		if (a > 0)
+			return a ;
+		return 0 ;
+	}
+
+	Flt32 relu (CR<Flt32> a) const override {
+		if (a > 0)
+			return a ;
+		return 0 ;
+	}
+
+	Flt64 relu (CR<Flt64> a) const override {
+		if (a > 0)
+			return a ;
+		return 0 ;
+	}
+
 	Val32 sign (CR<Val32> a) const override {
 		if (a >= 0)
 			return +1 ;
@@ -1429,8 +1453,8 @@ struct JetNode {
 	RefBuffer<Flt64> mDX ;
 	Index mSlot ;
 	JetEvalFunction mEval ;
-	Index mP1 ;
-	Index mP2 ;
+	JetIndex mP1 ;
+	JetIndex mP2 ;
 } ;
 
 struct JetTree {
@@ -1441,24 +1465,19 @@ class JetImplHolder final implement Fat<JetHolder ,JetLayout> {
 public:
 	void initialize (CR<Length> size_ ,CR<Flt64> item) override {
 		assert (size_ > 0) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (root_ptr ().exist ())
-				discard ;
-			self.mThis = SharedRef<JetTree>::make () ;
-			root_ptr () = self.mThis.weak () ;
-		}
-		if ifdo (act) {
-			self.mThis = SharedRef<JetTree> (root_ptr ().ref) ;
-		}
-		self.mIndex = self.mThis->mTree.alloc (Box<JetNode>::make ()) ;
+		self.mThis = root_ptr () ;
+		const auto r1x = address (self.mThis.ref) ;
+		self.mIndex.mTree = r1x ;
+		self.mIndex.mCurr = self.mThis->mTree.alloc (Box<JetNode>::make ()) ;
 		ptr (self.mIndex).mFX = item ;
 		ptr (self.mIndex).mEX = 0 ;
 		ptr (self.mIndex).mDX = RefBuffer<Flt64> (size_) ;
 		inline_memset (Pointer::from (ptr (self.mIndex).mDX.ref) ,ptr (self.mIndex).mDX.size () * SIZE_OF<Flt64>::expr) ;
 		ptr (self.mIndex).mSlot = NONE ;
-		ptr (self.mIndex).mP1 = NONE ;
-		ptr (self.mIndex).mP2 = NONE ;
+		ptr (self.mIndex).mP1.mTree = r1x ;
+		ptr (self.mIndex).mP1.mCurr = NONE ;
+		ptr (self.mIndex).mP2.mTree = r1x ;
+		ptr (self.mIndex).mP2.mCurr = NONE ;
 	}
 
 	void initialize (CR<Length> size_ ,CR<Flt64> item ,CR<Index> slot) override {
@@ -1477,13 +1496,13 @@ public:
 		}) ;
 	}
 
-	static VR<JetNode> ptr (CR<Index> curr) {
-		return root_ptr ()->mTree[curr] ;
+	static VR<SharedRef<JetTree>> root_ptr () {
+		static auto mInstance = SharedRef<JetTree>::make () ;
+		return mInstance ;
 	}
 
-	static VR<SharedRef<JetTree>> root_ptr () {
-		static auto mInstance = SharedRef<JetTree> () ;
-		return mInstance ;
+	static VR<JetNode> ptr (CR<JetIndex> index) {
+		return root_ptr ()->mTree[index.mCurr] ;
 	}
 
 	Flt64 fx () const override {
@@ -1502,8 +1521,8 @@ public:
 		once (self.mIndex ,params) ;
 	}
 
-	void once (CR<Index> curr ,CR<Wrapper<Flt64>> params) const {
-		if (curr == NONE)
+	void once (CR<JetIndex> curr ,CR<Wrapper<Flt64>> params) const {
+		if (curr.mCurr == NONE)
 			return ;
 		once (ptr (curr).mP1 ,params) ;
 		once (ptr (curr).mP2 ,params) ;

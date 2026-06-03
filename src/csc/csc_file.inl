@@ -72,7 +72,7 @@ exports CFat<StreamFileHolder> StreamFileHolder::hold (CR<StreamFileLayout> that
 
 struct StreamFileWriterLayout {
 	StreamFile mStreamFile ;
-	Ref<RefBuffer<Byte>> mFileBuffer ;
+	RefBuffer<Byte> mFileBuffer ;
 	TextWriter mTextWriter ;
 	ByteWriter mByteWriter ;
 	Box<Writer> mWriter ;
@@ -90,7 +90,7 @@ public:
 	void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> option) override {
 		self.mStreamFile = StreamFile (file) ;
 		self.mStreamFile.open_w (0) ;
-		self.mFileBuffer = Ref<RefBuffer<Byte>>::make (STREAMFILE_CHUNK_STEP::expr) ;
+		self.mFileBuffer = RefBuffer<Byte> (STREAMFILE_CHUNK_STEP::expr) ;
 		set_writer (option) ;
 	}
 
@@ -99,18 +99,18 @@ public:
 		if ifdo (act) {
 			if (option != StreamFileEncode::ByteWriter)
 				discard ;
-			self.mByteWriter = ByteWriter (self.mFileBuffer.share ()) ;
+			self.mByteWriter = ByteWriter (Ref<RefBuffer<Byte>>::reference (self.mFileBuffer)) ;
 			self.mWriter = Box<Writer>::make (self.mByteWriter) ;
 		}
 		if ifdo (act) {
 			if (option != StreamFileEncode::TextWriter)
 				discard ;
-			self.mTextWriter = TextWriter (self.mFileBuffer.share ()) ;
+			self.mTextWriter = TextWriter (Ref<RefBuffer<Byte>>::reference (self.mFileBuffer)) ;
 			self.mWriter = Box<Writer>::make (self.mTextWriter) ;
 		}
 		auto &&rax = self ;
 		self.mWriter->use_overflow ([&] (CR<Writer> writer) {
-			rax.mStreamFile.write (rax.mFileBuffer.ref) ;
+			rax.mStreamFile.write (rax.mFileBuffer) ;
 			rax.mWriter->reset () ;
 		}) ;
 	}
@@ -123,7 +123,7 @@ public:
 		const auto r1x = self.mWriter->length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = Flag (self.mFileBuffer->ref) ;
+		const auto r2x = Flag (self.mFileBuffer.ref) ;
 		self.mStreamFile.write (RefBuffer<Byte>::reference (r2x ,r1x)) ;
 		self.mWriter->reset () ;
 		self.mStreamFile.flush () ;

@@ -108,7 +108,7 @@ public:
 	void initialize (CR<Unknown> holder) override {
 		assert (!exist ()) ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<AutoRefTree> () ,holder ,1) ;
-		ClazzHolder::hold (self.mThis->mClazz)->initialize (holder) ;
+		self.mThis->mClazz = Clazz (holder) ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		const auto r1x = RFat<ReflectCreate> (holder) ;
 		r1x->create (BoxHolder::hold (raw ())->ref ,1) ;
@@ -354,7 +354,12 @@ public:
 			return ;
 		if (!self.mThis.exclusive ())
 			return ;
-		recycle () ;
+		if ifdo (TRUE) {
+			if (!BoxHolder::hold (raw ())->exist ())
+				discard ;
+			self.mThis->mOwner (BoxHolder::hold (raw ())->ref) ;
+		}
+		self.mThis->mHeader = ZERO ;
 	}
 
 	Bool exist () const override {
@@ -386,15 +391,8 @@ public:
 		return move (ret) ;
 	}
 
-	void recycle () override {
-		if (!exist ())
-			return ;
-		if ifdo (TRUE) {
-			if (!BoxHolder::hold (raw ())->exist ())
-				discard ;
-			self.mThis->mOwner (BoxHolder::hold (raw ())->ref) ;
-		}
-		self.mThis->mHeader = ZERO ;
+	void once_done () override {
+		unimplemented () ;
 	}
 } ;
 

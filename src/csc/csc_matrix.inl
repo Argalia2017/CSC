@@ -344,6 +344,18 @@ public:
 		return move (ret) ;
 	}
 
+	Flt64 magnitude () const override {
+		assert (self.mMatrix[3] == 0) ;
+		assert (self.mMatrix[7] == 0) ;
+		assert (self.mMatrix[11] == 0) ;
+		assert (self.mMatrix[15] == 0) ;
+		Flt64 ret = 0 ;
+		for (auto &&i : range (0 ,3 ,0 ,3))
+			ret += MathProc::square (self.mMatrix[mm (i.mX ,i.mY)]) ;
+		ret = MathProc::sqrt (ret) ;
+		return move (ret) ;
+	}
+
 	MatrixLayout transpose () const override {
 		MatrixLayout ret ;
 		for (auto &&i : range (0 ,4 ,0 ,4)) {
@@ -423,7 +435,7 @@ public:
 			const auto r4x = self.mMatrix[mm (jx ,ix)] * r1x ;
 			const auto r5x = self.mMatrix[mm (jx ,iy)] * r2x ;
 			const auto r6x = self.mMatrix[mm (jx ,iz)] * r3x ;
-			const auto r7x = Flt64 (0.5 - (i.mY + i.mX) % 2) ;
+			const auto r7x = 0.5 - Flt64 ((i.mY + i.mX) % 2) ;
 			const auto r8x = (r4x - r5x + r6x) * MathProc::sign (r7x) ;
 			ret.mMatrix[mm (i.mY ,i.mX)] = r8x ;
 		}
@@ -513,16 +525,6 @@ public:
 		const auto r3x = (r1x ^ r2x).normalize () ;
 		const auto r4x = MathProc::acos (r1x * r2x) ;
 		make_RotationMatrix (r3x ,r4x) ;
-	}
-
-	void make_UnitaryMatrix (CR<Matrix> trs) override {
-		const auto r1x = trs * Vector::axis_x () ;
-		const auto r2x = trs * Vector::axis_y () ;
-		const auto r3x = trs * Vector::axis_z () ;
-		const auto r4x = Matrix (r1x.normalize () ,r2x.normalize () ,r3x.normalize () ,Vector::axis_w ()) ;
-		const auto r5x = MathProc::sign (r4x.determinant ()) ;
-		const auto r6x = DiagMatrix (r5x ,r5x ,r5x ,1) ;
-		self = r4x * r6x ;
 	}
 
 	void make_TranslationMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) override {
@@ -735,7 +737,7 @@ public:
 				discard ;
 			if (self.mDuplexMatrix[0][3][2] != 0)
 				discard ;
-			if (self.mDuplexMatrix[0][3][3] != 1)
+			if (MathProc::abs (self.mDuplexMatrix[0][3][3] - 1) >= FLT64_EPS)
 				discard ;
 			self.mDuplexMatrix[1][3][3] = 1 ;
 		}
@@ -1305,9 +1307,9 @@ public:
 		const auto r7x = r4x.mS[1][1] * r5x ;
 		const auto r8x = r4x.mS[2][2] * r5x ;
 		const auto r9x = TranslationMatrix (r1x) ;
-		const auto r10x = UnitaryMatrix (r4x.mV) ;
+		const auto r10x = MatrixProc::solve_trs (r4x.mV) ;
 		const auto r11x = DiagMatrix (sqrt_fix (r6x) ,sqrt_fix (r7x) ,sqrt_fix (r8x)) ;
-		return r9x * r10x * r11x ;
+		return r9x * r10x.mR * r11x ;
 	}
 
 	Flt64 sqrt_fix (CR<Flt64> a) const {
@@ -1336,7 +1338,7 @@ public:
 		return r7x * r8x ;
 	}
 
-	Vector cut_matrix () const {
+	Vector cut_center () const {
 		Vector ret ;
 		assume (size () % 2 == 1) ;
 		Index ix = (size () - 1) / 2 ;
@@ -1346,7 +1348,7 @@ public:
 
 	Matrix cut_matrix (CR<Flt64> sx ,CR<Flt64> sy ,CR<Flt64> sz) const override {
 		const auto r1x = bound () ;
-		const auto r2x = cut_matrix () ;
+		const auto r2x = cut_center () ;
 		const auto r3x = (Vector (r1x.mMin) - r2x).sabs () ;
 		const auto r4x = (Vector (r1x.mMax) - r2x).sabs () ;
 		const auto r5x = MathProc::min_of (r3x[0] ,r4x[0]) * MathProc::inverse (sx) ;
@@ -1416,84 +1418,61 @@ exports CFat<PointCloudHolder> PointCloudHolder::hold (CR<PointCloudLayout> that
 	return CFat<PointCloudHolder> (PointCloudImplHolder () ,that) ;
 }
 
-class TPSFitImplHolder final implement Fat<TPSFitHolder ,TPSFitLayout> {
+class SE3ImplHolder final implement Fat<SE3Holder ,SE3Layout> {
 public:
-	void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) override {
-		assert (dst.size () == src.size ()) ;
-		const auto r1x = src.size () ;
-		const auto r2x = PointCloud (Ref<Array<Vector>>::reference (src)) ;
-		const auto r3x = PointCloud (Ref<Array<Vector>>::reference (dst)) ;
-		self.mNSrc = r2x.pca_matrix () ;
-		self.mNDst = r3x.pca_matrix () ;
-		const auto r4x = self.mNSrc[1] * r2x ;
-		const auto r5x = self.mNDst[1] * r3x ;
-		self.mQA = Image<Flt64> (r1x + 4 ,r1x + 4) ;
-		self.mQB = Image<Flt64> (3 ,r1x + 4) ;
-		for (auto &&i : range (0 ,r1x ,0 ,r1x)) {
-			if (i.mY > i.mX)
-				continue ;
-			const auto r6x = (r4x[i.mY] - r4x[i.mX]).magnitude () ;
-			const auto r7x = basic_function (r6x) ;
-			self.mQA.at (i.mX ,i.mY) = r7x ;
-			self.mQA.at (i.mY ,i.mX) = r7x ;
-		}
-		for (auto &&i : range (0 ,r1x)) {
-			const auto r8x = r4x[i] ;
-			const auto r9x = r5x[i] ;
-			for (auto &&j : range (0 ,4)) {
-				self.mQA.at (r1x + j ,i) = r8x[j] ;
-				self.mQA.at (i ,r1x + j) = r8x[j] ;
-			}
-			for (auto &&j : range (0 ,3)) {
-				self.mQB.at (j ,i) = r9x[j] ;
-			}
-		}
-		for (auto &&i : range (0 ,4)) {
-			for (auto &&j : range (0 ,4)) {
-				self.mQA.at (r1x + j ,r1x + i) = 0 ;
-			}
-			for (auto &&j : range (0 ,3)) {
-				self.mQB.at (j ,r1x + i) = 0 ;
-			}
-		}
-		self.mQC = LinearProc::solve_lsm (self.mQA ,self.mQB) ;
-		self.mPSrc = Array<Vector> (r1x) ;
-		for (auto &&i : self.mPSrc.iter ()) {
-			self.mPSrc[i] = r4x[i] ;
-		}
+	void initialize (CR<Matrix> that) override {
+		const auto r1x = Quaternion (that).vector () ;
+		const auto r2x = that * Vector::axis_w () ;
+		self.mSE3[0] = r1x[0] ;
+		self.mSE3[1] = r1x[1] ;
+		self.mSE3[2] = r1x[2] ;
+		self.mSE3[3] = r2x[0] ;
+		self.mSE3[4] = r2x[1] ;
+		self.mSE3[5] = r2x[2] ;
 	}
 
-	Vector smul (CR<Vector> that) const override {
-		assert (self.mQC.size () > 0) ;
-		Vector ret = Vector::axis_w () ;
-		const auto r1x = self.mPSrc.length () ;
-		const auto r2x = self.mNSrc[1] * that ;
-		for (auto &&i : range (0 ,r1x)) {
-			for (auto &&j : range (0 ,3)) {
-				const auto r3x = (r2x - self.mPSrc[i]).magnitude () ;
-				const auto r4x = basic_function (r3x) ;
-				ret[j] += self.mQC.at (j ,i) * r4x ;
-			}
+	CR<Flt64> at (CR<Index> y) const leftvalue override {
+		return self.mSE3[y] ;
+	}
+
+	SE3Layout sadd (CR<SE3Layout> that) const override {
+		SE3Layout ret ;
+		for (auto &&i : range (0 ,ret.mSE3.size ())) {
+			ret.mSE3[i] = self.mSE3[i] + that.mSE3[i] ;
 		}
-		for (auto &&i : range (0 ,4)) {
-			for (auto &&j : range (0 ,3)) {
-				ret[j] += self.mQC.at (j ,r1x + i) * r2x[i] ;
-			}
-		}
-		ret = self.mNDst[0] * ret ;
 		return move (ret) ;
 	}
 
-	Flt64 basic_function (CR<Flt64> r) const {
-		return MathProc::square (r) * MathProc::log (r + FLT64_EPS) ;
+	SE3Layout smul (CR<Flt64> that) const override {
+		SE3Layout ret ;
+		for (auto &&i : range (0 ,ret.mSE3.size ())) {
+			ret.mSE3[i] = self.mSE3[i] * that ;
+		}
+		return move (ret) ;
+	}
+
+	SE3Layout sdiv (CR<Flt64> that) const override {
+		SE3Layout ret ;
+		for (auto &&i : range (0 ,ret.mSE3.size ())) {
+			ret.mSE3[i] = self.mSE3[i] / that ;
+		}
+		return move (ret) ;
+	}
+
+	Matrix matrix () const override {
+		const auto r1x = Vector (self.mSE3[0] ,self.mSE3[1] ,self.mSE3[2] ,0) ;
+		const auto r2x = Vector (self.mSE3[3] ,self.mSE3[4] ,self.mSE3[5] ,0) ;
+		const auto r3x = Quaternion (r1x).matrix () ;
+		const auto r4x = TranslationMatrix (r2x) ;
+		return r4x * r3x ;
 	}
 } ;
 
-exports VFat<TPSFitHolder> TPSFitHolder::hold (VR<TPSFitLayout> that) {
-	return VFat<TPSFitHolder> (TPSFitImplHolder () ,that) ;
+exports VFat<SE3Holder> SE3Holder::hold (VR<SE3Layout> that) {
+	return VFat<SE3Holder> (SE3ImplHolder () ,that) ;
 }
 
-exports CFat<TPSFitHolder> TPSFitHolder::hold (CR<TPSFitLayout> that) {
-	return CFat<TPSFitHolder> (TPSFitImplHolder () ,that) ;
+exports CFat<SE3Holder> SE3Holder::hold (CR<SE3Layout> that) {
+	return CFat<SE3Holder> (SE3ImplHolder () ,that) ;
 }
 } ;

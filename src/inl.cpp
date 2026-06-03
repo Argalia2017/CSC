@@ -22,6 +22,7 @@
 #include <csc_array.inl>
 #include <csc_image.inl>
 #include <csc_matrix.inl>
+#include <csc_algorithm.inl>
 #include <csc_stream.inl>
 #include <csc_string.inl>
 #include <csc_runtime.inl>

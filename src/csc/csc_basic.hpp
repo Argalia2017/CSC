@@ -685,7 +685,7 @@ struct UniqueRefHolder implement Interface {
 	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
 	virtual UniqueRefLayout recast (CR<Unknown> extend) = 0 ;
-	virtual void recycle () = 0 ;
+	virtual void once_done () = 0 ;
 } ;
 
 inline UniqueRefLayout::~UniqueRefLayout () noexcept {
@@ -770,8 +770,8 @@ public:
 		return move (keep[TYPE<UniqueRef<ARG1>>::expr] (ret)) ;
 	}
 
-	void recycle () {
-		return UniqueRefHolder::hold (thiz)->recycle () ;
+	void once_done () {
+		return UniqueRefHolder::hold (thiz)->once_done () ;
 	}
 } ;
 

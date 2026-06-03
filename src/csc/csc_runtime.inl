@@ -20,28 +20,6 @@
 #include "csc_begin.h"
 
 namespace CSC {
-#ifdef __CSC_SYSTEM_WINDOWS__
-struct FUNCTION_calendar_from_timepoint {
-	forceinline std::tm operator() (CR<std::time_t> time) const {
-		std::tm ret ;
-		inline_memset (ret) ;
-		localtime_s ((&ret) ,(&time)) ;
-		return move (ret) ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_SYSTEM_LINUX__
-struct FUNCTION_calendar_from_timepoint {
-	forceinline std::tm operator() (CR<std::time_t> time) const {
-		const auto r1x = Flag (std::localtime (&time)) ;
-		return bitwise (Pointer::make (r1x)) ;
-	}
-} ;
-#endif
-
-static constexpr auto calendar_from_timepoint = FUNCTION_calendar_from_timepoint () ;
-
 struct TimeLayout {
 	std::chrono::system_clock::duration mTime ;
 } ;
@@ -134,6 +112,22 @@ public:
 		return move (ret) ;
 	}
 
+#ifdef __CSC_SYSTEM_WINDOWS__
+	std::tm calendar_from_timepoint (CR<std::time_t> time) const {
+		std::tm ret ;
+		inline_memset (ret) ;
+		localtime_s ((&ret) ,(&time)) ;
+		return move (ret) ;
+	}
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
+	std::tm calendar_from_timepoint (CR<std::time_t> time) const {
+		const auto r1x = Flag (std::localtime (&time)) ;
+		return bitwise (Pointer::make (r1x)) ;
+	}
+#endif
+
 	Super<Box<TimeLayout ,TimeStorage>> sadd (CR<TimeLayout> that) const override {
 		Super<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
 		ret.mThis->mTime = self.mTime + that.mTime ;
@@ -202,13 +196,13 @@ public:
 		return self.mAtomic.exchange (item ,std::memory_order_relaxed) ;
 	}
 
-	Bool change (VR<Val> expect ,CR<Val> item) override {
-		return self.mAtomic.compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
+	Bool change (VR<Val> from ,CR<Val> into) override {
+		return self.mAtomic.compare_exchange_weak (from ,into ,std::memory_order_relaxed) ;
 	}
 
-	void replace (CR<Val> expect ,CR<Val> item) override {
-		auto rax = expect ;
-		self.mAtomic.compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
+	void replace (CR<Val> from ,CR<Val> into) override {
+		auto rax = from ;
+		self.mAtomic.compare_exchange_strong (rax ,into ,std::memory_order_relaxed) ;
 	}
 
 	void increase () override {
@@ -696,27 +690,25 @@ public:
 		return move (ret) ;
 	}
 
-	Array<Flt64> random_normal (CR<Length> count) override {
-		Array<Flt64> ret = Array<Flt64> (count) ;
-		for (auto &&i : range (0 ,count)) {
-			auto act = TRUE ;
-			if ifdo (act) {
-				if (self.mNormal.mOdd)
-					discard ;
-				const auto r1x = random_float () ;
-				const auto r2x = random_float () ;
-				const auto r3x = MathProc::clamp (r1x ,FLT64_EPS ,Flt64 (1)) ;
-				const auto r4x = MathProc::sqrt (Flt64 (-2) * MathProc::log (r3x)) ;
-				const auto r5x = MATH_PI * 2 * r2x ;
-				self.mNormal.mNX = r4x * MathProc::cos (r5x) ;
-				self.mNormal.mNY = r4x * MathProc::sin (r5x) ;
-				self.mNormal.mOdd = TRUE ;
-				ret[i] = self.mNormal.mNX ;
-			}
-			if ifdo (act) {
-				ret[i] = self.mNormal.mNY ;
-				self.mNormal.mOdd = FALSE ;
-			}
+	Flt64 random_normal () override {
+		Flt64 ret ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (self.mNormal.mOdd)
+				discard ;
+			const auto r1x = random_float () ;
+			const auto r2x = random_float () ;
+			const auto r3x = MathProc::clamp (r1x ,FLT64_EPS ,Flt64 (1)) ;
+			const auto r4x = MathProc::sqrt (Flt64 (-2) * MathProc::log (r3x)) ;
+			const auto r5x = MATH_PI * 2 * r2x ;
+			self.mNormal.mNX = r4x * MathProc::cos (r5x) ;
+			self.mNormal.mNY = r4x * MathProc::sin (r5x) ;
+			self.mNormal.mOdd = TRUE ;
+			ret = self.mNormal.mNX ;
+		}
+		if ifdo (act) {
+			self.mNormal.mOdd = FALSE ;
+			ret = self.mNormal.mNY ;
 		}
 		return move (ret) ;
 	}

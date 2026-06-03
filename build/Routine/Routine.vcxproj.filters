@@ -52,6 +52,9 @@
     <ClInclude Include="..\..\src\csc\csc_file.hpp">
       <Filter>csc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_algorithm.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\csc\cpp.hint">
@@ -115,6 +118,9 @@
       <Filter>csc</Filter>
     </None>
     <None Include="..\..\src\csc\csc_matrix.nanoflann.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_algorithm.inl">
       <Filter>csc</Filter>
     </None>
   </ItemGroup>

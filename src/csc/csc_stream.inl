@@ -287,17 +287,17 @@ public:
 		if ifdo (TRUE) {
 			if (self.mRead < self.mWrite)
 				discard ;
-			self.mOverflow (Pointer::from (thiz)) ;
+			self.mOverflow (Pointer::from (self)) ;
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mRead >= self.mWrite)
+			if (self.mRead < self.mWrite)
 				discard ;
-			item = self.mStream.ref[self.mRead] ;
-			self.mRead++ ;
+			item = Byte (0X00) ;
 		}
 		if ifdo (act) {
-			item = Byte (0X00) ;
+			item = self.mStream.ref[self.mRead] ;
+			self.mRead++ ;
 		}
 	}
 
@@ -712,13 +712,16 @@ public:
 		if ifdo (TRUE) {
 			if (self.mRead < self.mWrite)
 				discard ;
-			self.mOverflow (Pointer::from (thiz)) ;
+			self.mOverflow (Pointer::from (self)) ;
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mStream->step () != 1)
+			if (self.mRead < self.mWrite)
 				discard ;
-			if (self.mRead >= self.mWrite)
+			item = Stru32 (0X00) ;
+		}
+		if ifdo (act) {
+			if (self.mStream->step () != 1)
 				discard ;
 			item = Stru (bitwise (self.mStream.ref[self.mRead])) ;
 			self.mRead++ ;
@@ -726,21 +729,14 @@ public:
 		if ifdo (act) {
 			if (self.mStream->step () != 2)
 				discard ;
-			if (self.mRead >= self.mWrite)
-				discard ;
 			item = Stru16 (bitwise (self.mStream.ref[self.mRead])) ;
 			self.mRead++ ;
 		}
 		if ifdo (act) {
 			if (self.mStream->step () != 4)
 				discard ;
-			if (self.mRead >= self.mWrite)
-				discard ;
 			item = Stru32 (bitwise (self.mStream.ref[self.mRead])) ;
 			self.mRead++ ;
-		}
-		if ifdo (act) {
-			item = Stru32 (0X00) ;
 		}
 	}
 
@@ -968,12 +964,15 @@ public:
 		if ifdo (TRUE) {
 			if (self.mWrite < self.mRead)
 				discard ;
-			self.mOverflow (Pointer::from (thiz)) ;
+			self.mOverflow (Pointer::from (self)) ;
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mWrite >= self.mRead)
+			if (self.mWrite < self.mRead)
 				discard ;
+			noop () ;
+		}
+		if ifdo (act) {
 			self.mStream.ref[self.mWrite] = item ;
 			self.mWrite++ ;
 		}
@@ -1493,13 +1492,16 @@ public:
 		if ifdo (TRUE) {
 			if (self.mWrite < self.mRead)
 				discard ;
-			self.mOverflow (Pointer::from (thiz)) ;
+			self.mOverflow (Pointer::from (self)) ;
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mStream->step () != 1)
+			if (self.mWrite < self.mRead)
 				discard ;
-			if (self.mWrite >= self.mRead)
+			noop () ;
+		}
+		if ifdo (act) {
+			if (self.mStream->step () != 1)
 				discard ;
 			bitwise (self.mStream.ref[self.mWrite]) = Stru (item) ;
 			self.mWrite++ ;
@@ -1507,15 +1509,11 @@ public:
 		if ifdo (act) {
 			if (self.mStream->step () != 2)
 				discard ;
-			if (self.mWrite >= self.mRead)
-				discard ;
 			bitwise (self.mStream.ref[self.mWrite]) = Stru16 (item) ;
 			self.mWrite++ ;
 		}
 		if ifdo (act) {
 			if (self.mStream->step () != 4)
-				discard ;
-			if (self.mWrite >= self.mRead)
 				discard ;
 			bitwise (self.mStream.ref[self.mWrite]) = Stru32 (item) ;
 			self.mWrite++ ;

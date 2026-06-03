@@ -38,7 +38,7 @@ public:
 
 class WorkThreadExecutingBinder final implement Fat<ExecutingHolder ,WorkThreadLayout> {
 public:
-	void friend_execute (CR<Index> slot) {
+	void friend_execute (CR<Index> slot) override {
 		return WorkThreadHolder::hold (self)->friend_execute (slot) ;
 	}
 } ;
@@ -82,9 +82,8 @@ public:
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mThreadFunc = func ;
 		const auto r1x = VFat<ExecutingHolder> (WorkThreadExecutingBinder () ,self) ;
-		const auto r2x = Ref<Executing>::make (r1x) ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (r2x.share () ,i) ;
+			self.mThread[i] = Thread (Ref<Executing>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -243,7 +242,7 @@ public:
 
 class CalcThreadExecutingBinder final implement Fat<ExecutingHolder ,CalcThreadLayout> {
 public:
-	void friend_execute (CR<Index> slot) {
+	void friend_execute (CR<Index> slot) override {
 		return CalcThreadHolder::hold (self)->friend_execute (slot) ;
 	}
 } ;
@@ -295,9 +294,8 @@ public:
 		self.mSuspendFlag = FALSE ;
 		self.mThreadFunc = func ;
 		const auto r1x = VFat<ExecutingHolder> (CalcThreadExecutingBinder () ,self) ;
-		const auto r2x = Ref<Executing>::make (r1x) ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (r2x.share () ,i) ;
+			self.mThread[i] = Thread (Ref<Executing>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -509,7 +507,7 @@ public:
 
 class PromiseExecutingBinder final implement Fat<ExecutingHolder ,PromiseLayout> {
 public:
-	void friend_execute (CR<Index> slot) {
+	void friend_execute (CR<Index> slot) override {
 		return PromiseHolder::hold (self)->friend_execute (slot) ;
 	}
 } ;
@@ -551,9 +549,8 @@ public:
 				discard ;
 			self.mThread = Array<Thread> (1) ;
 			const auto r1x = VFat<ExecutingHolder> (PromiseExecutingBinder () ,self) ;
-			const auto r2x = Ref<Executing>::make (r1x) ;
 			for (auto &&i : self.mThread.iter ()) {
-				self.mThread[i] = Thread (r2x.share () ,0) ;
+				self.mThread[i] = Thread (Ref<Executing>::make (r1x) ,0) ;
 				self.mThread[i].start () ;
 			}
 		}

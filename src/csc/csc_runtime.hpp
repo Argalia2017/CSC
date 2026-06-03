@@ -217,8 +217,8 @@ struct AtomicHolder implement Interface {
 	virtual Val fetch () = 0 ;
 	virtual void store (CR<Val> item) = 0 ;
 	virtual Val exchange (CR<Val> item) = 0 ;
-	virtual Bool change (VR<Val> expect ,CR<Val> item) = 0 ;
-	virtual void replace (CR<Val> expect ,CR<Val> item) = 0 ;
+	virtual Bool change (VR<Val> from ,CR<Val> into) = 0 ;
+	virtual void replace (CR<Val> from ,CR<Val> into) = 0 ;
 	virtual void increase () = 0 ;
 	virtual void decrease () = 0 ;
 } ;
@@ -248,12 +248,12 @@ public:
 		return AtomicHolder::hold (thiz)->exchange (item) ;
 	}
 
-	Bool change (VR<Val> expect ,CR<Val> item) const {
-		return AtomicHolder::hold (thiz)->change (expect ,item) ;
+	Bool change (VR<Val> from ,CR<Val> into) const {
+		return AtomicHolder::hold (thiz)->change (from ,into) ;
 	}
 
-	void replace (CR<Val> expect ,CR<Val> item) const {
-		return AtomicHolder::hold (thiz)->replace (expect ,item) ;
+	void replace (CR<Val> from ,CR<Val> into) const {
+		return AtomicHolder::hold (thiz)->replace (from ,into) ;
 	}
 
 	void increase () const {
@@ -614,7 +614,7 @@ struct RandomHolder implement Interface {
 	virtual void random_pick (CR<Length> length_ ,CR<Length> size_ ,VR<BitSet> result) = 0 ;
 	virtual Bool random_draw (CR<Flt64> possibility) = 0 ;
 	virtual Array<Flt64> random_uniform (CR<Length> count) = 0 ;
-	virtual Array<Flt64> random_normal (CR<Length> count) = 0 ;
+	virtual Flt64 random_normal () = 0 ;
 } ;
 
 class Random implement Super<Ref<RandomLayout>> {
@@ -659,8 +659,8 @@ public:
 		return RandomHolder::hold (thiz)->random_uniform (count) ;
 	}
 
-	Array<Flt64> random_normal (CR<Length> count) const {
-		return RandomHolder::hold (thiz)->random_normal (count) ;
+	Flt64 random_normal () const {
+		return RandomHolder::hold (thiz)->random_normal () ;
 	}
 } ;
 
@@ -681,6 +681,7 @@ struct SingletonProcHolder implement Interface {
 	virtual void initialize () = 0 ;
 	virtual Quad abi_reserve () const = 0 ;
 	virtual Quad ctx_reserve () const = 0 ;
+	virtual Flag regi (CR<Unknown> holder) const = 0 ;
 	virtual Flag load (CR<Clazz> clazz) const = 0 ;
 	virtual void save (CR<Clazz> clazz ,CR<Flag> layout) const = 0 ;
 } ;
@@ -699,6 +700,11 @@ public:
 		return SingletonProcHolder::hold (expr)->ctx_reserve () ;
 	}
 
+	template <class ARG1>
+	static Flag regi (TYPE<ARG1>) {
+		return SingletonProcHolder::hold (expr)->regi (ClazzUnknownBinder<ARG1> ()) ;
+	}
+
 	static Flag load (CR<Clazz> clazz) {
 		return SingletonProcHolder::hold (expr)->load (clazz) ;
 	}
@@ -712,19 +718,9 @@ template <class A>
 class Singleton implement Proxy {
 public:
 	static CR<A> expr_m () {
-		return memorize ([&] () {
-			const auto r1x = Clazz (TYPE<A>::expr) ;
-			auto rax = SingletonProc::load (r1x) ;
-			if ifdo (TRUE) {
-				if (rax != ZERO)
-					discard ;
-				rax = address (A::expr) ;
-				SingletonProc::save (r1x ,rax) ;
-				rax = SingletonProc::load (r1x) ;
-			}
-			auto &&rbx = keep[TYPE<A>::expr] (Pointer::make (rax)) ;
-			return Ref<A>::reference (rbx) ;
-		}).ref ;
+		return Pointer::make (memorize ([&] () {
+			return SingletonProc::regi (TYPE<A>::expr) ;
+		})) ;
 	}
 } ;
 
@@ -779,8 +775,6 @@ public:
 			return inline_vptr (ReflectGuidBinder<A> ()) ;
 		if (uuid == ReflectNameBinder<A>::expr)
 			return inline_vptr (ReflectNameBinder<A> ()) ;
-		if (uuid == ReflectCompileBinder<A>::expr)
-			return inline_vptr (ReflectCompileBinder<A> ()) ;
 		if (uuid == ReflectCloneBinder<A>::expr)
 			return inline_vptr (ReflectCloneBinder<A> ()) ;
 		return ZERO ;

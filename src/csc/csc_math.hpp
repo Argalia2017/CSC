@@ -34,6 +34,10 @@ struct MathProcHolder implement Interface {
 	virtual Val64 step (CR<Val64> a) const = 0 ;
 	virtual Flt32 step (CR<Flt32> a) const = 0 ;
 	virtual Flt64 step (CR<Flt64> a) const = 0 ;
+	virtual Val32 relu (CR<Val32> a) const = 0 ;
+	virtual Val64 relu (CR<Val64> a) const = 0 ;
+	virtual Flt32 relu (CR<Flt32> a) const = 0 ;
+	virtual Flt64 relu (CR<Flt64> a) const = 0 ;
 	virtual Val32 sign (CR<Val32> a) const = 0 ;
 	virtual Val64 sign (CR<Val64> a) const = 0 ;
 	virtual Flt32 sign (CR<Flt32> a) const = 0 ;
@@ -125,6 +129,11 @@ public:
 	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
 	static ARG1 step (CR<ARG1> a) {
 		return MathProcHolder::hold (expr)->step (a) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
+	static ARG1 relu (CR<ARG1> a) {
+		return MathProcHolder::hold (expr)->relu (a) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
@@ -762,9 +771,14 @@ public:
 
 struct JetTree ;
 
+struct JetIndex {
+	Flag mTree ;
+	Flag mCurr ;
+} ;
+
 struct JetLayout {
 	SharedRef<JetTree> mThis ;
-	Index mIndex ;
+	JetIndex mIndex ;
 } ;
 
 struct JetHolder implement Interface {

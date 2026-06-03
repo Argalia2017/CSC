@@ -452,6 +452,11 @@ public:
 	Slice segment (CR<Index> begin_ ,CR<Index> end_) const override {
 		if (begin_ >= end_)
 			return Slice () ;
+		const auto r1x = size () ;
+		if (!inline_between (begin_ ,0 ,r1x))
+			return Slice () ;
+		if (!inline_between (end_ ,0 ,r1x + 1))
+			return Slice () ;
 		return Slice (address (self.mString[begin_]) ,end_ - begin_ ,step ()) ;
 	}
 
@@ -1454,6 +1459,55 @@ public:
 		return NONE ;
 	}
 
+	Array<Index> search (CR<Pointer> begin_ ,CR<Pointer> end_) const override {
+		Array<Index> ret ;
+		if (!self.mThis.exist ())
+			return move (ret) ;
+		assert (self.mRemap) ;
+		const auto r1x = RFat<ReflectCompr> (self.mThis->mList.unknown ()) ;
+		Index ix = 0 ;
+		Index iy = length () ;
+		Index iz = 0 ;
+		while (TRUE) {
+			if (ix >= iy)
+				break ;
+			iz = ix + (iy - ix) / 2 ;
+			const auto r2x = r1x->compr (self.mThis->mList.at (self.mRange[iz]) ,begin_) ;
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (r2x >= ZERO)
+					discard ;
+				ix = iz + 1 ;
+			}
+			if ifdo (act) {
+				iy = iz ;
+			}
+		}
+		const auto r3x = ix ;
+		iy = length () ;
+		while (TRUE) {
+			if (ix >= iy)
+				break ;
+			iz = ix + (iy - ix) / 2 ;
+			const auto r4x = r1x->compr (self.mThis->mList.at (self.mRange[iz]) ,end_) ;
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (r4x >= ZERO)
+					discard ;
+				ix = iz + 1 ;
+			}
+			if ifdo (act) {
+				iy = iz ;
+			}
+		}
+		const auto r5x = ix ;
+		ret = Array<Index> (r5x - r3x) ;
+		for (auto &&i : ret.iter ()) {
+			ret[i] = i + r3x ;
+		}
+		return move (ret) ;
+	}
+
 	Bool contain (CR<Pointer> item) const override {
 		return find (item) != NONE ;
 	}
@@ -1475,7 +1529,6 @@ public:
 				discard ;
 			auto &&rax = self.mThis.ref ;
 			const auto r1x = RFat<ReflectCompr> (rax.mList.unknown ()) ;
-			const auto r2x = RFat<ReflectEqual> (rax.mList.unknown ()) ;
 			if ifdo (TRUE) {
 				self.mRange = RefBuffer<Index> (self.mWrite) ;
 				Index ix = self.mRoot ;
@@ -1487,26 +1540,11 @@ public:
 				assert (ix == NONE) ;
 			}
 			if ifdo (TRUE) {
-				const auto r3x = (&self.mRange[0]) ;
-				const auto r4x = r3x + self.mRange.size () ;
-				std::sort (r3x ,r4x ,[&] (CR<Index> a ,CR<Index> b) {
+				const auto r2x = (&self.mRange[0]) ;
+				const auto r3x = r2x + self.mRange.size () ;
+				std::sort (r2x ,r3x ,[&] (CR<Index> a ,CR<Index> b) {
 					return r1x->compr (rax.mList[a] ,rax.mList[b]) < ZERO ;
 				}) ;
-			}
-			if ifdo (TRUE) {
-				Index ix = 0 ;
-				for (auto &&i : range (1 ,self.mWrite)) {
-					const auto r5x = r2x->equal (rax.mList[self.mRange[ix]] ,rax.mList[self.mRange[i]]) ;
-					if (r5x)
-						continue ;
-					ix++ ;
-					self.mRange[ix] = self.mRange[i] ;
-				}
-				ix++ ;
-				//@warn: length would be decresed due to remove the same item
-				self.mWrite = ix ;
-				for (auto &&i : range (self.mWrite ,self.mRange.size ()))
-					self.mRange[i] = NONE ;
 			}
 			if ifdo (TRUE) {
 				self.mRoot = self.mRange[0] ;
@@ -2068,36 +2106,6 @@ exports CFat<SetHolder> SetHolder::hold (CR<SetLayout> that) {
 	return CFat<SetHolder> (SetImplHolder () ,that) ;
 }
 
-#ifdef __CSC_CONFIG_VAL32__
-struct FUNCTION_fnvhash {
-	forceinline Char operator() () const {
-		const auto r1x = ZERO ;
-		return HashProc::fnvhash32 (Pointer::from (r1x) ,0) ;
-	}
-
-	template <class ARG1>
-	forceinline Char operator() (CR<ARG1> src ,CR<Char> val) const {
-		return HashProc::fnvhash32 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,val) ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_CONFIG_VAL64__
-struct FUNCTION_fnvhash {
-	forceinline Quad operator() () const {
-		const auto r1x = ZERO ;
-		return HashProc::fnvhash64 (Pointer::from (r1x) ,0) ;
-	}
-
-	template <class ARG1>
-	forceinline Quad operator() (CR<ARG1> src ,CR<Quad> val) const {
-		return HashProc::fnvhash64 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,val) ;
-	}
-} ;
-#endif
-
-static constexpr auto fnvhash = FUNCTION_fnvhash () ;
-
 class HashcodeVisitorImplHolder final implement Fat<HashcodeVisitorHolder ,HashcodeVisitorLayout> {
 public:
 	void reset () override {
@@ -2134,6 +2142,30 @@ public:
 	void push (CR<Quad> a) override {
 		self.mCode = fnvhash (a ,self.mCode) ;
 	}
+
+#ifdef __CSC_CONFIG_VAL32__
+	Char fnvhash () const {
+		const auto r1x = ZERO ;
+		return HashProc::fnvhash32 (Pointer::from (r1x) ,0) ;
+	}
+
+	template <class ARG1>
+	Char fnvhash (CR<ARG1> src ,CR<Char> val) const {
+		return HashProc::fnvhash32 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,val) ;
+	}
+#endif
+
+#ifdef __CSC_CONFIG_VAL64__
+	forceinline Quad fnvhash () const {
+		const auto r1x = ZERO ;
+		return HashProc::fnvhash64 (Pointer::from (r1x) ,0) ;
+	}
+
+	template <class ARG1>
+	forceinline Quad fnvhash (CR<ARG1> src ,CR<Quad> val) const {
+		return HashProc::fnvhash64 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,val) ;
+	}
+#endif
 } ;
 
 exports VFat<HashcodeVisitorHolder> HashcodeVisitorHolder::hold (VR<HashcodeVisitorLayout> that) {
@@ -2596,9 +2628,9 @@ public:
 
 	static void check_mask (VR<BitSetLayout> that) {
 		Index ix = that.mSet.size () - 1 ;
-		if (ix <= 0)
+		if (ix < 0)
 			return ;
-		const auto r1x = that.mWidth % 8 + 1 ;
+		const auto r1x = that.mWidth % 8 ;
 		const auto r2x = ByteProc::pow_bit (r1x) - 1 ;
 		that.mSet[ix] &= Byte (r2x) ;
 	}

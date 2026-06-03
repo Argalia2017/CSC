@@ -22,8 +22,10 @@ public:
 			return FALSE ;
 		if (self.mCY != that.mCY)
 			return FALSE ;
-		if (self.mStep != that.mStep)
-			return FALSE ;
+		if (self.mStep != 0)
+			if (that.mStep != 0)
+				if (self.mStep != that.mStep)
+					return FALSE ;
 		return TRUE ;
 	}
 } ;
@@ -235,17 +237,6 @@ class ColorProcImplHolder final implement Fat<ColorProcHolder ,ColorProcLayout> 
 public:
 	void initialize () override {
 		noop () ;
-	}
-
-	Color3B bgr (CR<Flt64> b ,CR<Flt64> g ,CR<Flt64> r) const override {
-		Color3B ret ;
-		const auto r1x = MathProc::clamp (MathProc::round (b) ,Flt64 (0) ,Flt64 (255)) ;
-		const auto r2x = MathProc::clamp (MathProc::round (g) ,Flt64 (0) ,Flt64 (255)) ;
-		const auto r3x = MathProc::clamp (MathProc::round (r) ,Flt64 (0) ,Flt64 (255)) ;
-		ret.mB = Byte (Val32 (r1x)) ;
-		ret.mG = Byte (Val32 (r2x)) ;
-		ret.mR = Byte (Val32 (r3x)) ;
-		return move (ret) ;
 	}
 
 	Flt64 byte_norm (CR<Byte> c) const {
@@ -896,224 +887,26 @@ exports CFat<TensorHolder> TensorHolder::hold (CR<TensorLayout> that) {
 	return CFat<TensorHolder> (TensorImplHolder () ,that) ;
 }
 
-class DisjointImplHolder final implement Fat<DisjointHolder ,DisjointLayout> {
-public:
-	void initialize (CR<Length> size_) override {
-		self.mTable = Array<Index> (size_) ;
-		self.mTable.fill (NONE) ;
-	}
+template class External<TensorProcHolder ,TensorProcLayout> ;
 
-	Length size () const override {
-		return self.mTable.size () ;
-	}
-
-	Index lead (CR<Index> from_) override {
-		Index ix = from_ ;
-		while (TRUE) {
-			if (ix == NONE)
-				break ;
-			ix = parent (ix) ;
-		}
-		Index ret = ix ;
-		if ifdo (TRUE) {
-			if (ix == NONE)
-				discard ;
-			ix = from_ ;
-			Index iy = NONE ;
-			while (TRUE) {
-				if (ix == NONE)
-					break ;
-				iy = parent (ix) ;
-				self.mTable[ix] = ret ;
-				ix = iy ;
-			}
-		}
-		return move (ret) ;
-	}
-
-	Index parent (CR<Index> curr) const {
-		if (curr == self.mTable[curr])
-			return NONE ;
-		return self.mTable[curr] ;
-	}
-
-	void joint (CR<Index> from_ ,CR<Index> to_) override {
-		Index ix = lead (from_) ;
-		Index iy = lead (to_) ;
-		self.mTable[ix] = ix ;
-		self.mTable[iy] = ix ;
-	}
-
-	Bool edge (CR<Index> from_ ,CR<Index> to_) override {
-		Index ix = lead (from_) ;
-		Index iy = lead (to_) ;
-		return ix == iy ;
-	}
-
-	Length depth (CR<Index> from_) override {
-		Length ret = 0 ;
-		Index ix = from_ ;
-		while (TRUE) {
-			if (ix == NONE)
-				break ;
-			ret++ ;
-			ix = parent (ix) ;
-		}
-		return move (ret) ;
-	}
-
-	Deque<Index> cluster (CR<Index> from_) override {
-		Deque<Index> ret ;
-		Index ix = from_ ;
-		while (TRUE) {
-			if (ix == NONE)
-				break ;
-			ret.add (ix) ;
-			ix = parent (ix) ;
-		}
-		return move (ret) ;
-	}
-
-	Array<Index> jump (CR<Index> from_) override {
-		Array<Index> ret = Array<Index> (self.mTable.size ()) ;
-		ret.fill (NONE) ;
-		for (auto &&i : range (0 ,self.mTable.size ())) {
-			Index ix = lead (i) ;
-			if (ix == NONE)
-				continue ;
-			ret[ix] = ret[i] ;
-			ret[i] = ix ;
-		}
-		return move (ret) ;
-	}
+struct TensorProcLayout {
+	UniqueRef<Bool> mContext ;
 } ;
 
-exports VFat<DisjointHolder> DisjointHolder::hold (VR<DisjointLayout> that) {
-	return VFat<DisjointHolder> (DisjointImplHolder () ,that) ;
+exports CR<Super<Ref<TensorProcLayout>>> TensorProcHolder::expr_m () {
+	return memorize ([&] () {
+		Super<Ref<TensorProcLayout>> ret ;
+		ret.mThis = Ref<TensorProcLayout>::make () ;
+		TensorProcHolder::hold (ret)->initialize () ;
+		return move (ret) ;
+	}) ;
 }
 
-exports CFat<DisjointHolder> DisjointHolder::hold (CR<DisjointLayout> that) {
-	return CFat<DisjointHolder> (DisjointImplHolder () ,that) ;
+exports VFat<TensorProcHolder> TensorProcHolder::hold (VR<TensorProcLayout> that) {
+	return VFat<TensorProcHolder> (External<TensorProcHolder ,TensorProcLayout>::expr ,that) ;
 }
 
-class KMMatchImplHolder final implement Fat<KMMatchHolder ,KMMatchLayout> {
-public:
-	void initialize (CR<Length> size_) override {
-		self.mSize = size_ ;
-		self.mThreshold = Flt32 (0.1) ;
-		self.mUser = Array<Flt32> (self.mSize) ;
-		self.mWork = Array<Flt32> (self.mSize) ;
-		self.mUserVisit = BitSet (self.mSize) ;
-		self.mWorkVisit = BitSet (self.mSize) ;
-		self.mMatch = Array<Index> (self.mSize) ;
-		self.mLack = Array<Flt32> (self.mSize) ;
-	}
-
-	void set_threshold (CR<Flt64> threshold) override {
-		self.mThreshold = Flt32 (threshold) ;
-	}
-
-	Length size () const override {
-		return self.mSize ;
-	}
-
-	Array<Index> sort (CR<Image<Flt32>> love) override {
-		assert (self.mMatch.size () > 0) ;
-		assert (love.size () == MathProc::square (self.mSize)) ;
-		self.mLove = Ref<Image<Flt32>>::reference (love) ;
-		self.mUser.fill (0) ;
-		self.mWork.fill (0) ;
-		self.mUserVisit.clear () ;
-		self.mWorkVisit.clear () ;
-		self.mMatch.fill (NONE) ;
-		self.mLack.fill (0) ;
-		solve () ;
-		return self.mMatch ;
-	}
-
-	void solve () {
-		for (auto &&i : range (0 ,self.mSize)) {
-			self.mUser[i] = -infinity ;
-			for (auto &&j : range (0 ,self.mSize)) {
-				const auto r1x = self.mLove.ref[i][j] ;
-				self.mUser[i] = MathProc::max_of (self.mUser[i] ,r1x) ;
-			}
-		}
-		for (auto &&i : range (0 ,self.mSize)) {
-			self.mLack.fill (infinity) ;
-			while (TRUE) {
-				self.mUserVisit.clear () ;
-				self.mWorkVisit.clear () ;
-				if (dfs (i))
-					break ;
-				const auto r2x = invoke ([&] () {
-					Flt32 ret = infinity ;
-					for (auto &&j : range (0 ,self.mSize)) {
-						if (self.mWorkVisit[j])
-							continue ;
-						ret = MathProc::min_of (ret ,self.mLack[j]) ;
-					}
-					return move (ret) ;
-				}) ;
-				for (auto &&j : range (0 ,self.mSize)) {
-					if ifdo (TRUE) {
-						if (!self.mUserVisit[j])
-							discard ;
-						self.mUser[j] -= r2x ;
-					}
-					if ifdo (TRUE) {
-						if (!self.mWorkVisit[j])
-							discard ;
-						self.mWork[j] += r2x ;
-					}
-					if ifdo (TRUE) {
-						if (self.mWorkVisit[j])
-							discard ;
-						self.mLack[j] -= r2x ;
-					}
-				}
-			}
-		}
-	}
-
-	Bool dfs (CR<Index> user) {
-		self.mUserVisit[user] = TRUE ;
-		for (auto &&i : range (0 ,self.mSize)) {
-			if (self.mWorkVisit[i])
-				continue ;
-			const auto r1x = self.mLove.ref[user][i] ;
-			const auto r2x = self.mUser[user] + self.mWork[i] - r1x ;
-			if ifdo (TRUE) {
-				if (r2x < self.mThreshold)
-					discard ;
-				self.mLack[i] = MathProc::min_of (self.mLack[i] ,r2x) ;
-			}
-			if (r2x >= self.mThreshold)
-				continue ;
-			self.mWorkVisit[i] = TRUE ;
-			const auto r3x = self.mMatch[i] ;
-			if ifdo (TRUE) {
-				if (r3x != NONE)
-					discard ;
-				self.mMatch[i] = user ;
-				return TRUE ;
-			}
-			if ifdo (TRUE) {
-				if (!dfs (r3x))
-					discard ;
-				self.mMatch[i] = user ;
-				return TRUE ;
-			}
-		}
-		return FALSE ;
-	}
-} ;
-
-exports VFat<KMMatchHolder> KMMatchHolder::hold (VR<KMMatchLayout> that) {
-	return VFat<KMMatchHolder> (KMMatchImplHolder () ,that) ;
-}
-
-exports CFat<KMMatchHolder> KMMatchHolder::hold (CR<KMMatchLayout> that) {
-	return CFat<KMMatchHolder> (KMMatchImplHolder () ,that) ;
+exports CFat<TensorProcHolder> TensorProcHolder::hold (CR<TensorProcLayout> that) {
+	return CFat<TensorProcHolder> (External<TensorProcHolder ,TensorProcLayout>::expr ,that) ;
 }
 } ;

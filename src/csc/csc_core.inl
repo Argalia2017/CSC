@@ -23,88 +23,23 @@
 #include "csc_begin.h"
 
 namespace CSC {
+class CoreProcImplHolder final implement Fat<CoreProcHolder ,Proxy> {
+public:
 #ifdef __CSC_SYSTEM_WINDOWS__
-struct FUNCTION_has_debugger {
-	forceinline Bool operator() () const noexcept {
-		return IsDebuggerPresent () ;
+	Bool inline_debug () const override {
+		return memorize ([&] () {
+			return IsDebuggerPresent () ;
+		}) ;
 	}
-} ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
-struct FUNCTION_has_debugger {
-	forceinline Bool operator() () const noexcept {
-		return FALSE ;
-	}
-} ;
-#endif
-
-static constexpr auto has_debugger = FUNCTION_has_debugger () ;
-
-#ifdef __CSC_CXX_RTTI__
-struct FUNCTION_stl_type_name {
-	forceinline Flag operator() (CR<Interface> squalor ,CR<Flag> func_) const noexcept {
-		return Flag (typeid (squalor).name ()) ;
-	}
-} ;
-#endif
-
-#ifndef __CSC_CXX_RTTI__
-#ifdef __CSC_COMPILER_NVCC__
-#pragma message "NVCC would not generate type_name without rtti"
-#endif
-
-struct FUNCTION_stl_type_name {
-	forceinline Flag operator() (CR<Interface> squalor ,CR<Flag> func_) const noexcept {
-		return func_ ;
-	}
-} ;
-#endif
-
-static constexpr auto stl_type_name = FUNCTION_stl_type_name () ;
-
-#ifdef __CSC_COMPILER_MSVC__
-struct FUNCTION_stl_list_pair {
-	forceinline Tuple<Flag ,Flag> operator() (CR<csc_initializer_list_t<Pointer>> squalor ,CR<Length> step_) const noexcept {
-		Tuple<Flag ,Flag> ret ;
-		ret.m1st = Flag (squalor.begin ()) ;
-		ret.m2nd = Flag (squalor.end ()) ;
-		return move (ret) ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-struct FUNCTION_stl_list_pair {
-	forceinline Tuple<Flag ,Flag> operator() (CR<csc_initializer_list_t<Pointer>> squalor ,CR<Length> step_) const noexcept {
-		Tuple<Flag ,Flag> ret ;
-		ret.m1st = Flag (squalor.begin ()) ;
-		ret.m2nd = Flag (squalor.begin ()) + Length (squalor.size ()) * step_ ;
-		return move (ret) ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-struct FUNCTION_stl_list_pair {
-	forceinline Tuple<Flag ,Flag> operator() (CR<csc_initializer_list_t<Pointer>> squalor ,CR<Length> step_) const noexcept {
-		Tuple<Flag ,Flag> ret ;
-		ret.m1st = Flag (squalor.begin ()) ;
-		ret.m2nd = Flag (squalor.end ()) ;
-		return move (ret) ;
-	}
-} ;
-#endif
-
-static constexpr auto stl_list_pair = FUNCTION_stl_list_pair () ;
-
-class CoreProcImplHolder final implement Fat<CoreProcHolder ,Proxy> {
-public:
 	Bool inline_debug () const override {
 		return memorize ([&] () {
-			return has_debugger () ;
+			return FALSE ;
 		}) ;
 	}
+#endif
 
 	void inline_abort () const override {
 		std::abort () ;
@@ -116,13 +51,51 @@ public:
 		std::printf ("%s : [0x%p] \n" ,r1x ,r2x) ;
 	}
 
-	Flag inline_type_name (CR<Pointer> squalor ,CR<Flag> func_) const override {
-		return stl_type_name (squalor ,func_) ;
+#ifdef __CSC_CXX_RTTI__
+	Flag inline_type_name (CR<Interface> squalor ,CR<Flag> func_) const override {
+		return Flag (typeid (squalor).name ()) ;
 	}
+#endif
 
-	Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const override {
-		return stl_list_pair (squalor ,step_) ;
+#ifndef __CSC_CXX_RTTI__
+#ifdef __CSC_COMPILER_NVCC__
+#pragma message "NVCC would not generate type_name without rtti"
+#endif
+
+	Flag inline_type_name (CR<Interface> squalor ,CR<Flag> func_) const override {
+		return func_ ;
 	}
+#endif
+
+#ifdef __CSC_COMPILER_MSVC__
+	Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const override {
+		Tuple<Flag ,Flag> ret ;
+		auto rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
+		ret.m1st = Flag (rax.begin ()) ;
+		ret.m2nd = Flag (rax.end ()) ;
+		return move (ret) ;
+	}
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+	Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const override {
+		Tuple<Flag ,Flag> ret ;
+		auto rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
+		ret.m1st = Flag (rax.begin ()) ;
+		ret.m2nd = Flag (rax.begin ()) + Length (rax.size ()) * step_ ;
+		return move (ret) ;
+	}
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+	Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const override {
+		Tuple<Flag ,Flag> ret ;
+		auto rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
+		ret.m1st = Flag (rax.begin ()) ;
+		ret.m2nd = Flag (rax.end ()) ;
+		return move (ret) ;
+	}
+#endif
 
 	void inline_memset (VR<Pointer> dst ,CR<Length> size_) const override {
 		std::memset ((&dst) ,0 ,size_) ;
@@ -134,11 +107,6 @@ public:
 
 	Flag inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const override {
 		return Flag (std::memcmp ((&dst) ,(&src) ,size_)) ;
-	}
-
-	Index inline_guid () const override {
-		static auto mInstance = std::atomic<Val64> (IDEN) ;
-		return Index (mInstance++) ;
 	}
 } ;
 
@@ -217,7 +185,8 @@ exports CFat<BoxHolder> BoxHolder::hold (CR<BoxLayout> that) {
 
 struct RefTree {
 	Heap mHeap ;
-	Flag mOrigin ;
+	Flag mMemPtr ;
+	Flag mMemSize ;
 	std::atomic<Val> mCounter ;
 	BoxLayout mValue ;
 } ;
@@ -235,7 +204,8 @@ public:
 		self.mLayout = inline_alignas (r6x + SIZE_OF<RefTree>::expr ,r2x->type_align ()) ;
 		inline_memset (Pointer::make (r6x) ,self.mLayout - r6x) ;
 		ptr (self).mHeap = r5x ;
-		ptr (self).mOrigin = r6x ;
+		ptr (self).mMemPtr = r6x ;
+		ptr (self).mMemSize = r4x ;
 		BoxHolder::hold (ptr (self).mValue)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 		ptr (self).mCounter = 1 ;
@@ -253,7 +223,8 @@ public:
 		self.mLayout = inline_alignas (r7x + SIZE_OF<RefTree>::expr ,r1x->type_align ()) ;
 		inline_memset (Pointer::make (r7x) ,self.mLayout - r7x) ;
 		ptr (self).mHeap = r6x ;
-		ptr (self).mOrigin = r7x ;
+		ptr (self).mMemPtr = r7x ;
+		ptr (self).mMemSize = r5x ;
 		BoxHolder::hold (ptr (self).mValue)->initialize (holder) ;
 		const auto r8x = RFat<ReflectCreate> (holder) ;
 		r8x->create (ref ,1) ;
@@ -295,8 +266,9 @@ public:
 				discard ;
 			BoxHolder::hold (ptr (self).mValue)->destroy () ;
 			const auto r2x = ptr (self).mHeap ;
-			const auto r3x = ptr (self).mOrigin ;
-			r2x.free (r3x) ;
+			const auto r3x = ptr (self).mMemPtr ;
+			const auto r4x = ptr (self).mMemSize ;
+			r2x.free (r3x ,r4x) ;
 		}
 		self.mLayout = ZERO ;
 		self.mExtend = ZERO ;
@@ -380,50 +352,6 @@ exports CFat<RefHolder> RefHolder::hold (CR<RefLayout> that) {
 	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
-#ifdef __CSC_COMPILER_MSVC__
-struct FUNCTION_dump_memory_leaks {
-	forceinline void operator() () const {
-		_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF) ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-struct FUNCTION_dump_memory_leaks {
-	forceinline void operator() () const {
-		noop () ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-struct FUNCTION_dump_memory_leaks {
-	forceinline void operator() () const {
-		noop () ;
-	}
-} ;
-#endif
-
-static constexpr auto dump_memory_leaks = FUNCTION_dump_memory_leaks () ;
-
-#ifdef __CSC_SYSTEM_WINDOWS__
-struct FUNCTION_memsize {
-	forceinline Length operator() (CR<csc_handle_t> a) const {
-		return Length (_msize (a)) ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_SYSTEM_LINUX__
-struct FUNCTION_memsize {
-	forceinline Length operator() (CR<csc_handle_t> a) const {
-		return Length (malloc_usable_size (a)) ;
-	}
-} ;
-#endif
-
-static constexpr auto memsize = FUNCTION_memsize () ;
-
 struct HeapRoot {
 	Box<std::recursive_mutex> mMutex ;
 	Box<std::atomic<Val>> mStack ;
@@ -446,17 +374,30 @@ public:
 		return mInstance ;
 	}
 
+#ifdef __CSC_COMPILER_MSVC__
+	void dump_memory_leaks () const {
+		_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF) ;
+	}
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+	void dump_memory_leaks () const {
+		noop () ;
+	}
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+	void dump_memory_leaks () const {
+		noop () ;
+	}
+#endif
+
 	void enter () const override {
 		return root_ptr ().mMutex->lock () ;
 	}
 
 	void leave () const override {
 		return root_ptr ().mMutex->unlock () ;
-	}
-
-	Flag stack (CR<Length> size_) const override {
-		unimplemented () ;
-		return ZERO ;
 	}
 
 	Length size () const override {
@@ -467,28 +408,39 @@ public:
 		return root_ptr ().mLength.ref ;
 	}
 
+	Flag stack (CR<Length> size_) const override {
+		unimplemented () ;
+		return ZERO ;
+	}
+
 	Flag alloc (CR<Length> size_) const override {
 		Flag ret = Flag (operator new (size_ ,std::nothrow)) ;
 		assume (ret != ZERO) ;
-		const auto r1x = csc_handle_t (ret) ;
-		const auto r2x = memsize (r1x) ;
-		root_ptr ().mLength.ref += r2x ;
+		root_ptr ().mLength.ref += size_ ;
+		root_ptr ().mWidth.ref = inline_max (root_ptr ().mWidth.ref ,root_ptr ().mLength.ref) ;
 		return move (ret) ;
 	}
 
+#ifdef __cpp_aligned_new
 	Flag alloc (CR<Length> size_ ,CR<Length> align_) const override {
 		Flag ret = Flag (operator new (size_ ,std::align_val_t (align_) ,std::nothrow)) ;
 		assume (ret != ZERO) ;
-		const auto r1x = csc_handle_t (ret) ;
-		const auto r2x = memsize (r1x) ;
-		root_ptr ().mLength.ref += r2x ;
+		root_ptr ().mLength.ref += size_ ;
+		root_ptr ().mWidth.ref = inline_max (root_ptr ().mWidth.ref ,root_ptr ().mLength.ref) ;
 		return move (ret) ;
 	}
+#endif
 
-	void free (CR<Flag> layout) const override {
+#ifndef __cpp_aligned_new
+	Flag alloc (CR<Length> size_ ,CR<Length> align_) const override {
+		assume (FALSE) ;
+		return ZERO ;
+	}
+#endif
+
+	void free (CR<Flag> layout ,CR<Length> size_) const override {
 		const auto r1x = csc_handle_t (layout) ;
-		const auto r2x = memsize (r1x) ;
-		root_ptr ().mLength.ref -= r2x ;
+		root_ptr ().mLength.ref -= size_ ;
 		operator delete (r1x ,std::nothrow) ;
 	}
 } ;
@@ -674,7 +626,6 @@ struct ClazzTree {
 	Length mTypeSize ;
 	Length mTypeAlign ;
 	Flag mTypeMeta ;
-	Flag mTypeGuid ;
 	Slice mTypeName ;
 } ;
 
@@ -687,7 +638,6 @@ public:
 		self.mThis->mTypeAlign = r1x->type_align () ;
 		const auto r2x = RFat<ReflectGuid> (holder) ;
 		self.mThis->mTypeMeta = r2x->type_meta () ;
-		self.mThis->mTypeGuid = r2x->type_guid () ;
 		const auto r3x = RFat<ReflectName> (holder) ;
 		self.mThis->mTypeName = r3x->type_name () ;
 	}
@@ -717,7 +667,9 @@ public:
 	Flag type_guid () const override {
 		if (self.mThis == NULL)
 			return ZERO ;
-		return self.mThis->mTypeGuid ;
+		const auto r1x = Unknown (type_meta ()) ;
+		const auto r2x = RFat<ReflectGuid> (r1x) ;
+		return r2x->type_guid () ;
 	}
 
 	Slice type_name () const override {

@@ -353,6 +353,7 @@ struct MatrixHolder implement Interface {
 	virtual MatrixLayout smul (CR<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout sabs () const = 0 ;
 	virtual MatrixLayout minus () const = 0 ;
+	virtual Flt64 magnitude () const = 0 ;
 	virtual MatrixLayout transpose () const = 0 ;
 	virtual MatrixLayout triangular () const = 0 ;
 	virtual MatrixLayout homogenize () const = 0 ;
@@ -586,6 +587,10 @@ public:
 		return minus () ;
 	}
 
+	Flt64 magnitude () const {
+		return MatrixHolder::hold (thiz)->magnitude () ;
+	}
+
 	Matrix transpose () const {
 		MatrixLayout ret = MatrixHolder::hold (thiz)->transpose () ;
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
@@ -640,7 +645,6 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_ShearMatrix (CR<Vector> x ,CR<Vector> y ,CR<Vector> z) = 0 ;
 	virtual void make_RotationMatrix (CR<Vector> normal ,CR<Flt64> angle) = 0 ;
 	virtual void make_RotationMatrix (CR<Vector> from ,CR<Vector> into) = 0 ;
-	virtual void make_UnitaryMatrix (CR<Matrix> trs) = 0 ;
 	virtual void make_TranslationMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) = 0 ;
 	virtual void make_PerspectiveMatrix (CR<Flt64> fovx ,CR<ImageShape> shape) = 0 ;
 	virtual void make_PerspectiveMatrix (CR<Flt64> fx ,CR<Flt64> fy ,CR<Flt64> cx ,CR<Flt64> cy) = 0 ;
@@ -686,12 +690,6 @@ inline Matrix RotationMatrix (CR<Vector> normal ,CR<Flt64> angle) {
 inline Matrix RotationMatrix (CR<Vector> from ,CR<Vector> into) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_RotationMatrix (from ,into) ;
-	return move (ret) ;
-}
-
-inline Matrix UnitaryMatrix (CR<Matrix> trs) {
-	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_UnitaryMatrix (trs) ;
 	return move (ret) ;
 }
 
@@ -761,6 +759,12 @@ inline Matrix ViewMatrixZYX (CR<Vector> z ,CR<Vector> y) {
 	return move (ret) ;
 }
 
+inline Matrix SkewMatrix (CR<Vector> xyz) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_CrossProductMatrix (xyz) ;
+	return move (ret) ;
+}
+
 inline Matrix CrossProductMatrix (CR<Vector> xyz) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_CrossProductMatrix (xyz) ;
@@ -824,6 +828,7 @@ struct MatrixProcHolder implement Interface {
 	virtual TRSResult solve_trs (CR<Matrix> a) const = 0 ;
 	virtual KRTResult solve_krt (CR<Matrix> a) const = 0 ;
 	virtual SVDResult solve_svd (CR<Matrix> a) const = 0 ;
+	virtual Vector intersection (CR<Vector> a1 ,CR<Vector> a2 ,CR<Vector> b1 ,CR<Vector> b2) const = 0 ;
 } ;
 
 class MatrixProc implement Super<Ref<MatrixProcLayout>> {
@@ -842,6 +847,10 @@ public:
 
 	static SVDResult solve_svd (CR<Matrix> a) {
 		return MatrixProcHolder::hold (expr)->solve_svd (a) ;
+	}
+
+	static Vector intersection (CR<Vector> p1 ,CR<Vector> v1 ,CR<Vector> p2 ,CR<Vector> v2) {
+		return MatrixProcHolder::hold (expr)->intersection (p1 ,v1 ,p2 ,v2) ;
 	}
 } ;
 
@@ -1030,6 +1039,71 @@ public:
 	}
 } ;
 
+struct SE3Layout {
+	Buffer<Flt64 ,RANK6> mSE3 ;
+} ;
+
+struct SE3Holder implement Interface {
+	imports VFat<SE3Holder> hold (VR<SE3Layout> that) ;
+	imports CFat<SE3Holder> hold (CR<SE3Layout> that) ;
+
+	virtual void initialize (CR<Matrix> that) = 0 ;
+	virtual CR<Flt64> at (CR<Index> y) const leftvalue = 0 ;
+	virtual SE3Layout sadd (CR<SE3Layout> that) const = 0 ;
+	virtual SE3Layout smul (CR<Flt64> that) const = 0 ;
+	virtual SE3Layout sdiv (CR<Flt64> that) const = 0 ;
+	virtual Matrix matrix () const = 0 ;
+} ;
+
+class SE3 implement SE3Layout {
+protected:
+	using SE3Layout::mSE3 ;
+
+public:
+	void initialize (CR<Matrix> that) {
+		SE3Holder::hold (thiz)->initialize (that) ;
+	}
+
+	CR<Flt64> at (CR<Index> y) const leftvalue {
+		return SE3Holder::hold (thiz)->at (y) ;
+	}
+
+	SE3 sadd (CR<SE3> that) const {
+		SE3Layout ret = SE3Holder::hold (thiz)->sadd (that) ;
+		return move (keep[TYPE<SE3>::expr] (ret)) ;
+	}
+
+	SE3 smul (CR<Flt64> that) const {
+		SE3Layout ret = SE3Holder::hold (thiz)->smul (that) ;
+		return move (keep[TYPE<SE3>::expr] (ret)) ;
+	}
+
+	forceinline SE3 operator* (CR<Flt64> that) const {
+		return smul (that) ;
+	}
+
+	forceinline void operator*= (CR<Flt64> that) {
+		thiz = smul (that) ;
+	}
+
+	SE3 sdiv (CR<Flt64> that) const {
+		SE3Layout ret = SE3Holder::hold (thiz)->sdiv (that) ;
+		return move (keep[TYPE<SE3>::expr] (ret)) ;
+	}
+
+	forceinline SE3 operator/ (CR<Flt64> that) const {
+		return sdiv (that) ;
+	}
+
+	forceinline void operator/= (CR<Flt64> that) {
+		thiz = sdiv (that) ;
+	}
+
+	Matrix matrix () const {
+		return SE3Holder::hold (thiz)->matrix () ;
+	}
+} ;
+
 struct LinearProcLayout ;
 
 struct LinearProcHolder implement Interface {
@@ -1188,52 +1262,6 @@ public:
 
 	Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const {
 		return PointCloudHolder::hold (thiz)->search (center ,neighbor ,radius) ;
-	}
-} ;
-
-struct TPSFitLayout {
-	DuplexMatrix mNSrc ;
-	DuplexMatrix mNDst ;
-	Array<Vector> mPSrc ;
-	Image<Flt64> mQA ;
-	Image<Flt64> mQB ;
-	Image<Flt64> mQC ;
-} ;
-
-struct TPSFitHolder implement Interface {
-	imports VFat<TPSFitHolder> hold (VR<TPSFitLayout> that) ;
-	imports CFat<TPSFitHolder> hold (CR<TPSFitLayout> that) ;
-
-	virtual void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) = 0 ;
-	virtual Vector smul (CR<Vector> that) const = 0 ;
-} ;
-
-class TPSFit implement TPSFitLayout {
-protected:
-	using TPSFitLayout::mNSrc ;
-	using TPSFitLayout::mNDst ;
-	using TPSFitLayout::mPSrc ;
-	using TPSFitLayout::mQA ;
-	using TPSFitLayout::mQB ;
-	using TPSFitLayout::mQC ;
-
-public:
-	implicit TPSFit () = default ;
-
-	void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) {
-		TPSFitHolder::hold (thiz)->compute (dst ,src) ;
-	}
-
-	Vector smul (CR<Vector> that) const {
-		return TPSFitHolder::hold (thiz)->smul (that) ;
-	}
-
-	forceinline Vector operator() (CR<Vector> that) const {
-		return smul (that) ;
-	}
-
-	forceinline friend Vector operator* (CR<TPSFit> thiz_ ,CR<Vector> that) {
-		return thiz_.smul (that) ;
 	}
 } ;
 } ;

@@ -221,11 +221,6 @@ public:
 		sync_local () ;
 	}
 
-	static VR<SingletonRoot> root_ptr () {
-		static auto mInstance = SingletonRoot () ;
-		return mInstance ;
-	}
-
 	void sync_local () {
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -246,6 +241,8 @@ public:
 			}
 		}
 		if ifdo (TRUE) {
+			if (self.mRoot.exist ())
+				discard ;
 			const auto r1x = Flag (self.mLocal.mAddress1) ;
 			assume (r1x != ZERO) ;
 			auto &&rax = keep[TYPE<SingletonRoot>::expr] (Pointer::make (r1x)) ;
@@ -265,11 +262,12 @@ public:
 		} ,[&] (VR<csc_handle_t> me) {
 			CloseHandle (me) ;
 		}) ;
-		root_ptr ().mMutex = NULL ;
+		self.mRoot = Ref<SingletonRoot>::make () ;
+		self.mRoot->mMutex = NULL ;
 		self.mLocal.mReserve1 = Quad (self.mUid) ;
-		self.mLocal.mAddress1 = Quad (address (root_ptr ())) ;
+		self.mLocal.mAddress1 = Quad (address (self.mRoot.ref)) ;
 		self.mLocal.mReserve2 = abi_reserve () ;
-		self.mLocal.mAddress2 = Quad (address (root_ptr ())) ;
+		self.mLocal.mAddress2 = Quad (address (self.mRoot.ref)) ;
 		self.mLocal.mReserve3 = ctx_reserve () ;
 	}
 
@@ -365,6 +363,20 @@ public:
 
 	Quad ctx_reserve () const override {
 		return QUAD_ENDIAN ;
+	}
+
+	Flag regi (CR<Unknown> holder) const override {
+		const auto r1x = Clazz (holder) ;
+		Flag ret = SingletonProc::load (r1x) ;
+		if ifdo (TRUE) {
+			if (ret != ZERO)
+				discard ;
+			ret = r1x.type_guid () ;
+			SingletonProc::save (r1x ,ret) ;
+			ret = SingletonProc::load (r1x) ;
+		}
+		assert (ret != ZERO) ;
+		return move (ret) ;
 	}
 
 	Flag load (CR<Clazz> clazz) const override {

@@ -8,6 +8,7 @@
 #include <csc_array.hpp>
 #include <csc_image.hpp>
 #include <csc_matrix.hpp>
+#include <csc_algorithm.hpp>
 #include <csc_stream.hpp>
 #include <csc_string.hpp>
 #include <csc_runtime.hpp>

@@ -1534,6 +1534,7 @@ struct SortedMapHolder implement Interface {
 	virtual Index inext (CR<Index> index) const = 0 ;
 	virtual void add (RR<BoxLayout> item ,CR<Index> map_) = 0 ;
 	virtual Index find (CR<Pointer> item) const = 0 ;
+	virtual Array<Index> search (CR<Pointer> begin_ ,CR<Pointer> end_) const = 0 ;
 	virtual Bool contain (CR<Pointer> item) const = 0 ;
 	virtual Index map (CR<Pointer> item) const = 0 ;
 	virtual void remap () = 0 ;
@@ -1685,6 +1686,10 @@ public:
 
 	Index find (CR<A> item) const {
 		return SortedMapHolder::hold (thiz)->find (Pointer::from (item)) ;
+	}
+
+	Array<Index> search (CR<A> begin_ ,CR<A> end_) const {
+		return SortedMapHolder::hold (thiz)->search (Pointer::from (begin_) ,Pointer::from (end_)) ;
 	}
 
 	Bool contain (CR<A> item) const {

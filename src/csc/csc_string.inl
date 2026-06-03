@@ -15,77 +15,11 @@
 namespace CSC {
 #ifdef __CSC_SYSTEM_WINDOWS__
 using csc_locale_t = _locale_t ;
-
-struct FUNCTION_string_locale {
-	forceinline UniqueRef<csc_locale_t> operator() () const {
-		return UniqueRef<csc_locale_t> ([&] (VR<csc_locale_t> me) {
-			me = _create_locale (LC_CTYPE ,String<Stra>::zero ()) ;
-		} ,[&] (VR<csc_locale_t> me) {
-			_free_locale (me) ;
-		}) ;
-	}
-} ;
-
-struct FUNCTION_string_stra_from_strw {
-	forceinline void operator() (VR<String<Stra>> dst ,CR<String<Strw>> src ,CR<csc_locale_t> loc) const {
-		auto rax = csc_size_t (0) ;
-		const auto r1x = _wcstombs_s_l ((&rax) ,dst ,dst.size () ,src ,_TRUNCATE ,loc) ;
-		assume (r1x == 0) ;
-		dst.trunc (rax) ;
-	}
-} ;
-
-struct FUNCTION_string_strw_from_stra {
-	forceinline void operator() (VR<String<Strw>> dst ,CR<String<Stra>> src ,CR<csc_locale_t> loc) const {
-		auto rax = csc_size_t (0) ;
-		const auto r1x = _mbstowcs_s_l ((&rax) ,dst ,dst.size () ,src ,_TRUNCATE ,loc) ;
-		assume (r1x == 0) ;
-		dst.trunc (rax) ;
-	}
-} ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
 using csc_locale_t = locale_t ;
-
-struct FUNCTION_string_locale {
-	forceinline UniqueRef<csc_locale_t> operator() () const {
-		return UniqueRef<csc_locale_t> ([&] (VR<csc_locale_t> me) {
-			me = newlocale (LC_CTYPE_MASK ,String<Stra>::zero () ,NULL) ;
-		} ,[&] (VR<csc_locale_t> me) {
-			freelocale (me) ;
-		}) ;
-	}
-} ;
-
-struct FUNCTION_string_stra_from_strw {
-	forceinline void operator() (VR<String<Stra>> dst ,CR<String<Strw>> src ,CR<csc_locale_t> loc) const {
-		auto rax = mbstate_t () ;
-		inline_memset (rax) ;
-		uselocale (loc) ;
-		auto rbx = src.ref ;
-		const auto r1x = Length (wcsrtombs (dst ,(&rbx) ,dst.size () ,(&rax))) ;
-		assume (r1x >= 0) ;
-		dst.trunc (r1x) ;
-	}
-} ;
-
-struct FUNCTION_string_strw_from_stra {
-	forceinline void operator() (VR<String<Strw>> dst ,CR<String<Stra>> src ,CR<csc_locale_t> loc) const {
-		auto rax = mbstate_t () ;
-		inline_memset (rax) ;
-		uselocale (loc) ;
-		auto rbx = src.ref ;
-		const auto r1x = Length (mbsrtowcs (dst ,(&rbx) ,dst.size () ,(&rax))) ;
-		assume (r1x >= 0) ;
-		dst.trunc (r1x) ;
-	}
-} ;
 #endif
-
-static constexpr auto string_locale = FUNCTION_string_locale () ;
-static constexpr auto string_stra_from_strw = FUNCTION_string_stra_from_strw () ;
-static constexpr auto string_strw_from_stra = FUNCTION_string_strw_from_stra () ;
 
 struct StringProcLayout {
 	UniqueRef<csc_locale_t> mStringLocale ;
@@ -93,21 +27,71 @@ struct StringProcLayout {
 
 class StringProcImplHolder final implement Fat<StringProcHolder ,StringProcLayout> {
 public:
+#ifdef __CSC_SYSTEM_WINDOWS__
 	void initialize () override {
-		self.mStringLocale = string_locale () ;
+		self.mStringLocale = UniqueRef<csc_locale_t> ([&] (VR<csc_locale_t> me) {
+			me = _create_locale (LC_CTYPE ,String<Stra>::zero ()) ;
+		} ,[&] (VR<csc_locale_t> me) {
+			_free_locale (me) ;
+		}) ;
 	}
+#endif
 
+#ifdef __CSC_SYSTEM_LINUX__
+	void initialize () override {
+		self.mStringLocale = UniqueRef<csc_locale_t> ([&] (VR<csc_locale_t> me) {
+			me = newlocale (LC_CTYPE_MASK ,String<Stra>::zero () ,NULL) ;
+		} ,[&] (VR<csc_locale_t> me) {
+			freelocale (me) ;
+		}) ;
+	}
+#endif
+
+#ifdef __CSC_SYSTEM_WINDOWS__
 	String<Stra> stra_from_strw (CR<String<Strw>> a) const override {
 		String<Stra> ret = String<Stra> (a.length () * 2 + 1) ;
-		string_stra_from_strw (ret ,a ,self.mStringLocale) ;
+		auto rax = csc_size_t (0) ;
+		const auto r1x = _wcstombs_s_l ((&rax) ,ret ,ret.size () ,a ,_TRUNCATE ,self.mStringLocale) ;
+		assume (r1x == 0) ;
+		ret.trunc (rax) ;
 		return move (ret) ;
 	}
 
 	String<Strw> strw_from_stra (CR<String<Stra>> a) const override {
 		String<Strw> ret = String<Strw> (a.length () + 1) ;
-		string_strw_from_stra (ret ,a ,self.mStringLocale) ;
+		auto rax = csc_size_t (0) ;
+		const auto r1x = _mbstowcs_s_l ((&rax) ,ret ,ret.size () ,a ,_TRUNCATE ,self.mStringLocale) ;
+		assume (r1x == 0) ;
+		ret.trunc (rax) ;
 		return move (ret) ;
 	}
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
+	String<Stra> stra_from_strw (CR<String<Strw>> a) const override {
+		String<Stra> ret = String<Stra> (a.length () * 2 + 1) ;
+		auto rax = mbstate_t () ;
+		inline_memset (rax) ;
+		uselocale (self.mStringLocale) ;
+		auto rbx = a.ref ;
+		const auto r1x = Length (wcsrtombs (ret ,(&rbx) ,ret.size () ,(&rax))) ;
+		assume (r1x >= 0) ;
+		ret.trunc (r1x) ;
+		return move (ret) ;
+	}
+
+	String<Strw> strw_from_stra (CR<String<Stra>> a) const override {
+		String<Strw> ret = String<Strw> (a.length () + 1) ;
+		auto rax = mbstate_t () ;
+		inline_memset (rax) ;
+		uselocale (self.mStringLocale) ;
+		auto rbx = a.ref ;
+		const auto r1x = Length (mbsrtowcs (ret ,(&rbx) ,ret.size () ,(&rax))) ;
+		assume (r1x >= 0) ;
+		ret.trunc (r1x) ;
+		return move (ret) ;
+	}
+#endif
 
 	String<Stru> stru8_from_stru16 (CR<String<Stru16>> a) const override {
 		String<Stru> ret = String<Stru> (a.length () * 3) ;
@@ -201,7 +185,6 @@ public:
 		String<Stru> ret = String<Stru> (a.length () * 6) ;
 		Index ix = 0 ;
 		auto rax = Flag (0) ;
-		auto rbx = Char () ;
 		for (auto &&i : a.iter ()) {
 			const auto r1x = Char (a[i]) ;
 			if (rax == Flag (99))
@@ -893,18 +876,16 @@ exports CFat<RegexHolder> RegexHolder::hold (CR<RegexLayout> that) {
 }
 
 struct RegularReaderLayout {
-	Ref<RefBuffer<Byte>> mStream ;
+	TextReader mTextReader ;
 	StreamShape mBackup ;
-	Box<TextReader> mTextReader ;
 	Deque<Stru32> mDeque ;
 	Stru32 mTop ;
 } ;
 
 class RegularReader implement RegularReaderLayout {
 protected:
-	using RegularReaderLayout::mStream ;
-	using RegularReaderLayout::mBackup ;
 	using RegularReaderLayout::mTextReader ;
+	using RegularReaderLayout::mBackup ;
 	using RegularReaderLayout::mDeque ;
 	using RegularReaderLayout::mTop ;
 
@@ -912,25 +893,18 @@ public:
 	implicit RegularReader () = default ;
 
 	explicit RegularReader (RR<Ref<RefBuffer<Byte>>> stream ,CR<Length> ring_size) {
-		mStream = move (stream) ;
-		mBackup.mRead = 0 ;
-		mBackup.mWrite = mStream->size () ;
+		mTextReader = TextReader (move (stream)) ;
+		mBackup = mTextReader.shape () ;
 		mDeque = Deque<Stru32> (ring_size) ;
 		cache () ;
 	}
 
 	void cache () {
-		if ifdo (TRUE) {
-			if (mTextReader != NULL)
-				discard ;
-			mTextReader = Box<TextReader>::make (mStream.share ()) ;
-			mTextReader->reset (mBackup) ;
-		}
 		mDeque.clear () ;
 		while (TRUE) {
 			if (mDeque.full ())
 				break ;
-			mTextReader.ref >> mTop ;
+			mTextReader >> mTop ;
 			mDeque.add (mTop) ;
 		}
 	}
@@ -947,9 +921,9 @@ public:
 
 	template <class ARG1>
 	void read (XR<ARG1> item) {
-		mTextReader->reset (mBackup) ;
-		mTextReader.ref >> item ;
-		mBackup = mTextReader->shape () ;
+		mTextReader.reset (mBackup) ;
+		mTextReader >> item ;
+		mBackup = mTextReader.shape () ;
 		cache () ;
 	}
 
@@ -960,7 +934,7 @@ public:
 	}
 
 	void next () {
-		mTextReader.ref >> mTop ;
+		mTextReader >> mTop ;
 		if ifdo (TRUE) {
 			if (mTop == Stru32 (0X00))
 				discard ;

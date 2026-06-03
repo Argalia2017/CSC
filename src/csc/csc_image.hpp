@@ -328,11 +328,15 @@ struct Color4W {
 	Word mA ;
 } ;
 
-inline constexpr Color3B cvt_color3b_h32 (CR<uint32_t> c) {
+inline constexpr Color3B cvt_color3b_h32 (CR<csc_uint32_t> c) {
 	return Color3B ({
-		Byte (Char (c) >> 16) ,
+		Byte (Char (c)) ,
 		Byte (Char (c) >> 8) ,
-		Byte (Char (c))}) ;
+		Byte (Char (c) >> 16)}) ;
+}
+
+inline constexpr csc_uint32_t cvt_color3b_h32 (CR<Color3B> c) {
+	return csc_uint32_t (Char (c.mB) | (Char (c.mG) << 8) | (Char (c.mR) << 16)) ;
 }
 
 static constexpr auto COLOR_BLACK = cvt_color3b_h32 (0X00000000) ;
@@ -353,7 +357,6 @@ struct ColorProcHolder implement Interface {
 	imports CFat<ColorProcHolder> hold (CR<ColorProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual Color3B bgr (CR<Flt64> b ,CR<Flt64> g ,CR<Flt64> r) const = 0 ;
 	virtual Flt64 gray_from_bgr (CR<Color3B> a) const = 0 ;
 	virtual Color3B bgr_from_gray (CR<Flt64> a) const = 0 ;
 	virtual Color3B jet_from_norm (CR<Flt64> a) const = 0 ;
@@ -366,10 +369,6 @@ class ColorProc implement Super<Ref<ColorProcLayout>> {
 public:
 	static CR<ColorProc> expr_m () {
 		return keep[TYPE<ColorProc>::expr] (ColorProcHolder::expr) ;
-	}
-
-	static Color3B bgr (CR<Flt64> b ,CR<Flt64> g ,CR<Flt64> r) {
-		return ColorProcHolder::hold (expr)->bgr (b ,g ,r) ;
 	}
 
 	static Flt64 gray_from_bgr (CR<Color3B> a) {
@@ -650,111 +649,35 @@ public:
 	}
 } ;
 
-struct DisjointLayout {
-	Array<Index> mTable ;
+struct TensorProcLayout ;
+
+struct TensorProcHolder implement Interface {
+	imports CR<Super<Ref<TensorProcLayout>>> expr_m () ;
+	imports VFat<TensorProcHolder> hold (VR<TensorProcLayout> that) ;
+	imports CFat<TensorProcHolder> hold (CR<TensorProcLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual Tensor mean_blur (CR<Tensor> image ,CR<Length> kernel) const = 0 ;
+	virtual Tensor gaussian_blur (CR<Tensor> image ,CR<Length> kernel) const = 0 ;
+	virtual Tensor median_blur (CR<Tensor> image ,CR<Length> kernel) const = 0 ;
 } ;
 
-struct DisjointHolder implement Interface {
-	imports VFat<DisjointHolder> hold (VR<DisjointLayout> that) ;
-	imports CFat<DisjointHolder> hold (CR<DisjointLayout> that) ;
-
-	virtual void initialize (CR<Length> size_) = 0 ;
-	virtual Length size () const = 0 ;
-	virtual Index lead (CR<Index> from_) = 0 ;
-	virtual void joint (CR<Index> from_ ,CR<Index> to_) = 0 ;
-	virtual Bool edge (CR<Index> from_ ,CR<Index> to_) = 0 ;
-	virtual Length depth (CR<Index> from_) = 0 ;
-	virtual Deque<Index> cluster (CR<Index> from_) = 0 ;
-	virtual Array<Index> jump (CR<Index> from_) = 0 ;
-} ;
-
-class Disjoint implement DisjointLayout {
-protected:
-	using DisjointLayout::mTable ;
-
+class TensorProc implement Super<Ref<TensorProcLayout>> {
 public:
-	implicit Disjoint () = default ;
-
-	explicit Disjoint (CR<Length> size_) {
-		DisjointHolder::hold (thiz)->initialize (size_) ;
+	static CR<TensorProc> expr_m () {
+		return keep[TYPE<TensorProc>::expr] (TensorProcHolder::expr) ;
 	}
 
-	Length size () const {
-		return DisjointHolder::hold (thiz)->size () ;
+	static Tensor mean_blur (CR<Tensor> image ,CR<Length> kernel) {
+		return TensorProcHolder::hold (expr)->mean_blur (image ,kernel) ;
 	}
 
-	void joint (CR<Index> from_ ,CR<Index> to_) {
-		return DisjointHolder::hold (thiz)->joint (from_ ,to_) ;
+	static Tensor gaussian_blur (CR<Tensor> image ,CR<Length> kernel) {
+		return TensorProcHolder::hold (expr)->gaussian_blur (image ,kernel) ;
 	}
 
-	Bool edge (CR<Index> from_ ,CR<Index> to_) {
-		return DisjointHolder::hold (thiz)->edge (from_ ,to_) ;
-	}
-
-	Length depth (CR<Index> from_) {
-		return DisjointHolder::hold (thiz)->depth (from_) ;
-	}
-
-	Deque<Index> cluster (CR<Index> from_) {
-		return DisjointHolder::hold (thiz)->cluster (from_) ;
-	}
-
-	Array<Index> jump (CR<Index> from_) {
-		return DisjointHolder::hold (thiz)->jump (from_) ;
-	}
-} ;
-
-struct KMMatchLayout {
-	Length mSize ;
-	Flt32 mThreshold ;
-	Ref<Image<Flt32>> mLove ;
-	Array<Flt32> mUser ;
-	Array<Flt32> mWork ;
-	BitSet mUserVisit ;
-	BitSet mWorkVisit ;
-	Array<Index> mMatch ;
-	Array<Flt32> mLack ;
-} ;
-
-struct KMMatchHolder implement Interface {
-	imports VFat<KMMatchHolder> hold (VR<KMMatchLayout> that) ;
-	imports CFat<KMMatchHolder> hold (CR<KMMatchLayout> that) ;
-
-	virtual void initialize (CR<Length> size_) = 0 ;
-	virtual void set_threshold (CR<Flt64> threshold) = 0 ;
-	virtual Length size () const = 0 ;
-	virtual Array<Index> sort (CR<Image<Flt32>> love) = 0 ;
-} ;
-
-class KMMatch implement KMMatchLayout {
-protected:
-	using KMMatchLayout::mSize ;
-	using KMMatchLayout::mThreshold ;
-	using KMMatchLayout::mLove ;
-	using KMMatchLayout::mUser ;
-	using KMMatchLayout::mWork ;
-	using KMMatchLayout::mUserVisit ;
-	using KMMatchLayout::mWorkVisit ;
-	using KMMatchLayout::mMatch ;
-	using KMMatchLayout::mLack ;
-
-public:
-	implicit KMMatch () = default ;
-
-	explicit KMMatch (CR<Length> size_) {
-		KMMatchHolder::hold (thiz)->initialize (size_) ;
-	}
-
-	void set_threshold (CR<Flt64> threshold) {
-		return KMMatchHolder::hold (thiz)->set_threshold (threshold) ;
-	}
-
-	Length size () const {
-		return KMMatchHolder::hold (thiz)->size () ;
-	}
-
-	Array<Index> sort (CR<Image<Flt32>> love) {
-		return KMMatchHolder::hold (thiz)->sort (love) ;
+	static Tensor median_blur (CR<Tensor> image ,CR<Length> kernel) {
+		return TensorProcHolder::hold (expr)->median_blur (image ,kernel) ;
 	}
 } ;
 } ;

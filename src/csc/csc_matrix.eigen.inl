@@ -46,29 +46,30 @@ public:
 
 	TRSResult solve_trs (CR<Matrix> a) const override {
 		TRSResult ret ;
-		const auto r1x = a * Vector::axis_x () ;
-		const auto r2x = a * Vector::axis_y () ;
-		const auto r3x = a * Vector::axis_z () ;
-		const auto r4x = a * Vector::axis_w () ;
-		const auto r5x = Matrix (r1x.normalize () ,r2x.normalize () ,r3x.normalize () ,Vector::axis_w ()) ;
-		const auto r6x = MathProc::sign (r5x.determinant ()) ;
-		const auto r7x = DiagMatrix (r6x ,r6x ,r6x ,1) ;
-		ret.mT = TranslationMatrix (r4x) ;
-		ret.mR = Quaternion (r5x * r7x).matrix () ;
-		ret.mS = r7x * DiagMatrix (r1x.magnitude () ,r2x.magnitude () ,r3x.magnitude ()) ;
+		const auto r1x = MathProc::sign (a.determinant ()) ;
+		const auto r2x = a * DiagMatrix (r1x ,r1x ,r1x) ;
+		const auto r3x = r2x * Vector::axis_x () ;
+		const auto r4x = r2x * Vector::axis_y () ;
+		const auto r5x = r2x * Vector::axis_w () ;
+		const auto r6x = ViewMatrixXYZ (r3x ,r4x) ;
+		ret.mT = TranslationMatrix (r5x) ;
+		ret.mR = r6x ;
+		const auto r7x = ret.mR.transpose () * r2x ;
+		const auto r8x = DiagMatrix (r7x[0][0] ,r7x[1][1] ,r7x[2][2]) ;
+		ret.mS = r8x.sabs ();
 		return move (ret) ;
 	}
 
 	KRTResult solve_krt (CR<Matrix> a) const override {
 		KRTResult ret ;
-		ret.mK = a.homogenize () ;
+		ret.mK = a.homogenize () + Matrix::axis_w () ;
 		ret.mR = Matrix::iden () ;
 		ret.mT = a * Vector::axis_w () ;
 		auto rax = TRUE ;
 		while (TRUE) {
 			rax = FALSE ;
 			if ifdo (TRUE) {
-				if (MathProc::inverse (ret.mK[1][0]) == 0)
+				if (MathProc::abs (ret.mK[1][0]) < FLT64_EPS)
 					discard ;
 				const auto r1x = ret.mK[1][0] ;
 				const auto r2x = ret.mK[1][1] ;
@@ -86,7 +87,7 @@ public:
 				rax = TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (MathProc::inverse (ret.mK[2][0]) == 0)
+				if (MathProc::abs (ret.mK[2][0]) < FLT64_EPS)
 					discard ;
 				const auto r5x = ret.mK[2][0] ;
 				const auto r6x = ret.mK[2][2] ;
@@ -104,7 +105,7 @@ public:
 				rax = TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (MathProc::inverse (ret.mK[2][1]) == 0)
+				if (MathProc::abs (ret.mK[2][1]) < FLT64_EPS)
 					discard ;
 				const auto r9x = ret.mK[2][1] ;
 				const auto r10x = ret.mK[2][2] ;
@@ -124,6 +125,7 @@ public:
 			if (!rax)
 				break ;
 		}
+		ret.mT = ret.mR.transpose () * ret.mT ;
 		return move (ret) ;
 	}
 
@@ -153,6 +155,15 @@ public:
 			assume (!MathProc::is_inf (ret[i])) ;
 		}
 		return move (ret) ;
+	}
+
+	Vector intersection (CR<Vector> p1 ,CR<Vector> v1 ,CR<Vector> p2 ,CR<Vector> v2) const override {
+		const auto r1x = v1.normalize () ;
+		const auto r2x = v2.normalize () ;
+		const auto r3x = Matrix (r1x ,r2x ,r1x ^ r2x ,p1) ;
+		const auto r4x = r3x.inverse () * p2 ;
+		const auto r5x = Vector (r4x[0] ,0 ,0 ,1) ;
+		return r3x * r5x ;
 	}
 } ;
 
