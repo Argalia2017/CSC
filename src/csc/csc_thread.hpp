@@ -114,8 +114,7 @@ public:
 
 struct CalcSolution {
 	Index mIteration ;
-	Flt64 mAvgError ;
-	Flt64 mStdError ;
+	NormalError mError ;
 	BitSet mInput ;
 } ;
 
@@ -132,7 +131,7 @@ struct CalcThreadHolder implement Interface {
 	virtual void start (CR<Function<CR<CalcSolution> ,VR<CalcSolution>>> func) = 0 ;
 	virtual void friend_execute (CR<Index> slot) = 0 ;
 	virtual Bool ready () const = 0 ;
-	virtual CalcSolution poll () = 0 ;
+	virtual CalcSolution pull () = 0 ;
 	virtual void suspend () = 0 ;
 	virtual void resume () = 0 ;
 	virtual void stop () = 0 ;
@@ -163,8 +162,8 @@ public:
 		return CalcThreadHolder::hold (thiz)->ready () ;
 	}
 
-	CalcSolution poll () const {
-		return CalcThreadHolder::hold (thiz)->poll () ;
+	CalcSolution pull () const {
+		return CalcThreadHolder::hold (thiz)->pull () ;
 	}
 
 	void suspend () const {
@@ -198,7 +197,7 @@ struct PromiseHolder implement Interface {
 	virtual void rethrow (CR<Exception> e) = 0 ;
 	virtual Bool ready () const = 0 ;
 	virtual Bool running () const = 0 ;
-	virtual AutoRef<Pointer> poll () = 0 ;
+	virtual AutoRef<Pointer> pull () = 0 ;
 	virtual void future () = 0 ;
 	virtual void stop () = 0 ;
 } ;
@@ -246,8 +245,8 @@ public:
 		return PromiseHolder::hold (thiz)->running () ;
 	}
 
-	Optional<A> poll () const {
-		auto rax = PromiseHolder::hold (thiz)->poll () ;
+	Optional<A> pull () const {
+		auto rax = PromiseHolder::hold (thiz)->pull () ;
 		if (!rax.exist ())
 			return Optional<A>::error (1) ;
 		return move (rax.rebind (TYPE<A>::expr).ref) ;
@@ -277,7 +276,7 @@ struct SyntaxHolder implement Interface {
 	virtual void once (CR<Function<>> func) = 0 ;
 	virtual void then (CR<Function<>> func) = 0 ;
 	virtual void monad (CR<Clazz> name) = 0 ;
-	virtual void until (RR<Ref<Bool>> flag) = 0 ;
+	virtual Scope until () = 0 ;
 	virtual void execute () = 0 ;
 } ;
 
@@ -300,24 +299,24 @@ public:
 		return SyntaxHolder::hold (thiz)->maybe (Clazz (TYPE<ARG1>::expr)) ;
 	}
 
-	void once (CR<Function<>> func) {
+	void once (CR<Function<>> func) const {
 		return SyntaxHolder::hold (thiz)->once (func) ;
 	}
 
-	void then (CR<Function<>> func) {
+	void then (CR<Function<>> func) const {
 		return SyntaxHolder::hold (thiz)->then (func) ;
 	}
 
 	template <class ARG1>
-	void monad (TYPE<ARG1>) {
+	void monad (TYPE<ARG1>) const {
 		return SyntaxHolder::hold (thiz)->monad (Clazz (TYPE<ARG1>::expr)) ;
 	}
 
-	void until (RR<Ref<Bool>> flag) {
-		return SyntaxHolder::hold (thiz)->until (move (flag)) ;
+	Scope until () const {
+		return SyntaxHolder::hold (thiz)->until () ;
 	}
 
-	void execute () {
+	void execute () const {
 		return SyntaxHolder::hold (thiz)->execute () ;
 	}
 } ;

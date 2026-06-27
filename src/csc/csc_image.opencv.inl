@@ -27,39 +27,50 @@ public:
 
 	ImageLayout make_image (RR<BoxLayout> image) const override {
 		ImageLayout ret ;
-		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (image).ref ;
-		const auto r1x = rax.size () ;
-		const auto r2x = Length (rax.depth ()) ;
-		const auto r3x = align_of_cvmat_depth (r2x) ;
-		const auto r4x = choose_unknown (r3x) ;
-		const auto r5x = r3x * rax.channels () ;
-		const auto r6x = Length (rax.step[0]) ;
+		auto &&rax = keep[TYPE<Box<UniqueRef<cv::Mat>>>::expr] (image).ref ;
+		const auto r1x = Length (rax->cols) ;
+		const auto r2x = Length (rax->rows) ;
+		const auto r3x = align_of_cvmat_depth (rax->depth ()) ;
+		const auto r4x = Length (rax->channels ()) ;
+		const auto r5x = r3x * r4x ;
+		const auto r6x = Length (rax->step[0]) ;
 		assume (r6x % r5x == 0) ;
 		const auto r7x = r6x / r5x ;
-		const auto r8x = Flag (rax.data) ;
-		const auto r9x = r7x * Length (r1x.height) ;
+		const auto r8x = Flag (rax->data) ;
+		const auto r9x = r7x * r2x ;
 		const auto r10x = Slice (r8x ,r9x ,r5x) ;
-		RefBufferHolder::hold (ret.mImage)->initialize (r4x ,r10x ,Box<cv::Mat>::zeroize ()) ;
-		auto &&rbx = keep[TYPE<Box<cv::Mat>>::expr] (RefBufferHolder::hold (ret.mImage)->raw ()).ref ;
+		const auto r11x = choose_unknown (r3x) ;
+		RefBufferHolder::hold (ret.mImage)->initialize (r11x ,r10x ,Box<UniqueRef<cv::Mat>>::make ()) ;
+		auto &&rbx = keep[TYPE<Box<UniqueRef<cv::Mat>>>::expr] (RefBufferHolder::hold (ret.mImage)->raw ()).ref ;
 		assign (rbx ,rax) ;
-		ret.mWidth = Length (r1x.width) ;
+		ret.mWidth = r1x * 1024 + r3x ;
 		ret.mStride = r7x ;
 		ImageHolder::hold (ret)->reset () ;
 		return move (ret) ;
 	}
 
 	ImageLayout make_image (CR<ImageShape> shape) const override {
-		auto rax = Box<cv::Mat>::zeroize () ;
+		auto rax = Box<UniqueRef<cv::Mat>>::make () ;
 		const auto r1x = CV_MAKE_TYPE (CV_8U ,Val32 (shape.mStep)) ;
-		rax.ref = cv::Mat (cv::Size (Val32 (shape.mCX) ,Val32 (shape.mCY)) ,r1x) ;
+		rax.ref = UniqueRef<cv::Mat> ([&] (VR<cv::Mat> me) {
+			me = cv::Mat (cv::Size (Val32 (shape.mCX) ,Val32 (shape.mCY)) ,r1x) ;
+			assume (!me.empty ()) ;
+		} ,[&] (VR<cv::Mat> me) {
+			noop () ;
+		}) ;
 		return make_image (move (rax)) ;
 	}
 
 	ImageLayout make_image (CR<ImageShape> shape ,CR<Clazz> clazz ,CR<Length> channel) const override {
-		auto rax = Box<cv::Mat>::zeroize () ;
+		auto rax = Box<UniqueRef<cv::Mat>>::make () ;
 		const auto r1x = cvmat_depth_of_clazz (clazz) ;
 		const auto r2x = CV_MAKE_TYPE (Val32 (r1x) ,Val32 (channel)) ;
-		rax.ref = cv::Mat (cv::Size (Val32 (shape.mCX) ,Val32 (shape.mCY)) ,r2x) ;
+		rax.ref = UniqueRef<cv::Mat> ([&] (VR<cv::Mat> me) {
+			me = cv::Mat (cv::Size (Val32 (shape.mCX) ,Val32 (shape.mCY)) ,r2x) ;
+			assume (!me.empty ()) ;
+		} ,[&] (VR<cv::Mat> me) {
+			noop () ;
+		}) ;
 		return make_image (move (rax)) ;
 	}
 
@@ -73,7 +84,20 @@ public:
 		if (clazz == Clazz (TYPE<Flt64>::expr))
 			return CV_64F ;
 		assume (FALSE) ;
-		return CV_8U ;
+		return ZERO ;
+	}
+
+	Clazz clazz_of_cvmat_depth (CR<Length> depth) const {
+		if (depth == CV_8U)
+			return Clazz (TYPE<Byte>::expr) ;
+		if (depth == CV_16U)
+			return Clazz (TYPE<Word>::expr) ;
+		if (depth == CV_32F)
+			return Clazz (TYPE<Flt32>::expr) ;
+		if (depth == CV_64F)
+			return Clazz (TYPE<Flt64>::expr) ;
+		assume (FALSE) ;
+		return Clazz () ;
 	}
 
 	Length align_of_cvmat_depth (CR<Length> depth) const {
@@ -93,6 +117,7 @@ public:
 			return 8 ;
 		if (depth == CV_16F)
 			return 2 ;
+		assume (FALSE) ;
 		return 0 ;
 	}
 
@@ -111,22 +136,60 @@ public:
 
 	VR<Pointer> peek_image (VR<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
-		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
+		auto &&rax = keep[TYPE<Box<UniqueRef<cv::Mat>>>::expr] (ImageHolder::hold (image)->raw ()) ;
 		return Pointer::from (rax.ref) ;
 	}
 
 	CR<Pointer> peek_image (CR<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
-		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
+		auto &&rax = keep[TYPE<Box<UniqueRef<cv::Mat>>>::expr] (ImageHolder::hold (image)->raw ()) ;
 		return Pointer::from (rax.ref) ;
 	}
 
 	ImageLayout load_image (CR<String<Str>> file) const override {
-		auto rax = Box<cv::Mat>::zeroize () ;
+		auto rax = Box<UniqueRef<cv::Mat>>::make () ;
 		const auto r1x = StringProc::stra_from (file) ;
-		rax.ref = cv::imread (r1x.ref ,cv::IMREAD_UNCHANGED) ;
-		assume (!rax->empty ()) ;
+		rax.ref = UniqueRef<cv::Mat> ([&] (VR<cv::Mat> me) {
+			me = cv::imread (r1x.ref ,cv::IMREAD_UNCHANGED) ;
+			assume (!me.empty ()) ;
+		} ,[&] (VR<cv::Mat> me) {
+			noop () ;
+		}) ;
 		return make_image (move (rax)) ;
+	}
+
+	ImageLayout convert_image (CR<ImageLayout> image ,CR<Length> channel) const override {
+		assert (channel >= 1) ;
+		assert (channel <= 4) ;
+		auto &&rax = keep[TYPE<Box<UniqueRef<cv::Mat>>>::expr] (ImageHolder::hold (image)->raw ()).ref ;
+		const auto r1x = ImageHolder::hold (image)->shape () ;
+		const auto r2x = ImageHolder::hold (image)->step () ;
+		const auto r3x = Length (rax->depth ()) ;
+		const auto r4x = clazz_of_cvmat_depth (r3x) ;
+		const auto r5x = align_of_cvmat_depth (r3x) ;
+		ImageLayout ret = make_image (r1x ,r4x ,channel) ;
+		const auto r6x = r2x / r5x ;
+		const auto r7x = MathProc::min_of (channel ,r6x) * r5x ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (r6x == channel)
+				discard ;
+			if ifdo (TRUE) {
+				if (channel <= r6x)
+					discard ;
+				const auto r8x = ret.mImage.size () * r2x ;
+				inline_memset (ret.mImage[0] ,r8x) ;
+			}
+			for (auto &&i : r1x.iter ()) {
+				const auto r9x = address (ImageHolder::hold (ret)->at (i.mX ,i.mY)) ;
+				const auto r10x = address (ImageHolder::hold (image)->at (i.mX ,i.mY)) ;
+				inline_memcpy (Pointer::make (r9x) ,Pointer::make (r10x) ,r7x) ;
+			}
+		}
+		if ifdo (act) {
+			ImageHolder::hold (ret)->splice (0 ,0 ,image) ;
+		}
+		return move (ret) ;
 	}
 
 	void save_image (CR<String<Str>> file ,CR<ImageLayout> image) const override {
@@ -135,10 +198,14 @@ public:
 		const auto r3x = ImageHolder::hold (image)->by () ;
 		const auto r4x = ImageHolder::hold (image)->cx () ;
 		const auto r5x = ImageHolder::hold (image)->cy () ;
-		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (image.mImage.raw ()).ref ;
+		auto &&rax = keep[TYPE<Box<UniqueRef<cv::Mat>>>::expr] (image.mImage.raw ()).ref ;
 		const auto r6x = cv::Rect (Val32 (r2x) ,Val32 (r3x) ,Val32 (r4x) ,Val32 (r5x)) ;
-		auto rbx = rax (r6x) ;
-		cv::imwrite (r1x.ref ,rbx) ;
+		auto rbx = UniqueRef<cv::Mat> ([&] (VR<cv::Mat> me) {
+			me = rax.ref (r6x) ;
+		} ,[&] (VR<cv::Mat> me) {
+			noop () ;
+		}) ;
+		cv::imwrite (r1x.ref ,rbx.ref) ;
 	}
 
 	Color1B sampler (CR<Image<Color1B>> image ,CR<Flt64> x ,CR<Flt64> y) const override {
@@ -171,80 +238,17 @@ public:
 		const auto r10x = r7x * (1 - r8x) ;
 		const auto r11x = (1 - r7x) * (1 - r8x) ;
 		const auto r12x = (1 - r7x) * r8x ;
-		const auto r13x = cvt_color_t (image.at (r5x ,r6x)) ;
-		const auto r14x = cvt_color_t (image.at (r5x ,r4x)) ;
-		const auto r15x = cvt_color_t (image.at (r3x ,r4x)) ;
-		const auto r16x = cvt_color_t (image.at (r3x ,r6x)) ;
-		auto rax = Buffer<Flt32 ,SIZE_OF<ARG1>> () ;
-		for (auto &&i : range (0 ,rax.size ())) {
-			rax[i] = 0 ;
-			rax[i] += r13x[i] * r9x ;
-			rax[i] += r14x[i] * r10x ;
-			rax[i] += r15x[i] * r11x ;
-			rax[i] += r16x[i] * r12x ;
-			rax[i] = MathProc::clamp (rax[i] ,Flt32 (0) ,Flt32 (255)) ;
-		}
-		return cvt_color_t (rax) ;
-	}
-
-	Buffer1<Flt32> cvt_color_t (CR<Color1B> a) const {
-		Buffer1<Flt32> ret ;
-		ret[0] = Flt32 (a.mB) ;
-		return move (ret) ;
-	}
-
-	Buffer2<Flt32> cvt_color_t (CR<Color2B> a) const {
-		Buffer2<Flt32> ret ;
-		ret[0] = Flt32 (a.mB) ;
-		ret[1] = Flt32 (a.mG) ;
-		return move (ret) ;
-	}
-
-	Buffer3<Flt32> cvt_color_t (CR<Color3B> a) const {
-		Buffer3<Flt32> ret ;
-		ret[0] = Flt32 (a.mB) ;
-		ret[1] = Flt32 (a.mG) ;
-		ret[2] = Flt32 (a.mR) ;
-		return move (ret) ;
-	}
-
-	Buffer4<Flt32> cvt_color_t (CR<Color4B> a) const {
-		Buffer4<Flt32> ret ;
-		ret[0] = Flt32 (a.mB) ;
-		ret[1] = Flt32 (a.mG) ;
-		ret[2] = Flt32 (a.mR) ;
-		ret[3] = Flt32 (a.mA) ;
-		return move (ret) ;
-	}
-
-	Color1B cvt_color_t (CR<Buffer1<Flt32>> a) const {
-		Color1B ret ;
-		ret.mB = Byte (Val32 (a[0])) ;
-		return move (ret) ;
-	}
-
-	Color2B cvt_color_t (CR<Buffer2<Flt32>> a) const {
-		Color2B ret ;
-		ret.mB = Byte (Val32 (a[0])) ;
-		ret.mG = Byte (Val32 (a[1])) ;
-		return move (ret) ;
-	}
-
-	Color3B cvt_color_t (CR<Buffer3<Flt32>> a) const {
-		Color3B ret ;
-		ret.mB = Byte (Val32 (a[0])) ;
-		ret.mG = Byte (Val32 (a[1])) ;
-		ret.mR = Byte (Val32 (a[2])) ;
-		return move (ret) ;
-	}
-
-	Color4B cvt_color_t (CR<Buffer4<Flt32>> a) const {
-		Color4B ret ;
-		ret.mB = Byte (Val32 (a[0])) ;
-		ret.mG = Byte (Val32 (a[1])) ;
-		ret.mR = Byte (Val32 (a[2])) ;
-		ret.mA = Byte (Val32 (a[3])) ;
-		return move (ret) ;
+		const auto r13x = Color (image.at (r5x ,r6x)) ;
+		const auto r14x = Color (image.at (r5x ,r4x)) ;
+		const auto r15x = Color (image.at (r3x ,r4x)) ;
+		const auto r16x = Color (image.at (r3x ,r6x)) ;
+		auto rax = Color::all (0) ;
+		rax += r13x * r9x ;
+		rax += r14x * r10x ;
+		rax += r15x * r11x ;
+		rax += r16x * r12x ;
+		rax = rax.sclamp () ;
+		return rax.bgr () ;
 	}
 
 	Flt32 sampler (CR<Image<Flt32>> image ,CR<Flt64> x ,CR<Flt64> y) const override {
@@ -283,28 +287,4 @@ public:
 } ;
 
 static const auto mImageProcExternal = External<ImageProcHolder ,ImageProcLayout> (ImageProcImplHolder ()) ;
-
-class TensorProcImplHolder final implement Fat<TensorProcHolder ,TensorProcLayout> {
-public:
-	void initialize () override {
-		noop () ;
-	}
-
-	Tensor mean_blur (CR<Tensor> image ,CR<Length> kernel) const override {
-		unimplemented () ;
-		return Tensor () ;
-	}
-
-	Tensor gaussian_blur (CR<Tensor> image ,CR<Length> kernel) const override {
-		unimplemented () ;
-		return Tensor () ;
-	}
-
-	Tensor median_blur (CR<Tensor> image ,CR<Length> kernel) const override {
-		unimplemented () ;
-		return Tensor () ;
-	}
-} ;
-
-static const auto mTensorProcExternal = External<TensorProcHolder ,TensorProcLayout> (TensorProcImplHolder ()) ;
 } ;

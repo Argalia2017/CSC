@@ -19,10 +19,9 @@
 
 namespace CSC {
 struct KDTreeDataset {
-public:
 	RefBuffer<Flt32> mPointCloud ;
-	csc_size_t mDimension ;
 	csc_size_t mSize ;
+	csc_size_t mChannel ;
 
 public:
 	csc_size_t kdtree_get_point_count () const {
@@ -32,16 +31,16 @@ public:
 	Flt32 kdtree_distance (PTR<CR<Flt32>> pt ,csc_size_t idx ,csc_size_t size_) const {
 		auto rax = Flt64 (0) ;
 		for (auto &&i : range (0 ,Length (size_))) {
-			const auto r1x = pt[i] - mPointCloud[idx * mDimension + i] ;
+			const auto r1x = pt[i] - mPointCloud[idx * mChannel + i] ;
 			rax += MathProc::square (r1x) ;
 		}
 		return Flt32 (rax) ;
 	}
 
 	Flt32 kdtree_get_pt (csc_size_t idx ,csc_size_t dim) const {
-		if (dim >= mDimension)
+		if (dim >= mChannel)
 			return 0 ;
-		Index ix = Index (idx * mDimension + dim) ;
+		Index ix = Index (idx * mChannel + dim) ;
 		return mPointCloud[ix] ;
 	}
 
@@ -104,6 +103,13 @@ public:
 		ret.second = -mResult[0].m1st ;
 		return move (ret) ;
 	}
+
+	using DistanceType = Flt32 ;
+	using IndexType = Val32 ;
+
+	void sort () {
+		noop () ;
+	}
 } ;
 
 using KDTreeDistance = nanoflann::L2_Simple_Adaptor<Flt32 ,KDTreeDataset ,Flt32 ,Index> ;
@@ -118,17 +124,18 @@ public:
 
 class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> {
 public:
-	void initialize (CR<Array<Pointer>> pointcloud) override {
-		const auto r1x = address (pointcloud[0]) ;
-		const auto r2x = pointcloud.step () / SIZE_OF<Flt32>::expr ;
-		assume (inline_between (r2x ,1 ,4)) ;
-		const auto r3x = pointcloud.size () * r2x ;
+	void initialize (RR<RefBuffer<Flt32>> view ,CR<Length> channel) override {
+		assert (channel > 0) ;
+		const auto r1x = view.size () ;
+		const auto r2x = r1x % channel ;
+		assert (r1x > 0) ;
+		assert (r2x == 0) ;
 		self.mDataset = Ref<KDTreeDataset>::make () ;
-		self.mDataset->mPointCloud = RefBuffer<Flt32>::reference (r1x ,r3x) ;
-		self.mDataset->mDimension = r2x ;
-		self.mDataset->mSize = pointcloud.length () ;
+		self.mDataset->mPointCloud = move (view) ;
+		self.mDataset->mSize = r1x / channel ;
+		self.mDataset->mChannel = channel ;
 		const auto r4x = nanoflann::KDTreeSingleIndexAdaptorParams () ;
-		self.mKNNSearch = Ref<KDTreeKNNSearch>::make (Val32 (r2x) ,self.mDataset.ref ,r4x) ;
+		self.mKNNSearch = Ref<KDTreeKNNSearch>::make (Val32 (channel) ,self.mDataset.ref ,r4x) ;
 		self.mKNNSearch->buildIndex () ;
 	}
 

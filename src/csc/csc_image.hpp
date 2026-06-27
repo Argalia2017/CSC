@@ -50,6 +50,7 @@ struct ImageShapeHolder implement Interface {
 	imports VFat<ImageShapeHolder> hold (VR<ImageShapeLayout> that) ;
 	imports CFat<ImageShapeHolder> hold (CR<ImageShapeLayout> that) ;
 
+	virtual void initialize (CR<Length> cx_ ,CR<Length> cy_ ,CR<Length> step_) = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Length step () const = 0 ;
 	virtual Bool equal (CR<ImageShapeLayout> that) const = 0 ;
@@ -58,6 +59,14 @@ struct ImageShapeHolder implement Interface {
 class ImageShape implement ImageShapeLayout {
 public:
 	implicit ImageShape () = default ;
+
+	explicit ImageShape (CR<Length> cx_ ,CR<Length> cy_) {
+		ImageShapeHolder::hold (thiz)->initialize (cx_ ,cy_ ,0) ;
+	}
+
+	explicit ImageShape (CR<Length> cx_ ,CR<Length> cy_ ,CR<Length> step_) {
+		ImageShapeHolder::hold (thiz)->initialize (cx_ ,cy_ ,step_) ;
+	}
 
 	Length size () const {
 		return ImageShapeHolder::hold (thiz)->size () ;
@@ -288,8 +297,8 @@ struct Color1B {
 	Byte mB ;
 } ;
 
-struct Color1W {
-	Word mB ;
+struct Color1F {
+	Flt32 mB ;
 } ;
 
 struct Color2B {
@@ -297,9 +306,9 @@ struct Color2B {
 	Byte mG ;
 } ;
 
-struct Color2W {
-	Word mB ;
-	Word mG ;
+struct Color2F {
+	Flt32 mB ;
+	Flt32 mG ;
 } ;
 
 struct Color3B {
@@ -308,10 +317,10 @@ struct Color3B {
 	Byte mR ;
 } ;
 
-struct Color3W {
-	Word mB ;
-	Word mG ;
-	Word mR ;
+struct Color3F {
+	Flt32 mB ;
+	Flt32 mG ;
+	Flt32 mR ;
 } ;
 
 struct Color4B {
@@ -321,11 +330,11 @@ struct Color4B {
 	Byte mA ;
 } ;
 
-struct Color4W {
-	Word mB ;
-	Word mG ;
-	Word mR ;
-	Word mA ;
+struct Color4F {
+	Flt32 mB ;
+	Flt32 mG ;
+	Flt32 mR ;
+	Flt32 mA ;
 } ;
 
 inline constexpr Color3B cvt_color3b_h32 (CR<csc_uint32_t> c) {
@@ -333,10 +342,6 @@ inline constexpr Color3B cvt_color3b_h32 (CR<csc_uint32_t> c) {
 		Byte (Char (c)) ,
 		Byte (Char (c) >> 8) ,
 		Byte (Char (c) >> 16)}) ;
-}
-
-inline constexpr csc_uint32_t cvt_color3b_h32 (CR<Color3B> c) {
-	return csc_uint32_t (Char (c.mB) | (Char (c.mG) << 8) | (Char (c.mR) << 16)) ;
 }
 
 static constexpr auto COLOR_BLACK = cvt_color3b_h32 (0X00000000) ;
@@ -349,6 +354,210 @@ static constexpr auto COLOR_YELLOW = cvt_color3b_h32 (0XFFFFFF00) ;
 static constexpr auto COLOR_PURPLE = cvt_color3b_h32 (0XFFFF00FF) ;
 static constexpr auto COLOR_CYAN = cvt_color3b_h32 (0XFF00FFFF) ;
 
+template <class A>
+class BGRProxy implement Proxy {
+protected:
+	XR<A> mThat ;
+
+public:
+	implicit BGRProxy () = delete ;
+
+	explicit BGRProxy (XR<A> that) :mThat (that) {}
+
+	forceinline operator Color1B () rightvalue {
+		Color1B ret ;
+		ret.mB = Byte (mThat[0]) ;
+		return move (ret) ;
+	}
+
+	forceinline operator Color2B () rightvalue {
+		Color2B ret ;
+		ret.mB = Byte (mThat[0]) ;
+		ret.mG = Byte (mThat[1]) ;
+		return move (ret) ;
+	}
+
+	forceinline operator Color3B () rightvalue {
+		Color3B ret ;
+		ret.mB = Byte (mThat[0]) ;
+		ret.mG = Byte (mThat[1]) ;
+		ret.mR = Byte (mThat[2]) ;
+		return move (ret) ;
+	}
+
+	forceinline operator Color4B () rightvalue {
+		Color4B ret ;
+		ret.mB = Byte (mThat[0]) ;
+		ret.mG = Byte (mThat[1]) ;
+		ret.mR = Byte (mThat[2]) ;
+		ret.mA = Byte (mThat[3]) ;
+		return move (ret) ;
+	}
+} ;
+
+struct ColorLayout {
+	Buffer4<Val32> mColor ;
+	Val32 mWhite ;
+} ;
+
+struct ColorHolder implement Interface {
+	imports VFat<ColorHolder> hold (VR<ColorLayout> that) ;
+	imports CFat<ColorHolder> hold (CR<ColorLayout> that) ;
+
+	virtual void initialize (CR<Val32> item) = 0 ;
+	virtual void initialize (CR<Flag> buffer ,CR<Length> size_ ,CR<Length> step_) = 0 ;
+	virtual void get (CR<Index> index ,VR<Val32> item) const = 0 ;
+	virtual ColorLayout sadd (CR<ColorLayout> that) const = 0 ;
+	virtual ColorLayout ssub (CR<ColorLayout> that) const = 0 ;
+	virtual ColorLayout smul (CR<Flt64> that) const = 0 ;
+	virtual ColorLayout sdiv (CR<Flt64> that) const = 0 ;
+	virtual ColorLayout smul (CR<ColorLayout> that) const = 0 ;
+	virtual ColorLayout sabs () const = 0 ;
+	virtual ColorLayout minus () const = 0 ;
+	virtual ColorLayout smax (CR<ColorLayout> that) const = 0 ;
+	virtual ColorLayout smin (CR<ColorLayout> that) const = 0 ;
+	virtual ColorLayout sclamp () const = 0 ;
+	virtual ColorLayout swrap () const = 0 ;
+	virtual ColorLayout slerp (CR<ColorLayout> into ,CR<Flt64> t) const = 0 ;
+} ;
+
+class Color implement ColorLayout {
+public:
+	implicit Color () = default ;
+
+	template <class ARG1 ,class = REQUIRE<IS_CLASS<ARG1>>>
+	implicit Color (CR<ARG1> that) {
+		require (IS_TRIVIAL<ARG1>) ;
+		const auto r1x = SIZE_OF<ARG1>::expr ;
+		const auto r2x = ALIGN_OF<ARG1>::expr ;
+		ColorHolder::hold (thiz)->initialize (address (that) ,r1x ,r2x) ;
+	}
+
+	static Color all (CR<Val32> that) {
+		Color ret ;
+		ColorHolder::hold (ret)->initialize (that) ;
+		return move (ret) ;
+	}
+
+	BGRProxy<CR<Color>> bgr () const leftvalue {
+		return BGRProxy<CR<Color>> (thiz) ;
+	}
+
+	void get (CR<Index> index ,VR<Val32> item) const {
+		return ColorHolder::hold (thiz)->get (index ,item) ;
+	}
+
+	forceinline Val32 operator[] (CR<Index> index) const {
+		Val32 ret ;
+		get (index ,ret) ;
+		return move (ret) ;
+	}
+
+	Color sadd (CR<ColorLayout> that) const {
+		ColorLayout ret = ColorHolder::hold (thiz)->sadd (that) ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	forceinline Color operator+ (CR<Color> that) const {
+		return sadd (that) ;
+	}
+
+	forceinline void operator+= (CR<Color> that) {
+		thiz = sadd (that) ;
+	}
+
+	Color ssub (CR<ColorLayout> that) const {
+		ColorLayout ret = ColorHolder::hold (thiz)->ssub (that) ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	forceinline Color operator- (CR<Color> that) const {
+		return ssub (that) ;
+	}
+
+	forceinline void operator-= (CR<Color> that) {
+		thiz = ssub (that) ;
+	}
+
+	Color smul (CR<Flt64> that) const {
+		ColorLayout ret = ColorHolder::hold (thiz)->smul (that) ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	forceinline Color operator* (CR<Flt64> that) const {
+		return smul (that) ;
+	}
+
+	forceinline void operator*= (CR<Flt64> that) {
+		thiz = smul (that) ;
+	}
+
+	Color sdiv (CR<Flt64> that) const {
+		ColorLayout ret = ColorHolder::hold (thiz)->sdiv (that) ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	forceinline Color operator/ (CR<Flt64> that) const {
+		return sdiv (that) ;
+	}
+
+	forceinline void operator/= (CR<Flt64> that) {
+		thiz = sdiv (that) ;
+	}
+
+	Color smul (CR<Color> that) const {
+		ColorLayout ret = ColorHolder::hold (thiz)->smul (that) ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	Color operator* (CR<Color> that) const {
+		return smul (that) ;
+	}
+
+	forceinline void operator*= (CR<Color> that) {
+		thiz = smul (that) ;
+	}
+
+	Color sabs () const {
+		ColorLayout ret = ColorHolder::hold (thiz)->sabs () ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	Color minus () const {
+		ColorLayout ret = ColorHolder::hold (thiz)->minus () ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	forceinline Color operator- () const {
+		return minus () ;
+	}
+
+	Color smax (CR<Color> that) const {
+		ColorLayout ret = ColorHolder::hold (thiz)->smax (that) ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	Color smin (CR<Color> that) const {
+		ColorLayout ret = ColorHolder::hold (thiz)->smin (that) ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	Color sclamp () const {
+		ColorLayout ret = ColorHolder::hold (thiz)->sclamp () ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	Color swrap () const {
+		ColorLayout ret = ColorHolder::hold (thiz)->swrap () ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	Color slerp (CR<Color> into ,CR<Flt64> t) const {
+		ColorLayout ret = ColorHolder::hold (thiz)->slerp (into ,t) ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+} ;
+
 struct ColorProcLayout ;
 
 struct ColorProcHolder implement Interface {
@@ -357,12 +566,14 @@ struct ColorProcHolder implement Interface {
 	imports CFat<ColorProcHolder> hold (CR<ColorProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual Flt64 gray_from_bgr (CR<Color3B> a) const = 0 ;
-	virtual Color3B bgr_from_gray (CR<Flt64> a) const = 0 ;
+	virtual Flt64 byte_norm (CR<Byte> a) const = 0 ;
+	virtual Byte byte_norm (CR<Flt64> a) const = 0 ;
+	virtual Byte gray_from_bgr (CR<Color3B> a) const = 0 ;
+	virtual Color3B bgr_from_gray (CR<Byte> a) const = 0 ;
 	virtual Color3B jet_from_norm (CR<Flt64> a) const = 0 ;
 	virtual Flt64 norm_from_jet (CR<Color3B> a) const = 0 ;
-	virtual Color3W hsv_from_bgr (CR<Color3B> a) const = 0 ;
-	virtual Color3B bgr_from_hsv (CR<Color3W> a) const = 0 ;
+	virtual Color3F hsv_from_bgr (CR<Color3B> a) const = 0 ;
+	virtual Color3B bgr_from_hsv (CR<Color3F> a) const = 0 ;
 } ;
 
 class ColorProc implement Super<Ref<ColorProcLayout>> {
@@ -371,11 +582,19 @@ public:
 		return keep[TYPE<ColorProc>::expr] (ColorProcHolder::expr) ;
 	}
 
-	static Flt64 gray_from_bgr (CR<Color3B> a) {
+	static Flt64 byte_norm (CR<Byte> a) {
+		return ColorProcHolder::hold (expr)->byte_norm (a) ;
+	}
+
+	static Byte byte_norm (CR<Flt64> a) {
+		return ColorProcHolder::hold (expr)->byte_norm (a) ;
+	}
+
+	static Byte gray_from_bgr (CR<Color3B> a) {
 		return ColorProcHolder::hold (expr)->gray_from_bgr (a) ;
 	}
 
-	static Color3B bgr_from_gray (CR<Flt64> a) {
+	static Color3B bgr_from_gray (CR<Byte> a) {
 		return ColorProcHolder::hold (expr)->bgr_from_gray (a) ;
 	}
 
@@ -387,11 +606,11 @@ public:
 		return ColorProcHolder::hold (expr)->norm_from_jet (a) ;
 	}
 
-	static Color3W hsv_from_bgr (CR<Color3B> a) {
+	static Color3F hsv_from_bgr (CR<Color3B> a) {
 		return ColorProcHolder::hold (expr)->hsv_from_bgr (a) ;
 	}
 
-	static Color3B bgr_from_hsv (CR<Color3W> a) {
+	static Color3B bgr_from_hsv (CR<Color3F> a) {
 		return ColorProcHolder::hold (expr)->bgr_from_hsv (a) ;
 	}
 } ;
@@ -410,6 +629,7 @@ struct ImageProcHolder implement Interface {
 	virtual VR<Pointer> peek_image (VR<ImageLayout> image) const = 0 ;
 	virtual CR<Pointer> peek_image (CR<ImageLayout> image) const = 0 ;
 	virtual ImageLayout load_image (CR<String<Str>> file) const = 0 ;
+	virtual ImageLayout convert_image (CR<ImageLayout> image ,CR<Length> channel) const = 0 ;
 	virtual void save_image (CR<String<Str>> file ,CR<ImageLayout> image) const = 0 ;
 	virtual Color1B sampler (CR<Image<Color1B>> image ,CR<Flt64> x ,CR<Flt64> y) const = 0 ;
 	virtual Color2B sampler (CR<Image<Color2B>> image ,CR<Flt64> x ,CR<Flt64> y) const = 0 ;
@@ -449,6 +669,10 @@ public:
 
 	static ImageLayout load_image (CR<String<Str>> file) {
 		return ImageProcHolder::hold (expr)->load_image (file) ;
+	}
+
+	static ImageLayout convert_image (CR<ImageLayout> image ,CR<Length> channel) {
+		return ImageProcHolder::hold (expr)->convert_image (image ,channel) ;
 	}
 
 	static void save_image (CR<String<Str>> file ,CR<ImageLayout> image) {
@@ -562,7 +786,7 @@ public:
 		return TensorHolder::hold (thiz)->get (i0 ,item) ;
 	}
 
-	inline Flt64 operator() (CR<Index> i0) const {
+	forceinline Flt64 operator() (CR<Index> i0) const {
 		Flt64 ret ;
 		get (i0 ,ret) ;
 		return move (ret) ;
@@ -572,7 +796,7 @@ public:
 		return TensorHolder::hold (thiz)->get (i0 ,i1 ,item) ;
 	}
 
-	inline Flt64 operator() (CR<Index> i0 ,CR<Index> i1) const {
+	forceinline Flt64 operator() (CR<Index> i0 ,CR<Index> i1) const {
 		Flt64 ret ;
 		get (i0 ,i1 ,ret) ;
 		return move (ret) ;
@@ -582,7 +806,7 @@ public:
 		return TensorHolder::hold (thiz)->get (i0 ,i1 ,i2 ,item) ;
 	}
 
-	inline Flt64 operator() (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2) const {
+	forceinline Flt64 operator() (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2) const {
 		Flt64 ret ;
 		get (i0 ,i1 ,i2 ,ret) ;
 		return move (ret) ;
@@ -592,7 +816,7 @@ public:
 		return TensorHolder::hold (thiz)->get (i0 ,i1 ,i2 ,i3 ,item) ;
 	}
 
-	inline Flt64 operator() (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,CR<Index> i3) const {
+	forceinline Flt64 operator() (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,CR<Index> i3) const {
 		Flt64 ret ;
 		get (i0 ,i1 ,i2 ,i3 ,ret) ;
 		return move (ret) ;
@@ -646,38 +870,6 @@ public:
 
 	forceinline Tensor operator- () const {
 		return minus () ;
-	}
-} ;
-
-struct TensorProcLayout ;
-
-struct TensorProcHolder implement Interface {
-	imports CR<Super<Ref<TensorProcLayout>>> expr_m () ;
-	imports VFat<TensorProcHolder> hold (VR<TensorProcLayout> that) ;
-	imports CFat<TensorProcHolder> hold (CR<TensorProcLayout> that) ;
-
-	virtual void initialize () = 0 ;
-	virtual Tensor mean_blur (CR<Tensor> image ,CR<Length> kernel) const = 0 ;
-	virtual Tensor gaussian_blur (CR<Tensor> image ,CR<Length> kernel) const = 0 ;
-	virtual Tensor median_blur (CR<Tensor> image ,CR<Length> kernel) const = 0 ;
-} ;
-
-class TensorProc implement Super<Ref<TensorProcLayout>> {
-public:
-	static CR<TensorProc> expr_m () {
-		return keep[TYPE<TensorProc>::expr] (TensorProcHolder::expr) ;
-	}
-
-	static Tensor mean_blur (CR<Tensor> image ,CR<Length> kernel) {
-		return TensorProcHolder::hold (expr)->mean_blur (image ,kernel) ;
-	}
-
-	static Tensor gaussian_blur (CR<Tensor> image ,CR<Length> kernel) {
-		return TensorProcHolder::hold (expr)->gaussian_blur (image ,kernel) ;
-	}
-
-	static Tensor median_blur (CR<Tensor> image ,CR<Length> kernel) {
-		return TensorProcHolder::hold (expr)->median_blur (image ,kernel) ;
 	}
 } ;
 } ;

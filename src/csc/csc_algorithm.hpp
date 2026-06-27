@@ -187,6 +187,7 @@ struct BCSFitHolder implement Interface {
 	imports CFat<BCSFitHolder> hold (CR<BCSFitLayout> that) ;
 
 	virtual void initialize (CR<Array<Vector>> dst ,CR<Array<Vector>> src) = 0 ;
+	virtual CR<Array<Vector>> ref_m () const leftvalue = 0 ;
 	virtual Vector smul (CR<Vector> that) const = 0 ;
 	virtual Matrix jacobian (CR<Vector> that) const = 0 ;
 } ;
@@ -207,6 +208,10 @@ public:
 		BCSFitHolder::hold (thiz)->initialize (dst ,src) ;
 	}
 
+	CR<Array<Vector>> ref_m () const leftvalue {
+		return BCSFitHolder::hold (thiz)->ref_m () ;
+	}
+
 	Vector smul (CR<Vector> that) const {
 		return BCSFitHolder::hold (thiz)->smul (that) ;
 	}
@@ -221,6 +226,64 @@ public:
 
 	Matrix jacobian (CR<Vector> that) const {
 		return BCSFitHolder::hold (thiz)->jacobian (that) ;
+	}
+} ;
+
+struct FFTransformLayout {
+	Length mSize ;
+	Length mRank ;
+	Array<Array<Vector>> mCosSin ;
+	Buffer3<Flt64> mScale ;
+} ;
+
+struct FFTransformHolder implement Interface {
+	imports VFat<FFTransformHolder> hold (VR<FFTransformLayout> that) ;
+	imports CFat<FFTransformHolder> hold (CR<FFTransformLayout> that) ;
+
+	virtual void initialize (CR<Length> size_) = 0 ;
+	virtual void set_unitary (CR<Bool> flag) = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Array<Vector> smul (CR<Array<Vector>> that) const = 0 ;
+	virtual FFTransformLayout inverse () const = 0 ;
+} ;
+
+class FFTransform implement FFTransformLayout {
+protected:
+	using FFTransformLayout::mSize ;
+	using FFTransformLayout::mRank ;
+	using FFTransformLayout::mCosSin ;
+	using FFTransformLayout::mScale ;
+
+public:
+	implicit FFTransform () = default ;
+
+	explicit FFTransform (CR<Length> size_) {
+		FFTransformHolder::hold (thiz)->initialize (size_) ;
+	}
+
+	void set_unitary (CR<Bool> flag) {
+		return FFTransformHolder::hold (thiz)->set_unitary (flag) ;
+	}
+
+	Length size () const {
+		return FFTransformHolder::hold (thiz)->size () ;
+	}
+
+	Array<Vector> smul (CR<Array<Vector>> that) const {
+		return FFTransformHolder::hold (thiz)->smul (that) ;
+	}
+
+	forceinline Array<Vector> operator() (CR<Array<Vector>> that) const {
+		return smul (that) ;
+	}
+
+	forceinline friend Array<Vector> operator* (CR<FFTransform> thiz_ ,CR<Array<Vector>> that) {
+		return thiz_.smul (that) ;
+	}
+
+	FFTransform inverse () const {
+		FFTransformLayout ret = FFTransformHolder::hold (thiz)->inverse () ;
+		return move (keep[TYPE<FFTransform>::expr] (ret)) ;
 	}
 } ;
 } ;

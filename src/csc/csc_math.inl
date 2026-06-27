@@ -44,50 +44,50 @@ public:
 	}
 
 	Val32 step (CR<Val32> a) const override {
-		if (a > 0)
+		if (a >= 0)
 			return 1 ;
 		return 0 ;
 	}
 
 	Val64 step (CR<Val64> a) const override {
-		if (a > 0)
+		if (a >= 0)
 			return 1 ;
 		return 0 ;
 	}
 
 	Flt32 step (CR<Flt32> a) const override {
-		if (a > 0)
+		if (a >= 0)
 			return 1 ;
 		return 0 ;
 	}
 
 	Flt64 step (CR<Flt64> a) const override {
-		if (a > 0)
+		if (a >= 0)
 			return 1 ;
 		return 0 ;
 	}
 
-	Val32 relu (CR<Val32> a) const override {
-		if (a > 0)
-			return a ;
+	Val32 delta (CR<Val32> a) const override {
+		if (a == 0)
+			return 1 ;
 		return 0 ;
 	}
 
-	Val64 relu (CR<Val64> a) const override {
-		if (a > 0)
-			return a ;
+	Val64 delta (CR<Val64> a) const override {
+		if (a == 0)
+			return 1 ;
 		return 0 ;
 	}
 
-	Flt32 relu (CR<Flt32> a) const override {
-		if (a > 0)
-			return a ;
+	Flt32 delta (CR<Flt32> a) const override {
+		if (MathProc::abs (a) < FLT32_EPS)
+			return 1 ;
 		return 0 ;
 	}
 
-	Flt64 relu (CR<Flt64> a) const override {
-		if (a > 0)
-			return a ;
+	Flt64 delta (CR<Flt64> a) const override {
+		if (MathProc::abs (a) < FLT64_EPS)
+			return 1 ;
 		return 0 ;
 	}
 
@@ -243,12 +243,20 @@ public:
 		return std::round (a) ;
 	}
 
-	Flt32 fmod (CR<Flt32> a) const override {
-		return std::fmod (a ,Flt32 (1)) ;
+	Val32 wrap (CR<Val32> a ,CR<Val32> max_) const override {
+		if (max_ <= 0)
+			return 0 ;
+		const auto r1x = a % max_ ;
+		const auto r2x = Val32 (r1x < 0) * max_ ;
+		return r1x + r2x ;
 	}
 
-	Flt64 fmod (CR<Flt64> a) const override {
-		return std::fmod (a ,Flt64 (1)) ;
+	Val64 wrap (CR<Val64> a ,CR<Val64> max_) const override {
+		if (max_ <= 0)
+			return 0 ;
+		const auto r1x = a % max_ ;
+		const auto r2x = Val64 (r1x < 0) * max_ ;
+		return r1x + r2x ;
 	}
 
 	Val32 clamp (CR<Val32> a ,CR<Val32> min_ ,CR<Val32> max_) const override {
@@ -285,20 +293,34 @@ public:
 
 	Val32 lerp (CR<Flt64> a ,CR<Val32> min_ ,CR<Val32> max_) const override {
 		const auto r1x = MathProc::abs (a) ;
-		const auto r2x = r1x - MathProc::floor (r1x / 2 ,Flt64 (1)) * 2 ;
+		const auto r2x = r1x - MathProc::floor (r1x ,Flt64 (2)) ;
 		const auto r3x = 1 - MathProc::abs (r2x - 1) ;
 		const auto r4x = Flt64 (max_ - min_) * r3x ;
-		const auto r5x = Val32 (round (r4x)) ;
-		return min_ + r5x ;
+		return min_ + Val32 (round (r4x)) ;
 	}
 
 	Val64 lerp (CR<Flt64> a ,CR<Val64> min_ ,CR<Val64> max_) const override {
 		const auto r1x = MathProc::abs (a) ;
-		const auto r2x = r1x - MathProc::floor (r1x / 2 ,Flt64 (1)) * 2 ;
+		const auto r2x = r1x - MathProc::floor (r1x ,Flt64 (2)) ;
 		const auto r3x = 1 - MathProc::abs (r2x - 1) ;
 		const auto r4x = Flt64 (max_ - min_) * r3x ;
-		const auto r5x = Val64 (round (r4x)) ;
-		return min_ + r5x ;
+		return min_ + Val64 (round (r4x)) ;
+	}
+
+	Flt32 lerp (CR<Flt64> a ,CR<Flt32> min_ ,CR<Flt32> max_) const override {
+		const auto r1x = MathProc::abs (a) ;
+		const auto r2x = r1x - MathProc::floor (r1x ,Flt64 (2)) ;
+		const auto r3x = 1 - MathProc::abs (r2x - 1) ;
+		const auto r4x = Flt64 (max_ - min_) * r3x ;
+		return min_ + Flt32 (r4x) ;
+	}
+
+	Flt64 lerp (CR<Flt64> a ,CR<Flt64> min_ ,CR<Flt64> max_) const override {
+		const auto r1x = MathProc::abs (a) ;
+		const auto r2x = r1x - MathProc::floor (r1x ,Flt64 (2)) ;
+		const auto r3x = 1 - MathProc::abs (r2x - 1) ;
+		const auto r4x = Flt64 (max_ - min_) * r3x ;
+		return min_ + Flt64 (r4x) ;
 	}
 
 	Flt32 cos (CR<Flt32> a) const override {
@@ -339,6 +361,14 @@ public:
 
 	Flt64 asin (CR<Flt64> a) const override {
 		return std::asin (a) ;
+	}
+
+	Flt32 atan (CR<Flt32> a) const override {
+		return std::atan (a) ;
+	}
+
+	Flt64 atan (CR<Flt64> a) const override {
+		return std::atan (a) ;
 	}
 
 	Flt32 atan (CR<Flt32> y ,CR<Flt32> x) const override {
@@ -480,11 +510,13 @@ public:
 	void concat (CR<Flt64> error) override {
 		const auto r1x = Flt64 (self.mCount) ;
 		const auto r2x = MathProc::inverse (r1x + 1) ;
-		const auto r3x = error - self.mAvgError ;
-		self.mMaxError = MathProc::max_of (self.mMaxError ,error) ;
-		self.mAvgError = self.mAvgError + r3x * r2x ;
-		const auto r4x = r1x * r2x * MathProc::square (self.mStdError) + r1x * MathProc::square (r3x * r2x) ;
-		self.mStdError = MathProc::sqrt (r4x) ;
+		const auto r3x = error - self.mAvg ;
+		self.mMax = MathProc::max_of (self.mMax ,error) ;
+		self.mAvg = self.mAvg + r3x * r2x ;
+		const auto r4x = r1x * r2x * MathProc::square (self.mStd) + r1x * MathProc::square (r3x * r2x) ;
+		self.mStd = MathProc::sqrt (r4x) ;
+		const auto r5x = r1x * r2x * MathProc::square (self.mRms) + MathProc::square (error) * r2x ;
+		self.mRms = MathProc::sqrt (r5x) ;
 		self.mCount = Length (r1x + 1) ;
 	}
 } ;
@@ -602,8 +634,8 @@ public:
 		ret.mPrecision = 0 ;
 		ret.mSign = MathProc::any_of (obj1.mSign ,obj2.mSign) ;
 		const auto r1x = Length (32) ;
-		const auto r2x = Quad (ByteProc::pow_bit (r1x) - 1) ;
-		const auto r3x = ByteProc::pow_bit (r1x - 1) ;
+		const auto r2x = Quad (ByteProc::exp2p_bit (r1x) - 1) ;
+		const auto r3x = ByteProc::exp2p_bit (r1x - 1) ;
 		const auto r4x = Val64 (Quad (obj1.mMantissa) >> r1x) ;
 		const auto r5x = Val64 (Quad (obj1.mMantissa) & r2x) ;
 		const auto r6x = Val64 (Quad (obj2.mMantissa) >> r1x) ;
@@ -928,8 +960,22 @@ public:
 		return ~Quad (0X00) ;
 	}
 
-	Index pow_bit (CR<Length> nth) const override {
-		return Index (Quad (0X01) << nth) ;
+	Index exp2p_bit (CR<Length> a) const override {
+		return Index (Quad (0X01) << a) ;
+	}
+	
+	Length log2p_bit (CR<Index> a) const override {
+		if (a <= 0)
+			return 0 ;
+		Length ret = 0 ;
+		auto rax = Quad (a) ;
+		while (TRUE) {
+			if (rax == Quad (0X00))
+				break ;
+			ret++ ;
+			rax = rax >> 1 ;
+		}
+		return move (ret) ;
 	}
 
 	Length popcount (CR<Byte> a) const override {
@@ -1098,7 +1144,7 @@ public:
 		auto rax = Val32 (0) ;
 		for (auto &&i : range (0 ,r1x)) {
 			const auto r2x = Val32 (get (self ,i)) - Val32 (get (that ,i)) - rax ;
-			rax = Val32 (r2x < 0) ;
+			rax = 1 - MathProc::step (r2x) ;
 			const auto r3x = r2x + 256 * rax ;
 			ret.mInteger[i] = Byte (r3x) ;
 		}
@@ -1252,7 +1298,7 @@ public:
 			Index ix = r1x - 1 - i ;
 			for (auto &&j : range (0 ,8)) {
 				Index jx = 8 - 1 - j ;
-				const auto r3x = ByteProc::pow_bit (jx) ;
+				const auto r3x = ByteProc::exp2p_bit (jx) ;
 				for (auto &&k : range (0 ,r1x - 1)) {
 					Index kx = r1x - 1 - k ;
 					remainder.mInteger[kx] = (remainder.mInteger[kx] << 1) | (remainder.mInteger[kx - 1] >> 7) ;
@@ -1274,7 +1320,7 @@ public:
 					auto rax = Val32 (0) ;
 					for (auto &&k : range (0 ,r1x)) {
 						const auto r6x = Val32 (get (remainder ,k)) - Val32 (get (divisor ,k)) - rax ;
-						rax = Val32 (r6x < 0) ;
+						rax = 1 - MathProc::step (r6x) ;
 						const auto r7x = r6x + 256 * rax ;
 						remainder.mInteger[k] = Byte (r7x) ;
 					}
@@ -1461,11 +1507,23 @@ struct JetTree {
 	Allocator<JetNode ,AllocatorNode> mTree ;
 } ;
 
+struct JetRoot {
+	SharedRef<JetTree> mThis ;
+
+public:
+	static VR<JetRoot> expr_m () ;
+} ;
+
+inline VR<JetRoot> JetRoot::expr_m () {
+	static auto mInstance = JetRoot () ;
+	return mInstance ;
+}
+
 class JetImplHolder final implement Fat<JetHolder ,JetLayout> {
 public:
 	void initialize (CR<Length> size_ ,CR<Flt64> item) override {
 		assert (size_ > 0) ;
-		self.mThis = root_ptr () ;
+		self.mThis = JetRoot::expr.mThis ;
 		const auto r1x = address (self.mThis.ref) ;
 		self.mIndex.mTree = r1x ;
 		self.mIndex.mCurr = self.mThis->mTree.alloc (Box<JetNode>::make ()) ;
@@ -1496,13 +1554,8 @@ public:
 		}) ;
 	}
 
-	static VR<SharedRef<JetTree>> root_ptr () {
-		static auto mInstance = SharedRef<JetTree>::make () ;
-		return mInstance ;
-	}
-
 	static VR<JetNode> ptr (CR<JetIndex> index) {
-		return root_ptr ()->mTree[index.mCurr] ;
+		return JetRoot::expr.mThis->mTree[index.mCurr] ;
 	}
 
 	Flt64 fx () const override {
@@ -1879,7 +1932,7 @@ public:
 		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mFX >= 0) ;
 			node.mFX = MathProc::log (ptr (node.mP1).mFX) ;
-			const auto r1x = MathProc::step (MathProc::abs (ptr (node.mP1).mEX)) ;
+			const auto r1x = 1 - MathProc::delta (ptr (node.mP1).mEX) ;
 			node.mEX = round_ex (r1x) ;
 			const auto r2x = 1 / ptr (node.mP1).mFX ;
 			for (auto &&i : range (0 ,node.mDX.size ()))
@@ -1894,24 +1947,11 @@ public:
 		JetLayout ret ;
 		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
 		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
-			auto act = TRUE ;
-			if ifdo (act) {
-				if (ptr (node.mP1).mEX < 0)
-					discard ;
-				const auto r1x = MathProc::step (ptr (node.mP1).mFX) ;
-				node.mFX = r1x * ptr (node.mP1).mFX ;
-				node.mEX = r1x * MathProc::step (ptr (node.mP1).mEX) ;
-				for (auto &&i : range (0 ,node.mDX.size ()))
-					node.mDX[i] = r1x * ptr (node.mP1).mDX[i] ;
-			}
-			if ifdo (act) {
-				if (ptr (node.mP1).mEX >= 0)
-					discard ;
-				node.mFX = 0 ;
-				node.mEX = 0 ;
-				for (auto &&i : range (0 ,node.mDX.size ()))
-					node.mDX[i] = 0 ;
-			}
+			const auto r1x = MathProc::step (ptr (node.mP1).mFX) ;
+			node.mFX = r1x * ptr (node.mP1).mFX ;
+			node.mEX = r1x * ptr (node.mP1).mEX ;
+			for (auto &&i : range (0 ,node.mDX.size ()))
+				node.mDX[i] = r1x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
 		ptr (ret.mIndex).mP1 = self.mIndex ;
@@ -1926,10 +1966,7 @@ public:
 	}
 
 	static Flt64 round_ex (CR<Flt64> ex) {
-		const auto r1x = MathProc::floor (ex + Flt64 (0.005) ,Flt64 (0.01)) ;
-		const auto r2x = MathProc::inverse (ex - r1x) ;
-		assume (r2x == 0) ;
-		return r1x ;
+		return MathProc::round (ex * 100) * 0.01 ;
 	}
 
 	static void check_fx (VR<JetNode> node) {

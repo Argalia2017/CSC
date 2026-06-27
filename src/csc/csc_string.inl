@@ -1036,7 +1036,7 @@ public:
 		mObjectMap = SortedMap<String<Stru>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
-	XmlParserTree poll () {
+	XmlParserTree pull () {
 		XmlParserTree ret ;
 		ret.mTree = Array<XmlParserNode> (mTree.length ()) ;
 		const auto r1x = Array<Index>::make (mTree.iter ()) ;
@@ -1352,7 +1352,7 @@ public:
 	void initialize (CR<RefBuffer<Byte>> stream) override {
 		auto rax = MakeXmlParser (Ref<RefBuffer<Byte>>::reference (stream)) ;
 		rax.generate () ;
-		self.mThis = UniqueRef<XmlParserTree>::make (rax.poll ()) ;
+		self.mThis = UniqueRef<XmlParserTree>::make (rax.pull ()) ;
 		self.mIndex = self.mThis->mRoot ;
 	}
 
@@ -1612,11 +1612,14 @@ public:
 	template <class ARG1>
 	forceinline Array<ARG1> parse_impl (CR<ARG1> def ,CR<Length> size_) const {
 		const auto r1x = list () ;
-		assume (r1x.size () == size_) ;
-		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
-		for (auto &&i : ret.iter ()) {
-			const auto r2x = XmlParserHolder::hold (self)->child (i) ;
-			ret[i] = XmlParserHolder::hold (r2x)->parse (def) ;
+		const auto r2x = MathProc::min_of (r1x.size () ,size_) ;
+		Array<ARG1> ret = Array<ARG1> (size_) ;
+		for (auto &&i : range (0 ,r2x)) {
+			const auto r3x = XmlParserHolder::hold (self)->child (i) ;
+			ret[i] = XmlParserHolder::hold (r3x)->parse (def) ;
+		}
+		for (auto &&i : range (r2x ,size_)) {
+			ret[i] = def ;
 		}
 		return move (ret) ;
 	}
@@ -1684,7 +1687,7 @@ public:
 		mObjectMap = SortedMap<String<Stru>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
-	JsonParserTree poll () {
+	JsonParserTree pull () {
 		JsonParserTree ret ;
 		ret.mTree = Array<JsonParserNode> (mTree.length ()) ;
 		const auto r1x = Array<Index>::make (mTree.iter ()) ;
@@ -1978,7 +1981,7 @@ public:
 	void initialize (CR<RefBuffer<Byte>> stream) override {
 		auto rax = MakeJsonParser (Ref<RefBuffer<Byte>>::reference (stream)) ;
 		rax.generate () ;
-		self.mThis = UniqueRef<JsonParserTree>::make (rax.poll ()) ;
+		self.mThis = UniqueRef<JsonParserTree>::make (rax.pull ()) ;
 		self.mIndex = self.mThis->mRoot ;
 	}
 
@@ -2238,11 +2241,14 @@ public:
 	template <class ARG1>
 	forceinline Array<ARG1> parse_impl (CR<ARG1> def ,CR<Length> size_) const {
 		const auto r1x = list () ;
-		assume (r1x.size () == size_) ;
-		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
-		for (auto &&i : ret.iter ()) {
-			const auto r2x = JsonParserHolder::hold (self)->child (i) ;
-			ret[i] = JsonParserHolder::hold (r2x)->parse (def) ;
+		const auto r2x = MathProc::min_of (r1x.size () ,size_) ;
+		Array<ARG1> ret = Array<ARG1> (size_) ;
+		for (auto &&i : range (0 ,r2x)) {
+			const auto r3x = JsonParserHolder::hold (self)->child (i) ;
+			ret[i] = JsonParserHolder::hold (r3x)->parse (def) ;
+		}
+		for (auto &&i : range (r2x ,size_)) {
+			ret[i] = def ;
 		}
 		return move (ret) ;
 	}
@@ -2351,7 +2357,7 @@ public:
 		mPropertyListType.add (slice ("uint") ,PlyParserDataType::Char) ;
 	}
 
-	PlyParserTree poll () {
+	PlyParserTree pull () {
 		PlyParserTree ret ;
 		ret.mFormat = move (mFormat) ;
 		ret.mElementList = move (mElementList) ;
@@ -2500,12 +2506,11 @@ public:
 			assume (rax == Stru32 ('\n')) ;
 			mBodyBackup = mTextReader.shape () ;
 		}
-		for (auto &&i : mElementList.iter ()) {
-			auto &&rax = mElementList[i] ;
-			rax.mPropertyList.remap () ;
-			rax.mPropertySet = Set<String<Stru>> (rax.mPropertyList.length ()) ;
-			for (auto &&j : rax.mPropertyList.iter ())
-				rax.mPropertySet.add (rax.mPropertyList[j].mName ,j) ;
+		for (auto &&i : mElementList) {
+			i.mPropertyList.remap () ;
+			i.mPropertySet = Set<String<Stru>> (i.mPropertyList.length ()) ;
+			for (auto &&j : i.mPropertyList.iter ())
+				i.mPropertySet.add (i.mPropertyList[j].mName ,j) ;
 		}
 		if ifdo (TRUE) {
 			mElementList.remap () ;
@@ -2513,15 +2518,14 @@ public:
 			for (auto &&j : mElementList.iter ())
 				mElementSet.add (mElementList[j].mName ,j) ;
 		}
-		for (auto &&i : mElementList.iter ()) {
-			auto &&rax = mElementList[i] ;
-			const auto r8x = rax.mLineSize * rax.mLineStep ;
-			auto &&rbx = keep[TYPE<RefBufferLayout>::expr] (rax.mPlyBuffer) ;
+		for (auto &&i : mElementList) {
+			const auto r8x = i.mLineSize * i.mLineStep ;
+			auto &&rbx = keep[TYPE<RefBufferLayout>::expr] (i.mPlyBuffer) ;
 			rbx = RefBuffer<Byte> (r8x) ;
-			rax.mPlyIndex = 0 ;
-			auto &&rcx = keep[TYPE<RefBufferLayout>::expr] (rax.mExtBuffer) ;
+			i.mPlyIndex = 0 ;
+			auto &&rcx = keep[TYPE<RefBufferLayout>::expr] (i.mExtBuffer) ;
 			rcx = RefBuffer<Byte> () ;
-			rax.mExtIndex = 0 ;
+			i.mExtIndex = 0 ;
 		}
 	}
 
@@ -2551,12 +2555,12 @@ public:
 		mTextReader = TextReader (mStream.share ()) ;
 		mTextReader.reset (mBodyBackup) ;
 		mTextReader >> GAP ;
-		for (auto &&i : range (0 ,mElementList.length ())) {
-			for (auto &&j : range (0 ,mElementList[i].mLineSize)) {
-				for (auto &&k : range (0 ,mElementList[i].mPropertyList.length ())) {
-					read_body_text_item (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
-					read_body_text_list (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
-					mElementList[i].mLineLength++ ;
+		for (auto &&i : mElementList) {
+			for (auto &&j : range (0 ,i.mLineSize)) {
+				for (auto &&k : i.mPropertyList) {
+					read_body_text_item (i ,k ,j) ;
+					read_body_text_list (i ,k ,j) ;
+					i.mLineLength++ ;
 				}
 			}
 		}
@@ -2570,7 +2574,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Flt32)
 				discard ;
-			const auto r2x = mTextReader.poll (TYPE<Flt32>::expr) ;
+			const auto r2x = mTextReader.pull (TYPE<Flt32>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r2x ;
 			element.mPlyIndex += SIZE_OF<Flt32>::expr ;
 			mTextReader >> GAP ;
@@ -2578,7 +2582,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Flt64)
 				discard ;
-			const auto r3x = mTextReader.poll (TYPE<Flt64>::expr) ;
+			const auto r3x = mTextReader.pull (TYPE<Flt64>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r3x ;
 			element.mPlyIndex += SIZE_OF<Flt64>::expr ;
 			mTextReader >> GAP ;
@@ -2586,7 +2590,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Bool)
 				discard ;
-			const auto r4x = mTextReader.poll (TYPE<Bool>::expr) ;
+			const auto r4x = mTextReader.pull (TYPE<Bool>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r4x ;
 			element.mPlyIndex += SIZE_OF<Bool>::expr ;
 			mTextReader >> GAP ;
@@ -2594,7 +2598,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Val32)
 				discard ;
-			const auto r5x = mTextReader.poll (TYPE<Val32>::expr) ;
+			const auto r5x = mTextReader.pull (TYPE<Val32>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r5x ;
 			element.mPlyIndex += SIZE_OF<Val32>::expr ;
 			mTextReader >> GAP ;
@@ -2602,7 +2606,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Val64)
 				discard ;
-			const auto r6x = mTextReader.poll (TYPE<Val64>::expr) ;
+			const auto r6x = mTextReader.pull (TYPE<Val64>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r6x ;
 			element.mPlyIndex += SIZE_OF<Val64>::expr ;
 			mTextReader >> GAP ;
@@ -2610,7 +2614,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Byte)
 				discard ;
-			const auto r7x = mTextReader.poll (TYPE<Val64>::expr) ;
+			const auto r7x = mTextReader.pull (TYPE<Val64>::expr) ;
 			assume (r7x >= 0) ;
 			const auto r8x = Byte (r7x) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r8x ;
@@ -2625,7 +2629,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Word)
 				discard ;
-			const auto r9x = mTextReader.poll (TYPE<Val64>::expr) ;
+			const auto r9x = mTextReader.pull (TYPE<Val64>::expr) ;
 			assume (r9x >= 0) ;
 			const auto r10x = Word (r9x) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r10x ;
@@ -2640,7 +2644,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Char)
 				discard ;
-			const auto r11x = mTextReader.poll (TYPE<Val64>::expr) ;
+			const auto r11x = mTextReader.pull (TYPE<Val64>::expr) ;
 			assume (r11x >= 0) ;
 			const auto r12x = Char (r11x) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r12x ;
@@ -2655,7 +2659,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Quad)
 				discard ;
-			const auto r13x = mTextReader.poll (TYPE<Val64>::expr) ;
+			const auto r13x = mTextReader.pull (TYPE<Val64>::expr) ;
 			assume (r13x >= 0) ;
 			const auto r14x = Quad (r13x) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r14x ;
@@ -2688,7 +2692,7 @@ public:
 			mTextReader >> GAP ;
 			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
-				const auto r6x = mTextReader.poll (TYPE<Val32>::expr) ;
+				const auto r6x = mTextReader.pull (TYPE<Val32>::expr) ;
 				bitwise (element.mExtBuffer[element.mExtIndex]) = r6x ;
 				element.mExtIndex += SIZE_OF<Val32>::expr ;
 				mTextReader >> GAP ;
@@ -2700,7 +2704,7 @@ public:
 			mTextReader >> GAP ;
 			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
-				const auto r7x = mTextReader.poll (TYPE<Val64>::expr) ;
+				const auto r7x = mTextReader.pull (TYPE<Val64>::expr) ;
 				bitwise (element.mExtBuffer[element.mExtIndex]) = r7x ;
 				element.mExtIndex += SIZE_OF<Val64>::expr ;
 				mTextReader >> GAP ;
@@ -2719,12 +2723,12 @@ public:
 				discard ;
 			mByteReader >> BOM ;
 		}
-		for (auto &&i : range (0 ,mElementList.length ())) {
-			for (auto &&j : range (0 ,mElementList[i].mLineSize)) {
-				for (auto &&k : range (0 ,mElementList[i].mPropertyList.length ())) {
-					read_body_byte_item (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
-					read_body_byte_list (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
-					mElementList[i].mLineLength++ ;
+		for (auto &&i : mElementList) {
+			for (auto &&j : range (0 ,i.mLineSize)) {
+				for (auto &&k : i.mPropertyList) {
+					read_body_byte_item (i ,k ,j) ;
+					read_body_byte_list (i ,k ,j) ;
+					i.mLineLength++ ;
 				}
 			}
 		}
@@ -2737,42 +2741,42 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Flt32)
 				discard ;
-			const auto r2x = mByteReader.poll (TYPE<Flt32>::expr) ;
+			const auto r2x = mByteReader.pull (TYPE<Flt32>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r2x ;
 			element.mPlyIndex += SIZE_OF<Flt32>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Flt64)
 				discard ;
-			const auto r3x = mByteReader.poll (TYPE<Flt64>::expr) ;
+			const auto r3x = mByteReader.pull (TYPE<Flt64>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r3x ;
 			element.mPlyIndex += SIZE_OF<Flt64>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Bool)
 				discard ;
-			const auto r4x = mByteReader.poll (TYPE<Bool>::expr) ;
+			const auto r4x = mByteReader.pull (TYPE<Bool>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r4x ;
 			element.mPlyIndex += SIZE_OF<Bool>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Val32)
 				discard ;
-			const auto r5x = mByteReader.poll (TYPE<Val32>::expr) ;
+			const auto r5x = mByteReader.pull (TYPE<Val32>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r5x ;
 			element.mPlyIndex += SIZE_OF<Val32>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Val64)
 				discard ;
-			const auto r6x = mByteReader.poll (TYPE<Val64>::expr) ;
+			const auto r6x = mByteReader.pull (TYPE<Val64>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r6x ;
 			element.mPlyIndex += SIZE_OF<Val64>::expr ;
 		}
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Byte)
 				discard ;
-			const auto r7x = mByteReader.poll (TYPE<Byte>::expr) ;
+			const auto r7x = mByteReader.pull (TYPE<Byte>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r7x ;
 			element.mPlyIndex += SIZE_OF<Byte>::expr ;
 			if ifdo (TRUE) {
@@ -2784,7 +2788,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Word)
 				discard ;
-			const auto r8x = mByteReader.poll (TYPE<Word>::expr) ;
+			const auto r8x = mByteReader.pull (TYPE<Word>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r8x ;
 			element.mPlyIndex += SIZE_OF<Word>::expr ;
 			if ifdo (TRUE) {
@@ -2796,7 +2800,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Char)
 				discard ;
-			const auto r9x = mByteReader.poll (TYPE<Char>::expr) ;
+			const auto r9x = mByteReader.pull (TYPE<Char>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r9x ;
 			element.mPlyIndex += SIZE_OF<Char>::expr ;
 			if ifdo (TRUE) {
@@ -2808,7 +2812,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Quad)
 				discard ;
-			const auto r10x = mByteReader.poll (TYPE<Quad>::expr) ;
+			const auto r10x = mByteReader.pull (TYPE<Quad>::expr) ;
 			bitwise (element.mPlyBuffer[element.mPlyIndex]) = r10x ;
 			element.mPlyIndex += SIZE_OF<Quad>::expr ;
 		}
@@ -2837,7 +2841,7 @@ public:
 				discard ;
 			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
-				const auto r6x = mByteReader.poll (TYPE<Val32>::expr) ;
+				const auto r6x = mByteReader.pull (TYPE<Val32>::expr) ;
 				bitwise (element.mExtBuffer[element.mExtIndex]) = r6x ;
 				element.mExtIndex += SIZE_OF<Val32>::expr ;
 			}
@@ -2847,7 +2851,7 @@ public:
 				discard ;
 			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
-				const auto r7x = mByteReader.poll (TYPE<Val64>::expr) ;
+				const auto r7x = mByteReader.pull (TYPE<Val64>::expr) ;
 				bitwise (element.mExtBuffer[element.mExtIndex]) = r7x ;
 				element.mExtIndex += SIZE_OF<Val64>::expr ;
 			}
@@ -2863,7 +2867,7 @@ public:
 	void initialize (CR<RefBuffer<Byte>> stream) override {
 		auto rax = MakePlyParser (Ref<RefBuffer<Byte>>::reference (stream)) ;
 		rax.generate () ;
-		self.mThis = UniqueRef<PlyParserTree>::make (rax.poll ()) ;
+		self.mThis = UniqueRef<PlyParserTree>::make (rax.pull ()) ;
 		self.mGuide.mElement = NONE ;
 	}
 

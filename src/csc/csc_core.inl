@@ -46,9 +46,11 @@ public:
 	}
 
 	void inline_notice (CR<Flag> name ,CR<Flag> addr) const override {
-		const auto r1x = csc_string_t (name) ;
-		const auto r2x = csc_handle_t (addr) ;
-		std::printf ("%s : [0x%p] \n" ,r1x ,r2x) ;
+		if ifdo (FALSE) {
+			const auto r1x = csc_string_t (name) ;
+			const auto r2x = csc_handle_t (addr) ;
+			std::printf ("%s : [0x%p] \n" ,r1x ,r2x) ;
+		}
 	}
 
 #ifdef __CSC_CXX_RTTI__
@@ -155,8 +157,7 @@ public:
 	}
 
 	void remake (CR<Unknown> holder ,CR<Flag> layout) override {
-		if (exist ())
-			return ;
+		assert (!exist ()) ;
 		self.mHolder = inline_vptr (holder) ;
 		assert (layout == address (ref)) ;
 	}
@@ -202,6 +203,8 @@ public:
 		const auto r5x = Heap::expr ;
 		const auto r6x = r5x.alloc (r4x) ;
 		self.mLayout = inline_alignas (r6x + SIZE_OF<RefTree>::expr ,r2x->type_align ()) ;
+		const auto r7x = inline_vptr (r1x) ;
+		replace (self.mExtend ,ZERO ,r7x) ;
 		inline_memset (Pointer::make (r6x) ,self.mLayout - r6x) ;
 		ptr (self).mHeap = r5x ;
 		ptr (self).mMemPtr = r6x ;
@@ -221,20 +224,22 @@ public:
 		const auto r6x = Heap::expr ;
 		const auto r7x = r6x.alloc (r5x) ;
 		self.mLayout = inline_alignas (r7x + SIZE_OF<RefTree>::expr ,r1x->type_align ()) ;
+		const auto r8x = inline_vptr (holder) ;
+		replace (self.mExtend ,ZERO ,r8x) ;
 		inline_memset (Pointer::make (r7x) ,self.mLayout - r7x) ;
 		ptr (self).mHeap = r6x ;
 		ptr (self).mMemPtr = r7x ;
 		ptr (self).mMemSize = r5x ;
 		BoxHolder::hold (ptr (self).mValue)->initialize (holder) ;
-		const auto r8x = RFat<ReflectCreate> (holder) ;
-		r8x->create (ref ,1) ;
+		const auto r9x = RFat<ReflectCreate> (holder) ;
+		r9x->create (ref ,1) ;
 		ptr (self).mCounter = 1 ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<Flag> extend ,CR<Flag> layout) override {
+	void initialize (CR<Flag> holder ,CR<Flag> layout) override {
 		assert (!exist ()) ;
 		self.mLayout = layout ;
-		self.mExtend = extend ;
+		self.mExtend = holder ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (ownership ())
@@ -242,12 +247,10 @@ public:
 			noop () ;
 		}
 		if ifdo (act) {
-			const auto r1x = RFat<ReflectSize> (holder) ;
-			const auto r2x = r1x->type_align () ;
-			assert (r2x <= ALIGN_OF<RefTree>::expr) ;
 			if (ptr (self).mCounter <= 0)
 				discard ;
-			ptr (self).mCounter++ ;
+			const auto r1x = ++ptr (self).mCounter ;
+			assert (r1x >= 1) ;
 		}
 		if ifdo (act) {
 			self.mLayout = ZERO ;
@@ -282,17 +285,7 @@ public:
 
 	RefLayout share () const override {
 		RefLayout ret ;
-		if ifdo (TRUE) {
-			if (!exist ())
-				discard ;
-			if (!ownership ())
-				discard ;
-			const auto r1x = ++ptr (self).mCounter ;
-			noop (r1x) ;
-			assert (r1x >= 2) ;
-		}
-		ret.mLayout = self.mLayout ;
-		ret.mExtend = self.mExtend ;
+		RefHolder::hold (ret)->initialize (self.mExtend ,self.mLayout) ;
 		return move (ret) ;
 	}
 
@@ -302,8 +295,6 @@ public:
 
 	Unknown unknown () const override {
 		assert (ownership ()) ;
-		if (self.mExtend == ZERO)
-			return BoxHolder::hold (ptr (self).mValue)->unknown () ;
 		return Unknown (self.mExtend) ;
 	}
 
@@ -318,7 +309,11 @@ public:
 	}
 
 	void prepare (CR<Unknown> extend) override {
-		assert (ownership ()) ;
+		if ifdo (TRUE) {
+			if (self.mExtend == ZERO)
+				discard ;
+			assert (ownership ()) ;
+		}
 		self.mExtend = inline_vptr (extend) ;
 	}
 
@@ -334,6 +329,8 @@ public:
 	}
 
 	Bool ownership () const override {
+		if (self.mExtend == ZERO)
+			return FALSE ;
 		if (self.mExtend == VARIABLE::expr)
 			return FALSE ;
 		if (self.mExtend == CONSTANT::expr)
@@ -357,21 +354,24 @@ struct HeapRoot {
 	Box<std::atomic<Val>> mStack ;
 	Box<std::atomic<Val>> mWidth ;
 	Box<std::atomic<Val>> mLength ;
+
+public:
+	static VR<HeapRoot> expr_m () ;
 } ;
+
+inline VR<HeapRoot> HeapRoot::expr_m () {
+	static auto mInstance = HeapRoot () ;
+	return mInstance ;
+}
 
 class HeapImplHolder final implement Fat<HeapHolder ,HeapLayout> {
 public:
 	void initialize () override {
-		root_ptr ().mMutex.remake () ;
-		root_ptr ().mStack.remake () ;
-		root_ptr ().mWidth.remake () ;
-		root_ptr ().mLength.remake () ;
+		HeapRoot::expr.mMutex.remake () ;
+		HeapRoot::expr.mStack.remake () ;
+		HeapRoot::expr.mWidth.remake () ;
+		HeapRoot::expr.mLength.remake () ;
 		dump_memory_leaks () ;
-	}
-
-	static VR<HeapRoot> root_ptr () {
-		static auto mInstance = HeapRoot () ;
-		return mInstance ;
 	}
 
 #ifdef __CSC_COMPILER_MSVC__
@@ -393,19 +393,19 @@ public:
 #endif
 
 	void enter () const override {
-		return root_ptr ().mMutex->lock () ;
+		return HeapRoot::expr.mMutex->lock () ;
 	}
 
 	void leave () const override {
-		return root_ptr ().mMutex->unlock () ;
+		return HeapRoot::expr.mMutex->unlock () ;
 	}
 
 	Length size () const override {
-		return root_ptr ().mWidth.ref ;
+		return HeapRoot::expr.mWidth.ref ;
 	}
 
 	Length length () const override {
-		return root_ptr ().mLength.ref ;
+		return HeapRoot::expr.mLength.ref ;
 	}
 
 	Flag stack (CR<Length> size_) const override {
@@ -416,8 +416,8 @@ public:
 	Flag alloc (CR<Length> size_) const override {
 		Flag ret = Flag (operator new (size_ ,std::nothrow)) ;
 		assume (ret != ZERO) ;
-		root_ptr ().mLength.ref += size_ ;
-		root_ptr ().mWidth.ref = inline_max (root_ptr ().mWidth.ref ,root_ptr ().mLength.ref) ;
+		HeapRoot::expr.mLength.ref += size_ ;
+		HeapRoot::expr.mWidth.ref = inline_max (HeapRoot::expr.mWidth.ref ,HeapRoot::expr.mLength.ref) ;
 		return move (ret) ;
 	}
 
@@ -425,8 +425,8 @@ public:
 	Flag alloc (CR<Length> size_ ,CR<Length> align_) const override {
 		Flag ret = Flag (operator new (size_ ,std::align_val_t (align_) ,std::nothrow)) ;
 		assume (ret != ZERO) ;
-		root_ptr ().mLength.ref += size_ ;
-		root_ptr ().mWidth.ref = inline_max (root_ptr ().mWidth.ref ,root_ptr ().mLength.ref) ;
+		HeapRoot::expr.mLength.ref += size_ ;
+		HeapRoot::expr.mWidth.ref = inline_max (HeapRoot::expr.mWidth.ref ,HeapRoot::expr.mLength.ref) ;
 		return move (ret) ;
 	}
 #endif
@@ -440,7 +440,7 @@ public:
 
 	void free (CR<Flag> layout ,CR<Length> size_) const override {
 		const auto r1x = csc_handle_t (layout) ;
-		root_ptr ().mLength.ref -= size_ ;
+		HeapRoot::expr.mLength.ref -= size_ ;
 		operator delete (r1x ,std::nothrow) ;
 	}
 } ;
@@ -625,7 +625,7 @@ exports CFat<ExceptionHolder> ExceptionHolder::hold (CR<ExceptionLayout> that) {
 struct ClazzTree {
 	Length mTypeSize ;
 	Length mTypeAlign ;
-	Flag mTypeMeta ;
+	Flag mTypeGuid ;
 	Slice mTypeName ;
 } ;
 
@@ -637,7 +637,7 @@ public:
 		self.mThis->mTypeSize = r1x->type_size () ;
 		self.mThis->mTypeAlign = r1x->type_align () ;
 		const auto r2x = RFat<ReflectGuid> (holder) ;
-		self.mThis->mTypeMeta = r2x->type_meta () ;
+		self.mThis->mTypeGuid = r2x->type_guid () ;
 		const auto r3x = RFat<ReflectName> (holder) ;
 		self.mThis->mTypeName = r3x->type_name () ;
 	}
@@ -658,18 +658,18 @@ public:
 		return self.mThis->mTypeAlign ;
 	}
 
-	Flag type_meta () const override {
-		if (self.mThis == NULL)
-			return ZERO ;
-		return self.mThis->mTypeMeta ;
-	}
-
 	Flag type_guid () const override {
 		if (self.mThis == NULL)
 			return ZERO ;
-		const auto r1x = Unknown (type_meta ()) ;
+		return self.mThis->mTypeGuid ;
+	}
+
+	Flag type_expr () const override {
+		if (self.mThis == NULL)
+			return ZERO ;
+		const auto r1x = Unknown (type_guid ()) ;
 		const auto r2x = RFat<ReflectGuid> (r1x) ;
-		return r2x->type_guid () ;
+		return r2x->type_expr () ;
 	}
 
 	Slice type_name () const override {
@@ -679,17 +679,17 @@ public:
 	}
 
 	Bool equal (CR<ClazzLayout> that) const override {
+		if (type_guid () == ClazzHolder::hold (that)->type_guid ())
+			return TRUE ;
 		if (type_size () != ClazzHolder::hold (that)->type_size ())
 			return FALSE ;
 		if (type_align () != ClazzHolder::hold (that)->type_align ())
 			return FALSE ;
-		if (type_meta () == ClazzHolder::hold (that)->type_meta ())
-			return TRUE ;
 		return inline_equal (type_name () ,ClazzHolder::hold (that)->type_name ()) ;
 	}
 
 	Flag compr (CR<ClazzLayout> that) const override {
-		if (type_meta () == ClazzHolder::hold (that)->type_meta ())
+		if (type_guid () == ClazzHolder::hold (that)->type_guid ())
 			return ZERO ;
 		return inline_compr (type_name () ,ClazzHolder::hold (that)->type_name ()) ;
 	}
@@ -722,7 +722,7 @@ public:
 	}
 
 	void destroy () override {
-		if (self.mLayout == ZERO)
+		if (!exist ())
 			return ;
 		const auto r1x = RFat<ReflectScope> (unknown ()) ;
 		r1x->leave (Pointer::make (self.mLayout)) ;

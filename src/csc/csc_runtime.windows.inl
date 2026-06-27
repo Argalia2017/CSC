@@ -113,7 +113,7 @@ public:
 			auto rax = ByteReader (Ref<RefBuffer<Byte>>::reference (snapshot_)) ;
 			rax >> slice ("CSC_Process") ;
 			rax >> GAP ;
-			const auto r1x = rax.poll (TYPE<Val64>::expr) ;
+			const auto r1x = rax.pull (TYPE<Val64>::expr) ;
 			self.mUid = Flag (r1x) ;
 			rax >> GAP ;
 			rax >> self.mProcessCode ;
@@ -262,7 +262,7 @@ public:
 		} ,[&] (VR<csc_handle_t> me) {
 			CloseHandle (me) ;
 		}) ;
-		self.mRoot = Ref<SingletonRoot>::make () ;
+		self.mRoot = Ref<SingletonRoot>::reference (SingletonRoot::expr) ;
 		self.mRoot->mMutex = NULL ;
 		self.mLocal.mReserve1 = Quad (self.mUid) ;
 		self.mLocal.mAddress1 = Quad (address (self.mRoot.ref)) ;
@@ -371,7 +371,7 @@ public:
 		if ifdo (TRUE) {
 			if (ret != ZERO)
 				discard ;
-			ret = r1x.type_guid () ;
+			ret = r1x.type_expr () ;
 			SingletonProc::save (r1x ,ret) ;
 			ret = SingletonProc::load (r1x) ;
 		}
@@ -392,8 +392,7 @@ public:
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;
 		Scope anonymous (self.mRoot->mMutex) ;
-		const auto r1x = Pin<Set<Clazz>> (self.mRoot->mClazzSet) ;
-		r1x->add (clazz ,layout) ;
+		self.mRoot->mPin->mClazzSet.add (clazz ,layout) ;
 	}
 } ;
 

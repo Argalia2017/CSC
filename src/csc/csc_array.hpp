@@ -1508,7 +1508,7 @@ struct SortedMapTree {
 } ;
 
 struct SortedMapLayout {
-	Ref<SortedMapTree> mThis ;
+	SharedRef<SortedMapTree> mThis ;
 	Index mRoot ;
 	RefBuffer<Index> mRange ;
 	Index mWrite ;
@@ -2149,7 +2149,7 @@ struct BitSetHolder implement Interface {
 	imports CFat<BitSetHolder> hold (CR<BitSetLayout> that) ;
 
 	virtual void initialize (CR<Length> size_) = 0 ;
-	virtual void initialize (CR<Length> size_ ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Length> size_ ,CR<Array<Index>> params ,VR<BoxLayout> item) = 0 ;
 	virtual void initialize (CR<BitSetLayout> that) = 0 ;
 	virtual void clear () = 0 ;
 	virtual Length size () const = 0 ;
@@ -2188,9 +2188,9 @@ public:
 		BitSetHolder::hold (thiz)->initialize (size_) ;
 	}
 
-	explicit BitSet (CR<SizeProxy> size_ ,CR<csc_initializer_list_t<A>> that) {
+	explicit BitSet (CR<SizeProxy> size_ ,CR<Array<Index>> params) {
 		auto rax = Box<A> () ;
-		BitSetHolder::hold (thiz)->initialize (size_ ,Pointer::from (that) ,rax) ;
+		BitSetHolder::hold (thiz)->initialize (size_ ,params ,rax) ;
 	}
 
 	implicit BitSet (CR<BitSet> that) {

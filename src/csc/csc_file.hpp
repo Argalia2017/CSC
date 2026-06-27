@@ -316,7 +316,7 @@ struct StreamFileEncode {
 		ByteWriter ,
 		TextWriter ,
 		ETC
-	};
+	} ;
 } ;
 
 struct StreamFileWriterLayout ;
@@ -326,8 +326,9 @@ struct StreamFileWriterHolder implement Interface {
 	imports VFat<StreamFileWriterHolder> hold (VR<StreamFileWriterLayout> that) ;
 	imports CFat<StreamFileWriterHolder> hold (CR<StreamFileWriterLayout> that) ;
 
-	virtual void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> option) = 0 ;
-	virtual CR<Writer> ref_m () leftvalue = 0 ;
+	virtual void initialize (CR<String<Str>> file) = 0 ;
+	virtual void open (CR<Just<StreamFileEncode>> option) = 0 ;
+	virtual CR<Writer> ref_m () const leftvalue = 0 ;
 	virtual void flush () = 0 ;
 } ;
 
@@ -335,21 +336,31 @@ class StreamFileWriter implement Super<Ref<StreamFileWriterLayout>> {
 public:
 	implicit StreamFileWriter () = default ;
 
-	explicit StreamFileWriter (CR<String<Str>> file ,CR<Just<StreamFileEncode>> option) {
+	explicit StreamFileWriter (CR<String<Str>> file) {
 		mThis = StreamFileWriterHolder::create () ;
-		StreamFileWriterHolder::hold (thiz)->initialize (file ,option) ;
+		StreamFileWriterHolder::hold (thiz)->initialize (file) ;
 	}
 
-	CR<Writer> ref_m () leftvalue {
+	explicit StreamFileWriter (CR<String<Str>> file ,CR<Just<StreamFileEncode>> option) {
+		mThis = StreamFileWriterHolder::create () ;
+		StreamFileWriterHolder::hold (thiz)->initialize (file) ;
+		open (option) ;
+	}
+
+	void open (CR<Just<StreamFileEncode>> option) {
+		return StreamFileWriterHolder::hold (thiz)->open (option) ;
+	}
+
+	CR<Writer> ref_m () const leftvalue {
 		return StreamFileWriterHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator CR<Writer> () leftvalue {
+	forceinline operator CR<Writer> () const leftvalue {
 		return ref ;
 	}
 
 	void flush () {
-		StreamFileWriterHolder::hold (thiz)->flush () ;
+		return StreamFileWriterHolder::hold (thiz)->flush () ;
 	}
 } ;
 
@@ -425,8 +436,7 @@ struct UartFileHolder implement Interface {
 	imports VFat<UartFileHolder> hold (VR<UartFileLayout> that) ;
 	imports CFat<UartFileHolder> hold (CR<UartFileLayout> that) ;
 
-	virtual void initialize () = 0 ;
-	virtual void set_port_name (CR<String<Str>> name) = 0 ;
+	virtual void initialize (CR<String<Str>> file) = 0 ;
 	virtual void set_port_rate (CR<Length> rate) = 0 ;
 	virtual void set_ring_size (CR<Length> size_) = 0 ;
 	virtual void open () = 0 ;
@@ -437,13 +447,9 @@ class UartFile implement Super<Ref<UartFileLayout>> {
 public:
 	implicit UartFile () = default ;
 
-	implicit UartFile (CR<typeof (NULL)>) {
+	implicit UartFile (CR<String<Str>> file) {
 		mThis = UartFileHolder::create () ;
-		UartFileHolder::hold (thiz)->initialize () ;
-	}
-
-	void set_port_name (CR<String<Str>> name) {
-		return UartFileHolder::hold (thiz)->set_port_name (name) ;
+		UartFileHolder::hold (thiz)->initialize (file) ;
 	}
 
 	void set_port_rate (CR<Length> rate) {

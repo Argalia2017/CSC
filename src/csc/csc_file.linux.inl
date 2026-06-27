@@ -631,8 +631,7 @@ public:
 		} ,[&] (VR<String<Str>> me) {
 			FileProc::erase_file (me) ;
 		}) ;
-		const auto r1x = Pin<List<UniqueRef<String<Str>>>> (self.mLockDirectory) ;
-		r1x->add (move (rax)) ;
+		self.mPin->mLockDirectory.add (move (rax)) ;
 	}
 } ;
 
@@ -1065,14 +1064,11 @@ struct UartFileCOMStatus {} ;
 
 class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileLayout> {
 public:
-	void initialize () override {
+	void initialize (CR<String<Str>> name) override {
+		self.mPortName = name ;
 		self.mCOMParams = Ref<UartFileCOMParams>::make () ;
 		self.mCOMStatus = Ref<UartFileCOMStatus>::make () ;
 		self.mCOMError = 0 ;
-	}
-
-	void set_port_name (CR<String<Str>> name) override {
-		self.mPortName = name ;
 	}
 
 	void set_port_rate (CR<Length> rate) override {

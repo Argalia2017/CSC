@@ -40,10 +40,11 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
-		BoxHolder::hold (item)->initialize (holder) ;
 		for (auto &&i : range (0 ,rax.size ())) {
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
-			r1x->assign (at (i) ,BoxHolder::hold (item)->ref) ;
+			BoxHolder::hold (item)->initialize (holder) ;
+			r1x->swap (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r1x->swap (at (i) ,BoxHolder::hold (item)->ref) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -180,24 +181,22 @@ public:
 	void initialize (CR<Length> size_ ,CR<Length> step_) override {
 		if (size_ <= 0)
 			return ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mString) ;
 		const auto r1x = size_ + 1 ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (step_ != 1)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru>>::expr] (Pointer::from (self.mString)) ;
 			rax = RefBuffer<Stru> (r1x) ;
 		}
 		if ifdo (act) {
 			if (step_ != 2)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru16>>::expr] (Pointer::from (self.mString)) ;
 			rax = RefBuffer<Stru16> (r1x) ;
 		}
 		if ifdo (act) {
 			if (step_ != 4)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<Stru32>>::expr] (Pointer::from (self.mString)) ;
 			rax = RefBuffer<Stru32> (r1x) ;
 		}
 		if ifdo (act) {
@@ -554,6 +553,7 @@ public:
 		const auto r2x = iy - ix + 1 ;
 		const auto r3x = r2x * step () ;
 		inline_memcpy (self.mString[0] ,self.mString[ix] ,r3x) ;
+		trunc (r2x) ;
 	}
 
 	Bool trim_contain (CR<Slice> list ,CR<Stru32> item) const {
@@ -590,7 +590,7 @@ public:
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r1x->swap (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -668,7 +668,7 @@ public:
 		const auto r1x = self.mDeque.size () ;
 		Index ix = self.mWrite % r1x ;
 		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->assign (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
+		r2x->swap (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
 		self.mWrite++ ;
 	}
 
@@ -691,7 +691,7 @@ public:
 		const auto r1x = self.mDeque.size () ;
 		Index ix = (self.mRead - 1 + r1x) % r1x ;
 		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->assign (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
+		r2x->swap (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
 		self.mRead-- ;
 		check_bound () ;
 	}
@@ -735,7 +735,7 @@ public:
 			for (auto &&i : range (0 ,r1x - self.mRead)) {
 				Index ix = r1x - 1 - i ;
 				Index iy = r2x - 1 - i ;
-				r3x->assign (self.mDeque.at (iy) ,self.mDeque.at (ix)) ;
+				r3x->swap (self.mDeque.at (iy) ,self.mDeque.at (ix)) ;
 			}
 			self.mRead += r2x - r1x ;
 			check_bound () ;
@@ -787,7 +787,7 @@ public:
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r1x->swap (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -815,6 +815,7 @@ public:
 	}
 
 	CR<Pointer> at (CR<Index> index) const leftvalue override {
+		assert (inline_between (index ,0 ,length ())) ;
 		return self.mPriority.at (index) ;
 	}
 
@@ -852,7 +853,7 @@ public:
 		check_resize () ;
 		Index ix = self.mWrite ;
 		const auto r1x = RFat<ReflectAssign> (self.mPriority.unknown ()) ;
-		r1x->assign (self.mPriority.at (ix) ,BoxHolder::hold (item)->ref) ;
+		r1x->swap (self.mPriority.at (ix) ,BoxHolder::hold (item)->ref) ;
 		self.mWrite++ ;
 		update_insert (ix) ;
 	}
@@ -861,7 +862,11 @@ public:
 		assert (!empty ()) ;
 		Index ix = self.mWrite - 1 ;
 		const auto r1x = RFat<ReflectAssign> (self.mPriority.unknown ()) ;
-		r1x->assign (self.mPriority.at (0) ,self.mPriority.at (ix)) ;
+		const auto r2x = RFat<ReflectDestroy> (self.mPriority.unknown ()) ;
+		const auto r3x = RFat<ReflectCreate> (self.mPriority.unknown ()) ;
+		r1x->swap (self.mPriority.at (0) ,self.mPriority.at (ix)) ;
+		r2x->destroy (self.mPriority.at (ix) ,1) ;
+		r3x->create (self.mPriority.at (ix) ,1) ;
 		self.mWrite = ix ;
 		update_insert (0) ;
 	}
@@ -871,7 +876,7 @@ public:
 		Index jy = self.mWrite ;
 		const auto r1x = RFat<ReflectAssign> (self.mPriority.unknown ()) ;
 		const auto r2x = RFat<ReflectCompr> (self.mPriority.unknown ()) ;
-		r1x->assign (self.mPriority.at (jy) ,self.mPriority.at (ix)) ;
+		r1x->swap (self.mPriority.at (jy) ,self.mPriority.at (ix)) ;
 		while (TRUE) {
 			Index iy = parent (ix) ;
 			if (iy < 0)
@@ -879,7 +884,7 @@ public:
 			const auto r3x = r2x->compr (self.mPriority.at (jy) ,self.mPriority.at (iy)) ;
 			if (r3x >= 0)
 				break ;
-			r1x->assign (self.mPriority.at (ix) ,self.mPriority.at (iy)) ;
+			r1x->swap (self.mPriority.at (ix) ,self.mPriority.at (iy)) ;
 			ix = iy ;
 		}
 		while (TRUE) {
@@ -904,10 +909,10 @@ public:
 			}
 			if (jx == ix)
 				break ;
-			r1x->assign (self.mPriority.at (ix) ,self.mPriority.at (jx)) ;
+			r1x->swap (self.mPriority.at (ix) ,self.mPriority.at (jx)) ;
 			ix = jx ;
 		}
-		r1x->assign (self.mPriority.at (ix) ,self.mPriority.at (jy)) ;
+		r1x->swap (self.mPriority.at (ix) ,self.mPriority.at (jy)) ;
 	}
 
 	Index parent (CR<Index> curr) const {
@@ -964,7 +969,7 @@ public:
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r1x->swap (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -1164,7 +1169,7 @@ public:
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r1x->swap (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -1348,7 +1353,7 @@ public:
 	}
 
 	void initialize (CR<Unknown> holder ,CR<Length> size_) override {
-		self.mThis = Ref<SortedMapTree>::make () ;
+		self.mThis = SharedRef<SortedMapTree>::make () ;
 		AllocatorHolder::hold (self.mThis->mList)->initialize (holder ,size_) ;
 		self.mThis->mCheck = 0 ;
 		clear () ;
@@ -1360,16 +1365,15 @@ public:
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r1x->swap (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
 	SortedMapLayout share () const override {
-		assert (self.mRoot == NONE) ;
 		SortedMapLayout ret ;
-		ret.mThis = self.mThis.share () ;
+		ret.mThis = self.mThis ;
 		ret.mRoot = NONE ;
 		ret.mRange = RefBuffer<Index> () ;
 		ret.mWrite = 0 ;
@@ -1595,7 +1599,7 @@ public:
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r1x->swap (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -2194,7 +2198,7 @@ public:
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r1x->swap (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -2396,14 +2400,14 @@ public:
 		clear () ;
 	}
 
-	void initialize (CR<Length> size_ ,CR<Pointer> params ,VR<BoxLayout> item) override {
+	void initialize (CR<Length> size_ ,CR<Array<Index>> params ,VR<BoxLayout> item) override {
 		const auto r1x = Unknown (BufferUnknownBinder<Index> ()) ;
-		auto rax = from_initializer_list (params ,r1x) ;
 		initialize (size_) ;
-		const auto r2x = RFat<ReflectAssign> (r1x) ;
-		for (auto &&i : range (0 ,rax.size ())) {
+		const auto r2x = RFat<ReflectSize> (r1x) ;
+		const auto r3x = r2x->type_size () ;
+		for (auto &&i : range (0 ,params.size ())) {
 			BoxHolder::hold (item)->initialize (r1x) ;
-			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			inline_memcpy (BoxHolder::hold (item)->ref ,Pointer::from (params[i]) ,r3x) ;
 			add (move (item)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -2436,12 +2440,12 @@ public:
 	}
 
 	void get (CR<Index> index ,VR<Bool> item) const override {
-		const auto r1x = ByteProc::pow_bit (index % 8) ;
+		const auto r1x = ByteProc::exp2p_bit (index % 8) ;
 		item = ByteProc::any_bit (self.mSet[index / 8] ,r1x) ;
 	}
 
 	void set (CR<Index> index ,CR<Bool> item) override {
-		const auto r1x = ByteProc::pow_bit (index % 8) ;
+		const auto r1x = ByteProc::exp2p_bit (index % 8) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (!item)
@@ -2468,7 +2472,7 @@ public:
 			const auto r1x = index % 8 + 1 ;
 			if (r1x == 8)
 				discard ;
-			const auto r2x = ByteProc::pow_bit (r1x) - 1 ;
+			const auto r2x = ByteProc::exp2p_bit (r1x) - 1 ;
 			const auto r3x = self.mSet[ix] & ~Byte (r2x) ;
 			if (r3x == Byte (0X00))
 				discard ;
@@ -2631,7 +2635,7 @@ public:
 		if (ix < 0)
 			return ;
 		const auto r1x = that.mWidth % 8 ;
-		const auto r2x = ByteProc::pow_bit (r1x) - 1 ;
+		const auto r2x = ByteProc::exp2p_bit (r1x) - 1 ;
 		that.mSet[ix] &= Byte (r2x) ;
 	}
 } ;

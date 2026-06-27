@@ -648,6 +648,7 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_TranslationMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) = 0 ;
 	virtual void make_PerspectiveMatrix (CR<Flt64> fovx ,CR<ImageShape> shape) = 0 ;
 	virtual void make_PerspectiveMatrix (CR<Flt64> fx ,CR<Flt64> fy ,CR<Flt64> cx ,CR<Flt64> cy) = 0 ;
+	virtual void make_ProjectionMatrix (CR<Vector> normal) = 0 ;
 	virtual void make_ProjectionMatrix (CR<Vector> normal ,CR<Vector> center ,CR<Vector> light) = 0 ;
 	virtual void make_ViewMatrix (CR<Vector> vx ,CR<Vector> vy) = 0 ;
 	virtual void make_ViewMatrix (CR<Vector> vx ,CR<Vector> vy ,CR<Just<ViewMatrixOption>> option) = 0 ;
@@ -714,6 +715,12 @@ inline Matrix PerspectiveMatrix (CR<Flt64> fovx ,CR<ImageShape> shape) {
 inline Matrix PerspectiveMatrix (CR<Flt64> fx ,CR<Flt64> fy ,CR<Flt64> cx ,CR<Flt64> cy) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fx ,fy ,cx ,cy) ;
+	return move (ret) ;
+}
+
+inline Matrix ProjectionMatrix (CR<Vector> normal) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_ProjectionMatrix (normal) ;
 	return move (ret) ;
 }
 
@@ -828,7 +835,9 @@ struct MatrixProcHolder implement Interface {
 	virtual TRSResult solve_trs (CR<Matrix> a) const = 0 ;
 	virtual KRTResult solve_krt (CR<Matrix> a) const = 0 ;
 	virtual SVDResult solve_svd (CR<Matrix> a) const = 0 ;
-	virtual Vector intersection (CR<Vector> a1 ,CR<Vector> a2 ,CR<Vector> b1 ,CR<Vector> b2) const = 0 ;
+	virtual Matrix solve_llt (CR<Matrix> a) const = 0 ;
+	virtual Vector intersection (CR<Vector> p1 ,CR<Vector> v1 ,CR<Vector> p2 ,CR<Vector> v2) const = 0 ;
+	virtual Flt64 atan_angle (CR<Vector> v1 ,CR<Vector> vx ,CR<Vector> vy) const = 0 ;
 } ;
 
 class MatrixProc implement Super<Ref<MatrixProcLayout>> {
@@ -849,8 +858,16 @@ public:
 		return MatrixProcHolder::hold (expr)->solve_svd (a) ;
 	}
 
+	static Matrix solve_llt (CR<Matrix> a) {
+		return MatrixProcHolder::hold (expr)->solve_llt (a) ;
+	}
+
 	static Vector intersection (CR<Vector> p1 ,CR<Vector> v1 ,CR<Vector> p2 ,CR<Vector> v2) {
 		return MatrixProcHolder::hold (expr)->intersection (p1 ,v1 ,p2 ,v2) ;
+	}
+
+	static Flt64 atan_angle (CR<Vector> v1 ,CR<Vector> vx ,CR<Vector> vy) {
+		return MatrixProcHolder::hold (expr)->atan_angle (v1 ,vx ,vy) ;
 	}
 } ;
 
@@ -1052,7 +1069,12 @@ struct SE3Holder implement Interface {
 	virtual SE3Layout sadd (CR<SE3Layout> that) const = 0 ;
 	virtual SE3Layout smul (CR<Flt64> that) const = 0 ;
 	virtual SE3Layout sdiv (CR<Flt64> that) const = 0 ;
+	virtual Vector angular () const = 0 ;
+	virtual Vector linear () const = 0 ;
 	virtual Matrix matrix () const = 0 ;
+	virtual SE3Layout jacobian (CR<Vector> dst ,CR<Vector> src) const = 0 ;
+	virtual SE3Layout integrate (CR<Flt64> dt) const = 0 ;
+	virtual SE3Layout slerp (CR<SE3Layout> into ,CR<Flt64> t) const = 0 ;
 } ;
 
 class SE3 implement SE3Layout {
@@ -1060,7 +1082,9 @@ protected:
 	using SE3Layout::mSE3 ;
 
 public:
-	void initialize (CR<Matrix> that) {
+	implicit SE3 () = default ;
+
+	explicit SE3 (CR<Matrix> that) {
 		SE3Holder::hold (thiz)->initialize (that) ;
 	}
 
@@ -1099,8 +1123,31 @@ public:
 		thiz = sdiv (that) ;
 	}
 
+	Vector angular () const {
+		return SE3Holder::hold (thiz)->angular () ;
+	}
+
+	Vector linear () const {
+		return SE3Holder::hold (thiz)->linear () ;
+	}
+
 	Matrix matrix () const {
 		return SE3Holder::hold (thiz)->matrix () ;
+	}
+
+	SE3 jacobian (CR<Vector> dst ,CR<Vector> src) const {
+		SE3Layout ret = SE3Holder::hold (thiz)->jacobian (dst ,src) ;
+		return move (keep[TYPE<SE3>::expr] (ret)) ;
+	}
+
+	SE3 integrate (CR<Flt64> dt) {
+		SE3Layout ret = SE3Holder::hold (thiz)->integrate (dt) ;
+		return move (keep[TYPE<SE3>::expr] (ret)) ;
+	}
+
+	SE3 slerp (CR<SE3> into ,CR<Flt64> t) const {
+		SE3Layout ret = SE3Holder::hold (thiz)->slerp (into ,t) ;
+		return move (keep[TYPE<SE3>::expr] (ret)) ;
 	}
 } ;
 
@@ -1143,7 +1190,7 @@ struct PointCloudKDTreeHolder implement Interface {
 	imports VFat<PointCloudKDTreeHolder> hold (VR<PointCloudKDTreeLayout> that) ;
 	imports CFat<PointCloudKDTreeHolder> hold (CR<PointCloudKDTreeLayout> that) ;
 
-	virtual void initialize (CR<Array<Pointer>> pointcloud) = 0 ;
+	virtual void initialize (RR<RefBuffer<Flt32>> view ,CR<Length> channel) = 0 ;
 	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const = 0 ;
 	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const = 0 ;
 } ;
@@ -1152,9 +1199,9 @@ class PointCloudKDTree implement Super<Ref<PointCloudKDTreeLayout>> {
 public:
 	implicit PointCloudKDTree () = default ;
 
-	explicit PointCloudKDTree (CR<Array<Pointer>> pointcloud) {
+	explicit PointCloudKDTree (RR<RefBuffer<Flt32>> view ,CR<Length> channel) {
 		mThis = PointCloudKDTreeHolder::create () ;
-		PointCloudKDTreeHolder::hold (thiz)->initialize (pointcloud) ;
+		PointCloudKDTreeHolder::hold (thiz)->initialize (move (view) ,channel) ;
 	}
 
 	Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const {
@@ -1166,14 +1213,10 @@ public:
 	}
 } ;
 
-struct PointCloudLayout {
-	Length mRank ;
-	Ref<Array<Pointer>> mPointCloud ;
-	Matrix mWorld ;
-	PointCloudKDTree mKDTree ;
-} ;
+struct PointCloudLayout ;
 
 struct PointCloudHolder implement Interface {
+	imports Ref<PointCloudLayout> create () ;
 	imports VFat<PointCloudHolder> hold (VR<PointCloudLayout> that) ;
 	imports CFat<PointCloudHolder> hold (CR<PointCloudLayout> that) ;
 
@@ -1181,40 +1224,42 @@ struct PointCloudHolder implement Interface {
 	virtual void initialize (RR<Ref<Array<Point3F>>> pointcloud) = 0 ;
 	virtual void initialize (RR<Ref<Array<Vector>>> pointcloud) = 0 ;
 	virtual Length size () const = 0 ;
+	virtual Length channel () const = 0 ;
 	virtual void get (CR<Index> index ,VR<Vector> item) const = 0 ;
 	virtual Matrix pca_matrix () const = 0 ;
 	virtual Matrix box_matrix (CR<Flt64> bx ,CR<Flt64> by ,CR<Flt64> bz) const = 0 ;
 	virtual Matrix cut_matrix (CR<Flt64> sx ,CR<Flt64> sy ,CR<Flt64> sz) const = 0 ;
 	virtual Line3F bound () const = 0 ;
-	virtual PointCloudLayout smul (CR<Matrix> that) const = 0 ;
+	virtual Super<Ref<PointCloudLayout>> smul (CR<Matrix> that) const = 0 ;
 	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const = 0 ;
 	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const = 0 ;
 } ;
 
-class PointCloud implement PointCloudLayout {
-protected:
-	using PointCloudLayout::mRank ;
-	using PointCloudLayout::mPointCloud ;
-	using PointCloudLayout::mWorld ;
-	using PointCloudLayout::mKDTree ;
-
+class PointCloud implement Super<Ref<PointCloudLayout>> {
 public:
 	implicit PointCloud () = default ;
 
 	explicit PointCloud (RR<Ref<Array<Point2F>>> pointcloud) {
+		mThis = PointCloudHolder::create () ;
 		PointCloudHolder::hold (thiz)->initialize (move (pointcloud)) ;
 	}
 
 	explicit PointCloud (RR<Ref<Array<Point3F>>> pointcloud) {
+		mThis = PointCloudHolder::create () ;
 		PointCloudHolder::hold (thiz)->initialize (move (pointcloud)) ;
 	}
 
 	explicit PointCloud (RR<Ref<Array<Vector>>> pointcloud) {
+		mThis = PointCloudHolder::create () ;
 		PointCloudHolder::hold (thiz)->initialize (move (pointcloud)) ;
 	}
 
 	Length size () const {
 		return PointCloudHolder::hold (thiz)->size () ;
+	}
+
+	Length channel () const {
+		return PointCloudHolder::hold (thiz)->channel () ;
 	}
 
 	void get (CR<Index> index ,VR<Vector> item) const {
@@ -1244,7 +1289,7 @@ public:
 	}
 
 	PointCloud smul (CR<Matrix> that) const {
-		PointCloudLayout ret = PointCloudHolder::hold (thiz)->smul (that) ;
+		Super<Ref<PointCloudLayout>> ret = PointCloudHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<PointCloud>::expr] (ret)) ;
 	}
 

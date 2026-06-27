@@ -26,6 +26,7 @@ struct TimeCalendar {
 } ;
 
 struct TimeLayout ;
+
 struct TimeStorage {
 	Val64 mTime ;
 } ;
@@ -117,7 +118,7 @@ public:
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
-	Time operator+ (CR<Time> that) const {
+	forceinline Time operator+ (CR<Time> that) const {
 		return sadd (that) ;
 	}
 
@@ -130,7 +131,7 @@ public:
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
-	Time operator- (CR<Time> that) const {
+	forceinline Time operator- (CR<Time> that) const {
 		return ssub (that) ;
 	}
 
@@ -204,6 +205,7 @@ public:
 } ;
 
 struct AtomicLayout ;
+
 struct AtomicStorage {
 	Val64 mAtomic ;
 } ;
@@ -344,6 +346,7 @@ inline Mutex UniqueMutex () {
 }
 
 struct SharedLockLayout ;
+
 struct SharedLockStorage {
 	RefLayout mMutex ;
 	RefLayout mLock ;
@@ -383,6 +386,7 @@ public:
 } ;
 
 struct UniqueLockLayout ;
+
 struct UniqueLockStorage {
 	RefLayout mMutex ;
 	RefLayout mLock ;

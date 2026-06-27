@@ -10,8 +10,8 @@
 
 namespace CSC {
 struct OptionalLayout {
+	Pin<BoxLayout> mPin ;
 	Flag mCode ;
-	mutable BoxLayout mValue ;
 
 public:
 	implicit OptionalLayout () noexcept {
@@ -23,32 +23,36 @@ struct OptionalHolder implement Interface {
 	imports VFat<OptionalHolder> hold (VR<OptionalLayout> that) ;
 	imports CFat<OptionalHolder> hold (CR<OptionalLayout> that) ;
 
-	virtual void initialize (CR<Flag> code) = 0 ;
+	virtual void initialize (CR<Flag> code ,VR<BoxLayout> addr) = 0 ;
 	virtual Bool exist () const = 0 ;
 	virtual Flag code () const = 0 ;
-	virtual void get (VR<BoxLayout> item) const = 0 ;
-	virtual void set (VR<BoxLayout> item) const = 0 ;
+	virtual void pull (VR<BoxLayout> item) const = 0 ;
+	virtual void push (RR<BoxLayout> item) const = 0 ;
 } ;
 
 template <class A>
 class Optional implement OptionalLayout {
 protected:
+	using OptionalLayout::mPin ;
 	using OptionalLayout::mCode ;
-	using OptionalLayout::mValue ;
-	Union<A> mStorage ;
+	Box<A> mValue ;
 
 public:
 	implicit Optional () = default ;
 
-	implicit Optional (CR<A> that) :Optional (move (that)) {}
+	implicit Optional (CR<A> that) {
+		OptionalHolder::hold (thiz)->initialize (0 ,mValue) ;
+		once (move (that)) ;
+	}
 
 	implicit Optional (RR<A> that) {
+		OptionalHolder::hold (thiz)->initialize (0 ,mValue) ;
 		once (move (that)) ;
 	}
 
 	static Optional error (CR<Flag> code) {
 		Optional ret ;
-		OptionalHolder::hold (ret)->initialize (code) ;
+		OptionalHolder::hold (ret)->initialize (code ,ret.mValue) ;
 		return move (ret) ;
 	}
 
@@ -60,41 +64,30 @@ public:
 		return OptionalHolder::hold (thiz)->code () ;
 	}
 
-	A fetch () const {
+	A pull () const {
 		auto rax = Box<A> () ;
-		OptionalHolder::hold (thiz)->get (rax) ;
+		OptionalHolder::hold (thiz)->pull (rax) ;
 		return move (rax.ref) ;
 	}
 
 	forceinline operator A () const {
-		return fetch () ;
+		return pull () ;
 	}
 
 	void once (CR<A> item) const {
-		once (move (item)) ;
+		auto rax = Box<A>::make (move (item)) ;
+		OptionalHolder::hold (thiz)->push (move (rax)) ;
 	}
 
 	void once (RR<A> item) const {
-		if (exist ())
-			return ;
 		auto rax = Box<A>::make (move (item)) ;
-		OptionalHolder::hold (thiz)->set (rax) ;
+		OptionalHolder::hold (thiz)->push (move (rax)) ;
 	}
 
 	template <class ARG1>
-	forceinline CR<Optional> operator() (RR<ARG1> item) const {
-		once (move (item)) ;
+	forceinline CR<Optional> operator() (XR<ARG1> item) const {
+		once (keep[TYPE<XR<ARG1>>::expr] (item)) ;
 		return thiz ;
-	}
-
-	template <class ARG1>
-	void then (CR<ARG1> func) const {
-		if (!exist ())
-			return ;
-		auto rax = Box<A> () ;
-		OptionalHolder::hold (thiz)->get (rax) ;
-		func (rax.ref) ;
-		OptionalHolder::hold (thiz)->set (rax) ;
 	}
 } ;
 
@@ -224,6 +217,7 @@ inline Wrapper<Pointer ,RANK0> MakeWrapper () {
 template <class ARG1 ,class...ARG2>
 inline Wrapper<ARG1 ,RANK_OF<TYPE<ARG1 ,ARG2...>>> MakeWrapper (CR<ARG1> params1 ,CR<ARG2>...params2) {
 	using R1X = RANK_OF<TYPE<ARG1 ,ARG2...>> ;
+	//@fatal: GCC is so bad
 	return Wrapper<ARG1 ,R1X> (Buffer<Flag ,R1X> ({address (params1) ,address (params2)...})) ;
 }
 
@@ -257,6 +251,27 @@ public:
 	}
 } ;
 
+template <class A ,class B ,class C>
+class FunctionTBind ;
+
+template <class A ,class B ,class...C>
+class FunctionTBind<A ,B ,TYPE<C...>> implement Proxy {
+protected:
+	A mThat ;
+	B mBind ;
+
+public:
+	implicit FunctionTBind () = delete ;
+
+	implicit FunctionTBind (RR<A> func_ ,CR<B> bind_) :mThat (move (func_)) {
+		mBind = bind_ ;
+	}
+
+	forceinline void operator() (XR<C>...params) const {
+		return mThat (mBind ,params...) ;
+	}
+} ;
+
 struct FunctionTree ;
 
 struct FunctionLayout {
@@ -273,6 +288,7 @@ struct FunctionHolder implement Interface {
 	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual Length rank () const = 0 ;
 	virtual void invoke (CR<Wrapper<Pointer>> params) const = 0 ;
+	virtual Scope until () const = 0 ;
 } ;
 
 template <class A>
@@ -289,16 +305,19 @@ public:
 	}
 } ;
 
+template <class A>
+class FunctionT ;
+
 template <class...A>
-class Function implement FunctionLayout {
+class FunctionT<TYPE<A...>> implement FunctionLayout {
 protected:
 	using FunctionLayout::mThis ;
 
 public:
-	implicit Function () = default ;
+	implicit FunctionT () = default ;
 
 	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_EXTEND<FunctionLayout ,ARG1>>>>
-	implicit Function (RR<ARG1> that) {
+	implicit FunctionT (RR<ARG1> that) {
 		using R1X = FUNCTION_RETURN<ARG1> ;
 		using R2X = FUNCTION_PARAMS<ARG1> ;
 		require (IS_VOID<R1X>) ;
@@ -308,17 +327,17 @@ public:
 		rax.remake (move (that)) ;
 	}
 
-	implicit Function (CR<Function> that) {
+	implicit FunctionT (CR<FunctionT> that) {
 		FunctionHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VR<Function> operator= (CR<Function> that) {
+	forceinline VR<FunctionT> operator= (CR<FunctionT> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit Function (RR<Function> that) = default ;
+	implicit FunctionT (RR<FunctionT> that) = default ;
 
-	forceinline VR<Function> operator= (RR<Function> that) = default ;
+	forceinline VR<FunctionT> operator= (RR<FunctionT> that) = default ;
 
 	VR<BoxLayout> raw () leftvalue {
 		return FunctionHolder::hold (thiz)->raw () ;
@@ -339,7 +358,21 @@ public:
 	forceinline void operator() (XR<A>...params) const {
 		return invoke (keep[TYPE<XR<A>>::expr] (params)...) ;
 	}
+
+	template <class ARG1 ,class ARG2 = TYPE_M1ST_REST<FUNCTION_PARAMS<ARG1>>>
+	FunctionT<ARG2> bind (RR<ARG1> that) const {
+		using R1X = TYPE_M1ST_ITEM<FUNCTION_PARAMS<ARG1>> ;
+		require (IS_SAME<R1X ,FunctionT>) ;
+		return FunctionT<ARG2> (FunctionTBind<ARG1 ,FunctionT ,ARG2> (move (that) ,thiz)) ;
+	}
+
+	Scope until () const {
+		return FunctionHolder::hold (thiz)->until () ;
+	}
 } ;
+
+template <class...A>
+using Function = FunctionT<TYPE<A...>> ;
 
 struct ReflectRecast implement Interface {
 	virtual Flag recast (CR<Flag> layout) const = 0 ;
@@ -685,7 +718,7 @@ struct UniqueRefHolder implement Interface {
 	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
 	virtual UniqueRefLayout recast (CR<Unknown> extend) = 0 ;
-	virtual void once_done () = 0 ;
+	virtual Bool done () = 0 ;
 } ;
 
 inline UniqueRefLayout::~UniqueRefLayout () noexcept {
@@ -770,8 +803,8 @@ public:
 		return move (keep[TYPE<UniqueRef<ARG1>>::expr] (ret)) ;
 	}
 
-	void once_done () {
-		return UniqueRefHolder::hold (thiz)->once_done () ;
+	Bool done () {
+		return UniqueRefHolder::hold (thiz)->done () ;
 	}
 } ;
 

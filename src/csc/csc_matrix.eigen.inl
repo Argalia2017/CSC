@@ -56,7 +56,7 @@ public:
 		ret.mR = r6x ;
 		const auto r7x = ret.mR.transpose () * r2x ;
 		const auto r8x = DiagMatrix (r7x[0][0] ,r7x[1][1] ,r7x[2][2]) ;
-		ret.mS = r8x.sabs ();
+		ret.mS = r8x.sabs () ;
 		return move (ret) ;
 	}
 
@@ -69,7 +69,7 @@ public:
 		while (TRUE) {
 			rax = FALSE ;
 			if ifdo (TRUE) {
-				if (MathProc::abs (ret.mK[1][0]) < FLT64_EPS)
+				if (MathProc::inverse (ret.mK[1][0]) == 0)
 					discard ;
 				const auto r1x = ret.mK[1][0] ;
 				const auto r2x = ret.mK[1][1] ;
@@ -87,7 +87,7 @@ public:
 				rax = TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (MathProc::abs (ret.mK[2][0]) < FLT64_EPS)
+				if (MathProc::inverse (ret.mK[2][0]) == 0)
 					discard ;
 				const auto r5x = ret.mK[2][0] ;
 				const auto r6x = ret.mK[2][2] ;
@@ -105,7 +105,7 @@ public:
 				rax = TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (MathProc::abs (ret.mK[2][1]) < FLT64_EPS)
+				if (MathProc::inverse (ret.mK[2][1]) == 0)
 					discard ;
 				const auto r9x = ret.mK[2][1] ;
 				const auto r10x = ret.mK[2][2] ;
@@ -141,6 +141,29 @@ public:
 		return move (ret) ;
 	}
 
+	Matrix solve_llt (CR<Matrix> a) const override {
+		Matrix ret = Matrix::zero () ;
+		for (auto &&i : range (0 ,4 ,0 ,4)) {
+			if (i.mX > i.mY)
+				continue ;
+			auto rax = Flt64 (0) ;
+			for (auto &&j : range (0 ,i.mX))
+				rax += ret[i.mY][j] * ret[i.mX][j] ;
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (i.mX != i.mY)
+					discard ;
+				rax = a[i.mY][i.mY] - rax ;
+				assume (rax > 0) ;
+				ret[i] = MathProc::sqrt (rax) ;
+			}
+			if ifdo (act) {
+				ret[i] = (a[i] - rax) * MathProc::inverse (ret[i.mX][i.mX]) ;
+			}
+		}
+		return move (ret) ;
+	}
+
 	Eigen::Matrix4d cvt_eigen_matrix (CR<Matrix> a) const {
 		Eigen::Matrix4d ret ;
 		for (auto &&i : range (0 ,4 ,0 ,4))
@@ -161,9 +184,19 @@ public:
 		const auto r1x = v1.normalize () ;
 		const auto r2x = v2.normalize () ;
 		const auto r3x = Matrix (r1x ,r2x ,r1x ^ r2x ,p1) ;
-		const auto r4x = r3x.inverse () * p2 ;
-		const auto r5x = Vector (r4x[0] ,0 ,0 ,1) ;
-		return r3x * r5x ;
+		const auto r4x = r3x.determinant () ;
+		if (MathProc::inverse (r4x) == 0)
+			return (p1 + p2).projection () ;
+		const auto r5x = r3x.inverse () * p2 ;
+		const auto r6x = Vector (r5x[0] ,0 ,0 ,1) ;
+		return r3x * r6x ;
+	}
+
+	Flt64 atan_angle (CR<Vector> v1 ,CR<Vector> vx ,CR<Vector> vy) const override {
+		const auto r1x = ViewMatrixXYZ (vx ,vy) ;
+		const auto r2x = r1x.transpose () * v1 ;
+		const auto r3x = Vector (r2x[0] ,r2x[1] ,0 ,0).normalize () ;
+		return MathProc::atan (r3x[1] ,r3x[0]) ;
 	}
 } ;
 

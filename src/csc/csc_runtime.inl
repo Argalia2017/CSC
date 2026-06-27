@@ -38,15 +38,15 @@ public:
 
 	void initialize (CR<TimeCalendar> calendar_) override {
 		auto rax = std::tm () ;
-		const auto r1x = calendar_.mYear - 1900 ;
-		rax.tm_year = Val32 (r1x * Length (r1x > 0)) ;
-		const auto r2x = calendar_.mMonth ;
-		rax.tm_mon = Val32 (r2x * Length (r2x > 0)) ;
+		const auto r1x = Val32 (calendar_.mYear - 1900) ;
+		rax.tm_year = r1x * MathProc::step (r1x) ;
+		const auto r2x = Val32 (calendar_.mMonth) ;
+		rax.tm_mon = r2x * MathProc::step (r2x) ;
 		rax.tm_mday = Val32 (calendar_.mDay) ;
-		const auto r3x = calendar_.mWDay - 1 ;
-		rax.tm_wday = Val32 (r3x * Length (r3x > 0)) ;
-		const auto r4x = calendar_.mYDay - 1 ;
-		rax.tm_yday = Val32 (r4x * Length (r4x > 0)) ;
+		const auto r3x = Val32 (calendar_.mWDay - 1) ;
+		rax.tm_wday = r3x * MathProc::step (r3x) ;
+		const auto r4x = Val32 (calendar_.mYDay - 1) ;
+		rax.tm_yday = r4x * MathProc::step (r4x) ;
 		rax.tm_hour = Val32 (calendar_.mHour) ;
 		rax.tm_min = Val32 (calendar_.mMinute) ;
 		rax.tm_sec = Val32 (calendar_.mSecond) ;
@@ -129,13 +129,15 @@ public:
 #endif
 
 	Super<Box<TimeLayout ,TimeStorage>> sadd (CR<TimeLayout> that) const override {
-		Super<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
+		Super<Box<TimeLayout ,TimeStorage>> ret ;
+		ret.mThis = TimeHolder::create () ;
 		ret.mThis->mTime = self.mTime + that.mTime ;
 		return move (ret) ;
 	}
 
 	Super<Box<TimeLayout ,TimeStorage>> ssub (CR<TimeLayout> that) const override {
-		Super<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
+		Super<Box<TimeLayout ,TimeStorage>> ret ;
+		ret.mThis = TimeHolder::create () ;
 		ret.mThis->mTime = self.mTime - that.mTime ;
 		return move (ret) ;
 	}
@@ -729,9 +731,18 @@ exports CFat<RandomHolder> RandomHolder::hold (CR<RandomLayout> that) {
 template class External<SingletonProcHolder ,SingletonProcLayout> ;
 
 struct SingletonRoot {
+	Pin<SingletonRoot> mPin ;
 	Mutex mMutex ;
 	Set<Clazz> mClazzSet ;
+
+public:
+	static VR<SingletonRoot> expr_m () ;
 } ;
+
+inline VR<SingletonRoot> SingletonRoot::expr_m () {
+	static auto mInstance = SingletonRoot () ;
+	return mInstance ;
+}
 
 struct SingletonLocal {
 	Quad mReserve1 ;
@@ -776,6 +787,7 @@ exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CR<SingletonProcLay
 }
 
 struct GlobalNode {
+	Pin<GlobalNode> mPin ;
 	Flag mHolder ;
 	AutoRef<Pointer> mValue ;
 } ;
@@ -850,9 +862,9 @@ public:
 	void store (RR<AutoRef<Pointer>> item) const override {
 		Scope anonymous (self.mThis->mMutex) ;
 		Index ix = self.mIndex ;
-		const auto r1x = Pin<AutoRef<Pointer>> (self.mThis->mGlobalList[ix].mValue) ;
-		assume (!r1x->exist ()) ;
-		r1x.ref = move (item) ;
+		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
+		assume (!rax.exist ()) ;
+		self.mThis->mGlobalList[ix].mPin->mValue = move (item) ;
 	}
 } ;
 

@@ -9,6 +9,15 @@
 namespace CSC {
 class ImageShapeImplHolder final implement Fat<ImageShapeHolder ,ImageShapeLayout> {
 public:
+	void initialize (CR<Length> cx_ ,CR<Length> cy_ ,CR<Length> step_) override {
+		assert (cx_ > 0) ;
+		assert (cy_ > 0) ;
+		assert (step_ >= 0) ;
+		self.mCX = cx_ ;
+		self.mCY = cy_ ;
+		self.mStep = step_ ;
+	}
+
 	Length size () const override {
 		return self.mCX * self.mCY ;
 	}
@@ -47,8 +56,11 @@ public:
 	void initialize (CR<Unknown> holder ,RR<ImageLayout> that) override {
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_size () ;
+		const auto r3x = r1x->type_align () ;
 		noop (r2x) ;
+		noop (r3x) ;
 		assume (r2x == that.mImage.step ()) ;
+		assume (r3x == that.mWidth % 1024) ;
 		self = move (that) ;
 	}
 
@@ -57,13 +69,14 @@ public:
 		assert (cy_ > 0) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_size () ;
-		const auto r3x = cx_ * cy_ * step_ ;
-		const auto r4x = inline_alignas (r3x ,r2x) / r2x ;
+		const auto r3x = r1x->type_align () ;
+		const auto r4x = cx_ * cy_ * step_ ;
+		const auto r5x = inline_alignas (r4x ,r2x) / r2x ;
 		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mImage) ;
-		RefBufferHolder::hold (rax)->initialize (holder ,r4x) ;
+		RefBufferHolder::hold (rax)->initialize (holder ,r5x) ;
 		rax.mSize = cx_ * cy_ ;
 		rax.mStep = step_ ;
-		self.mWidth = cx_ ;
+		self.mWidth = cx_ * 1024 + r3x ;
 		self.mStride = cx_ ;
 		reset () ;
 	}
@@ -145,11 +158,14 @@ public:
 			return ;
 		const auto r1x = inline_max (self.mStride ,1) ;
 		const auto r2x = self.mImage.size () / r1x ;
-		reset (0 ,0 ,self.mWidth ,r2x) ;
+		const auto r3x = self.mWidth / 1024 ;
+		reset (0 ,0 ,r3x ,r2x) ;
 	}
 
 	void reset (CR<Length> bx_ ,CR<Length> by_ ,CR<Length> cx_ ,CR<Length> cy_) override {
 		assert (self.mImage.size () > 0) ;
+		assert (bx_ >= 0) ;
+		assert (by_ >= 0) ;
 		assert (cx_ > 0) ;
 		assert (cy_ > 0) ;
 		const auto r1x = bx_ + cx_ - 1 ;
@@ -231,6 +247,182 @@ exports CFat<ImageHolder> ImageHolder::hold (CR<ImageLayout> that) {
 	return CFat<ImageHolder> (ImageImplHolder () ,that) ;
 }
 
+using COLOR_SCALE = ENUM<1024> ;
+
+class ColorImplHolder final implement Fat<ColorHolder ,ColorLayout> {
+public:
+	void initialize (CR<Val32> item) override {
+		self.mWhite = Val32 (255) * Val32 (COLOR_SCALE::expr)  ;
+		const auto r1x = item * Val32 (COLOR_SCALE::expr) ;
+		self.mColor[0] = r1x ;
+		self.mColor[1] = r1x ;
+		self.mColor[2] = r1x ;
+		self.mColor[3] = r1x ;
+	}
+
+	void initialize (CR<Flag> buffer ,CR<Length> size_ ,CR<Length> step_) override {
+		assert (size_ > 0) ;
+		assert (step_ > 0) ;
+		const auto r1x = size_ / step_ ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (step_ != 1)
+				discard ;
+			self.mWhite = Val32 (~Byte (0X00)) ;
+			for (auto &&i : range (0 ,r1x)) {
+				const auto r2x = buffer + i * step_ ;
+				const auto r3x = Byte (bitwise (Pointer::make (r2x))) ;
+				self.mColor[i] = Val32 (r3x) ;
+			}
+		}
+		if ifdo (act) {
+			if (step_ != 2)
+				discard ;
+			self.mWhite = Val32 (~Word (0X00)) ;
+			for (auto &&i : range (0 ,r1x)) {
+				const auto r4x = buffer + i * step_ ;
+				const auto r5x = Word (bitwise (Pointer::make (r4x))) ;
+				self.mColor[i] = Val32 (r5x) ;
+			}
+		}
+		if ifdo (act) {
+			if (step_ != 4)
+				discard ;
+			const auto r6x = Flt32 (65535) ;
+			self.mWhite = Val32 (r6x) ;
+			for (auto &&i : range (0 ,r1x)) {
+				const auto r7x = buffer + i * step_ ;
+				const auto r8x = Flt32 (bitwise (Pointer::make (r7x))) * r6x ;
+				self.mColor[i] = Val32 (r8x) ;
+			}
+		}
+		if ifdo (act) {
+			assume (FALSE) ;
+		}
+		for (auto &&i : range (r1x ,4)) {
+			self.mColor[i] = 0 ;
+		}
+		self.mWhite *= Val32 (COLOR_SCALE::expr) ;
+		for (auto &&i : range (0 ,4)) {
+			self.mColor[i] *= Val32 (COLOR_SCALE::expr) ;
+		}
+	}
+
+	void get (CR<Index> index ,VR<Val32> item) const override {
+		item = self.mColor[index] / Val32 (COLOR_SCALE::expr) ;
+	}
+
+	ColorLayout sadd (CR<ColorLayout> that) const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4))
+			ret.mColor[i] = self.mColor[i] + that.mColor[i] ;
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout ssub (CR<ColorLayout> that) const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4))
+			ret.mColor[i] = self.mColor[i] - that.mColor[i] ;
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout smul (CR<Flt64> that) const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4)) {
+			const auto r1x = Flt64 (self.mColor[i]) * that ;
+			ret.mColor[i] = Val32 (r1x) ;
+		}
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout sdiv (CR<Flt64> that) const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4)) {
+			const auto r1x = Flt64 (self.mColor[i]) / that ;
+			ret.mColor[i] = Val32 (r1x) ;
+		}
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout smul (CR<ColorLayout> that) const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4)) {
+			const auto r1x = Val64 (self.mColor[i]) * Val64 (that.mColor[i]) ;
+			ret.mColor[i] = Val32 (r1x / that.mWhite) ;
+		}
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout sabs () const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4))
+			ret.mColor[i] = MathProc::abs (self.mColor[i]) ;
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout minus () const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4))
+			ret.mColor[i] = -self.mColor[i] ;
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout smax (CR<ColorLayout> that) const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4))
+			ret.mColor[i] = MathProc::max_of (self.mColor[i] ,that.mColor[i]) ;
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout smin (CR<ColorLayout> that) const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4))
+			ret.mColor[i] = MathProc::min_of (self.mColor[i] ,that.mColor[i]) ;
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout sclamp () const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4))
+			ret.mColor[i] = MathProc::clamp (self.mColor[i] ,Val32 (0) ,self.mWhite) ;
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout swrap () const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4))
+			ret.mColor[i] = MathProc::wrap (self.mColor[i] ,self.mWhite) ;
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+
+	ColorLayout slerp (CR<ColorLayout> into ,CR<Flt64> t) const override {
+		ColorLayout ret ;
+		for (auto &&i : range (0 ,4))
+			ret.mColor[i] = MathProc::lerp (t ,self.mColor[i] ,into.mColor[i]) ;
+		ret.mWhite = self.mWhite ;
+		return move (ret) ;
+	}
+} ;
+
+exports VFat<ColorHolder> ColorHolder::hold (VR<ColorLayout> that) {
+	return VFat<ColorHolder> (ColorImplHolder () ,that) ;
+}
+
+exports CFat<ColorHolder> ColorHolder::hold (CR<ColorLayout> that) {
+	return CFat<ColorHolder> (ColorImplHolder () ,that) ;
+}
+
 struct ColorProcLayout {} ;
 
 class ColorProcImplHolder final implement Fat<ColorProcHolder ,ColorProcLayout> {
@@ -239,69 +431,75 @@ public:
 		noop () ;
 	}
 
-	Flt64 byte_norm (CR<Byte> c) const {
-		return Flt64 (Val32 (c)) * MathProc::inverse (Flt64 (255)) ;
+	Flt64 byte_norm (CR<Byte> a) const override {
+		return Flt64 (a) * MathProc::inverse (Flt32 (255)) ;
 	}
 
-	Flt64 byte_norm (CR<Word> c) const {
-		return Flt64 (Val32 (c)) * MathProc::inverse (Flt64 (65535)) ;
+	Byte byte_norm (CR<Flt64> a) const override {
+		const auto r1x = Val32 (MathProc::round (a * 255)) ;
+		return Byte (MathProc::clamp (r1x ,Val32 (0) ,Val32 (255))) ;
 	}
 
-	Flt64 gray_from_bgr (CR<Color3B> a) const override {
+	Byte gray_from_bgr (CR<Color3B> a) const override {
 		const auto r1x = byte_norm (a.mR) ;
 		const auto r2x = byte_norm (a.mG) ;
 		const auto r3x = byte_norm (a.mB) ;
 		const auto r4x = 0.299 * r1x + 0.587 * r2x + 0.114 * r3x ;
-		return MathProc::clamp (r4x ,0.0 ,1.0) ;
+		return byte_norm (r4x) ;
 	}
 
-	Color3B bgr_from_gray (CR<Flt64> a) const override {
+	Color3B bgr_from_gray (CR<Byte> a) const override {
 		Color3B ret ;
-		const auto r1x = MathProc::clamp (a ,0.0 ,1.0) * Flt64 (255) ;
-		const auto r2x = Val32 (MathProc::round (r1x)) ;
-		ret.mB = Byte (r2x) ;
-		ret.mG = Byte (r2x) ;
-		ret.mR = Byte (r2x) ;
+		ret.mB = a ;
+		ret.mG = a ;
+		ret.mR = a ;
 		return move (ret) ;
 	}
 
 	Color3B jet_from_norm (CR<Flt64> a) const override {
 		Color3B ret ;
-		const auto r1x = MathProc::clamp (a ,0.0 ,1.0) * Flt64 (8 * 128) ;
-		const auto r2x = Val32 (MathProc::round (r1x)) ;
+		const auto r1x = Val32 (MathProc::round (a * 1024)) ;
+		const auto r2x = MathProc::clamp (r1x ,Val32 (0) ,Val32 (1024)) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (r2x >= 128)
 				discard ;
-			ret.mR = Byte (128 + r2x) ;
+			ret.mR = Byte (0) ;
 			ret.mG = Byte (0) ;
-			ret.mB = Byte (0) ;
+			ret.mB = Byte (128 + r2x) ;
 		}
 		if ifdo (act) {
 			if (r2x >= 384)
 				discard ;
-			ret.mR = Byte (255) ;
+			ret.mR = Byte (0) ;
 			ret.mG = Byte (r2x - 128) ;
-			ret.mB = Byte (0) ;
+			ret.mB = Byte (255) ;
 		}
 		if ifdo (act) {
 			if (r2x >= 640)
 				discard ;
-			ret.mR = ~Byte (r2x - 384) ;
+			ret.mR = Byte (r2x - 384) ;
 			ret.mG = Byte (255) ;
-			ret.mB = Byte (r2x - 384) ;
+			ret.mB = Byte (255 - (r2x - 384)) ;
 		}
 		if ifdo (act) {
 			if (r2x >= 896)
 				discard ;
-			ret.mR = Byte (0) ;
-			ret.mG = ~Byte (r2x - 640) ;
-			ret.mB = Byte (255) ;
+			ret.mR = Byte (255) ;
+			ret.mG = Byte (255 - (r2x - 640)) ;
+			ret.mB = Byte (0) ;
 		}
 		if ifdo (act) {
-			ret.mR = Byte (0) ;
+			if (r2x >= 1024)
+				discard ;
+			ret.mR = Byte (255 - (r2x - 896)) ;
 			ret.mG = Byte (0) ;
-			ret.mB = ~Byte (r2x - 896) ;
+			ret.mB = Byte (0) ;
+		}
+		if ifdo (act) {
+			ret.mR = Byte (128) ;
+			ret.mG = Byte (0) ;
+			ret.mB = Byte (0) ;
 		}
 		return move (ret) ;
 	}
@@ -310,44 +508,48 @@ public:
 		const auto r1x = Val32 (a.mR) ;
 		const auto r2x = Val32 (a.mG) ;
 		const auto r3x = Val32 (a.mB) ;
-		const auto r4x = MathProc::inverse (Flt64 (8 * 128)) ;
+		const auto r4x = MathProc::inverse (Flt64 (1024)) ;
 		auto act = TRUE ;
 		if ifdo (act) {
+			if (a.mR != Byte (0))
+				discard ;
 			if (a.mG != Byte (0))
 				discard ;
-			if (a.mB != Byte (0))
-				discard ;
-			const auto r5x = MathProc::max_of (r1x ,128) ;
+			const auto r5x = MathProc::max_of (r3x ,128) ;
 			return (r5x - 128) * r4x ;
 		}
 		if ifdo (act) {
-			if (a.mR != Byte (255))
+			if (a.mR != Byte (0))
+				discard ;
+			if (a.mB != Byte (255))
 				discard ;
 			return (r2x + 128) * r4x ;
 		}
 		if ifdo (act) {
 			if (a.mG != Byte (255))
 				discard ;
-			return (r3x + 384) * r4x ;
+			return (r1x + 384) * r4x ;
 		}
 		if ifdo (act) {
-			if (a.mB != Byte (255))
+			if (a.mR != Byte (255))
 				discard ;
-			return (255 - r2x + 640) * r4x ;
+			if (a.mB != Byte (0))
+				discard ;
+			return (640 + (255 - r2x)) * r4x ;
 		}
 		if ifdo (act) {
-			if (a.mR != Byte (0))
-				discard ;
 			if (a.mG != Byte (0))
 				discard ;
-			const auto r6x = MathProc::max_of (r3x ,127) ;
-			return (255 - r6x + 896) * r4x ;
+			if (a.mB != Byte (0))
+				discard ;
+			const auto r6x = MathProc::max_of (r1x ,128) ;
+			return (896 + (255 - r6x)) * r4x ;
 		}
-		return 1 ;
+		return Flt64 (1) ;
 	}
 
-	Color3W hsv_from_bgr (CR<Color3B> a) const override {
-		Color3W ret ;
+	Color3F hsv_from_bgr (CR<Color3B> a) const override {
+		Color3F ret ;
 		const auto r1x = byte_norm (a.mR) ;
 		const auto r2x = byte_norm (a.mG) ;
 		const auto r3x = byte_norm (a.mB) ;
@@ -360,13 +562,13 @@ public:
 		if ifdo (act) {
 			if (r6x > 0)
 				discard ;
-			rax = r7x ;
+			rax = Flt64 (0) ;
 		}
 		if ifdo (act) {
 			if (r5x != r1x)
 				discard ;
 			rax = (r2x - r3x) * r7x ;
-			rax = MathProc::fmod (rax / 6) * 6 ;
+			rax -= MathProc::floor (rax ,Flt64 (6)) ;
 		}
 		if ifdo (act) {
 			if (r5x != r2x)
@@ -379,22 +581,22 @@ public:
 			rax = (r1x - r2x) * r7x + 4 ;
 		}
 		rax *= 60 ;
+		rax -= MathProc::floor (rax ,Flt64 (360)) ;
 		rax /= 360 ;
-		rax += MathProc::step (-rax) ;
 		const auto r8x = r6x * MathProc::inverse (r5x) ;
-		ret.mB = Word (MathProc::lerp (rax ,Val32 (0) ,Val32 (65535))) ;
-		ret.mG = Word (MathProc::lerp (r8x ,Val32 (0) ,Val32 (65535))) ;
-		ret.mR = Word (MathProc::lerp (r5x ,Val32 (0) ,Val32 (65535))) ;
+		ret.mB = Flt32 (rax) ;
+		ret.mG = Flt32 (r8x) ;
+		ret.mR = Flt32 (r5x) ;
 		return move (ret) ;
 	}
 
-	Color3B bgr_from_hsv (CR<Color3W> a) const override {
+	Color3B bgr_from_hsv (CR<Color3F> a) const override {
 		Color3B ret ;
-		const auto r1x = byte_norm (a.mB) * 360 ;
-		const auto r2x = byte_norm (a.mG) ;
-		const auto r3x = byte_norm (a.mR) ;
+		const auto r1x = Flt64 (a.mB) * 360 ;
+		const auto r2x = Flt64 (a.mG) ;
+		const auto r3x = Flt64 (a.mR) ;
 		const auto r4x = r3x * r2x ;
-		const auto r5x = MathProc::fmod (r1x / 120) * 2 ;
+		const auto r5x = (r1x - MathProc::floor (r1x ,Flt64 (120))) / 60 ;
 		const auto r6x = r4x * (1 - MathProc::abs (r5x - 1)) ;
 		const auto r7x = r3x - r4x ;
 		auto rax = Buffer3<Flt64> () ;
@@ -442,9 +644,9 @@ public:
 		rax[0] += r7x ;
 		rax[1] += r7x ;
 		rax[2] += r7x ;
-		ret.mB = Byte (MathProc::lerp (rax[2] ,Val32 (0) ,Val32 (255))) ;
-		ret.mG = Byte (MathProc::lerp (rax[1] ,Val32 (0) ,Val32 (255))) ;
-		ret.mR = Byte (MathProc::lerp (rax[0] ,Val32 (0) ,Val32 (255))) ;
+		ret.mB = byte_norm (rax[2]) ;
+		ret.mG = byte_norm (rax[1]) ;
+		ret.mR = byte_norm (rax[0]) ;
 		return move (ret) ;
 	}
 } ;
@@ -885,28 +1087,5 @@ exports VFat<TensorHolder> TensorHolder::hold (VR<TensorLayout> that) {
 
 exports CFat<TensorHolder> TensorHolder::hold (CR<TensorLayout> that) {
 	return CFat<TensorHolder> (TensorImplHolder () ,that) ;
-}
-
-template class External<TensorProcHolder ,TensorProcLayout> ;
-
-struct TensorProcLayout {
-	UniqueRef<Bool> mContext ;
-} ;
-
-exports CR<Super<Ref<TensorProcLayout>>> TensorProcHolder::expr_m () {
-	return memorize ([&] () {
-		Super<Ref<TensorProcLayout>> ret ;
-		ret.mThis = Ref<TensorProcLayout>::make () ;
-		TensorProcHolder::hold (ret)->initialize () ;
-		return move (ret) ;
-	}) ;
-}
-
-exports VFat<TensorProcHolder> TensorProcHolder::hold (VR<TensorProcLayout> that) {
-	return VFat<TensorProcHolder> (External<TensorProcHolder ,TensorProcLayout>::expr ,that) ;
-}
-
-exports CFat<TensorProcHolder> TensorProcHolder::hold (CR<TensorProcLayout> that) {
-	return CFat<TensorProcHolder> (External<TensorProcHolder ,TensorProcLayout>::expr ,that) ;
 }
 } ;

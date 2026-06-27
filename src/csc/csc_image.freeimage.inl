@@ -36,35 +36,35 @@ public:
 		const auto r1x = Length (FreeImage_GetWidth (rax)) ;
 		const auto r2x = Length (FreeImage_GetHeight (rax)) ;
 		const auto r3x = align_of_fibitmap_type (FreeImage_GetImageType (rax)) ;
-		const auto r4x = choose_fibitmap_unknown (r3x) ;
 		if ifdo (TRUE) {
-			const auto r5x = Length (FreeImage_GetBPP (rax)) / 8 ;
-			const auto r6x = Length (FreeImage_GetPitch (rax)) ;
-			if (r6x % r5x == 0)
+			const auto r4x = Length (FreeImage_GetBPP (rax)) / 8 ;
+			const auto r5x = Length (FreeImage_GetPitch (rax)) ;
+			if (r5x % r4x == 0)
 				discard ;
-			const auto r7x = inline_alignas (r1x ,8) ;
-			const auto r8x = r5x * 8 ;
+			const auto r6x = inline_alignas (r1x ,8) ;
+			const auto r7x = r4x * 8 ;
 			auto rbx = UniqueRef<HFIBITMAP> ([&] (VR<HFIBITMAP> me) {
-				me = FreeImage_Allocate (Val32 (r7x) ,Val32 (r2x) ,Val32 (r8x)) ;
+				me = FreeImage_Allocate (Val32 (r6x) ,Val32 (r2x) ,Val32 (r7x)) ;
 				assume (me != NULL) ;
 			} ,[&] (VR<HFIBITMAP> me) {
 				FreeImage_Unload (me) ;
 			}) ;
-			const auto r9x = FreeImage_GetBits (rbx) ;
-			const auto r10x = Length (FreeImage_GetPitch (rbx)) ;
-			FreeImage_ConvertToRawBits (r9x ,rax ,Val32 (r10x) ,Val32 (r8x) ,0 ,0 ,0) ;			
+			const auto r8x = FreeImage_GetBits (rbx) ;
+			const auto r9x = Length (FreeImage_GetPitch (rbx)) ;
+			FreeImage_ConvertToRawBits (r8x ,rax ,Val32 (r9x) ,Val32 (r7x) ,0 ,0 ,0) ;
 			swap (rax ,rbx) ;
 		}
-		const auto r11x = Length (FreeImage_GetBPP (rax)) / 8 ;
-		const auto r12x = Length (FreeImage_GetPitch (rax)) ;
-		assume (r12x % r11x == 0) ;
-		const auto r13x = r12x / r11x ;
-		const auto r14x = Flag (FreeImage_GetBits (rax)) ;
-		const auto r15x = r13x * r2x ;
-		const auto r16x = Slice (r14x ,r15x ,r11x) ;
-		RefBufferHolder::hold (ret.mImage)->initialize (r4x ,r16x ,move (image)) ;
-		ret.mWidth = r1x ;
-		ret.mStride = r13x ;
+		const auto r10x = Length (FreeImage_GetBPP (rax)) / 8 ;
+		const auto r11x = Length (FreeImage_GetPitch (rax)) ;
+		assume (r11x % r10x == 0) ;
+		const auto r12x = r11x / r10x ;
+		const auto r13x = Flag (FreeImage_GetBits (rax)) ;
+		const auto r14x = r12x * r2x ;
+		const auto r15x = Slice (r13x ,r14x ,r10x) ;
+		const auto r16x = choose_fibitmap_unknown (r3x) ;
+		RefBufferHolder::hold (ret.mImage)->initialize (r16x ,r15x ,move (image)) ;
+		ret.mWidth = r1x * 1024 + r3x ;
+		ret.mStride = r12x ;
 		ImageHolder::hold (ret)->reset () ;
 		return move (ret) ;
 	}
@@ -107,6 +107,19 @@ public:
 		return FIT_UNKNOWN ;
 	}
 
+	Clazz clazz_of_fibitmap_type (CR<Just<FREE_IMAGE_TYPE>> type_) const {
+		if (type_ == FIT_BITMAP)
+			return Clazz (TYPE<Byte>::expr) ;
+		if (type_ == FIT_RGBA16)
+			return Clazz (TYPE<Word>::expr) ;
+		if (type_ == FIT_FLOAT)
+			return Clazz (TYPE<Flt32>::expr) ;
+		if (type_ == FIT_DOUBLE)
+			return Clazz (TYPE<Flt64>::expr) ;
+		assume (FALSE) ;
+		return Clazz () ;
+	}
+
 	Length align_of_fibitmap_type (CR<Just<FREE_IMAGE_TYPE>> type_) const {
 		if (type_ == FIT_UNKNOWN)
 			return 8 ;
@@ -134,6 +147,7 @@ public:
 			return 4 ;
 		if (type_ == FIT_RGBAF)
 			return 4 ;
+		assume (FALSE) ;
 		return 0 ;
 	}
 
@@ -174,6 +188,40 @@ public:
 			FreeImage_Unload (me) ;
 		}) ;
 		return make_image (move (rax)) ;
+	}
+
+	ImageLayout convert_image (CR<ImageLayout> image ,CR<Length> channel) const override {
+		assert (channel >= 1) ;
+		assert (channel <= 4) ;
+		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (ImageHolder::hold (image)->raw ()).ref ;
+		const auto r1x = ImageHolder::hold (image)->shape () ;
+		const auto r2x = ImageHolder::hold (image)->step () ;
+		const auto r3x = Length (FreeImage_GetImageType (rax)) ;
+		const auto r4x = clazz_of_fibitmap_type (r3x) ;
+		const auto r5x = align_of_fibitmap_type (r3x) ;
+		ImageLayout ret = make_image (r1x ,r4x ,channel) ;
+		const auto r6x = r2x / r5x ;
+		const auto r7x = MathProc::min_of (channel ,r6x) * r5x ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (r6x == channel)
+				discard ;
+			if ifdo (TRUE) {
+				if (channel <= r6x)
+					discard ;
+				const auto r8x = ret.mImage.size () * r2x ;
+				inline_memset (ret.mImage[0] ,r8x) ;
+			}
+			for (auto &&i : r1x.iter ()) {
+				const auto r9x = address (ImageHolder::hold (ret)->at (i.mX ,i.mY)) ;
+				const auto r10x = address (ImageHolder::hold (image)->at (i.mX ,i.mY)) ;
+				inline_memcpy (Pointer::make (r9x) ,Pointer::make (r10x) ,r7x) ;
+			}
+		}
+		if ifdo (act) {
+			ImageHolder::hold (ret)->splice (0 ,0 ,image) ;
+		}
+		return move (ret) ;
 	}
 
 	void save_image (CR<String<Str>> file ,CR<ImageLayout> image) const override {
@@ -224,20 +272,17 @@ public:
 		const auto r10x = r7x * (1 - r8x) ;
 		const auto r11x = (1 - r7x) * (1 - r8x) ;
 		const auto r12x = (1 - r7x) * r8x ;
-		const auto r13x = cvt_color_t (image.at (r5x ,r6x)) ;
-		const auto r14x = cvt_color_t (image.at (r5x ,r4x)) ;
-		const auto r15x = cvt_color_t (image.at (r3x ,r4x)) ;
-		const auto r16x = cvt_color_t (image.at (r3x ,r6x)) ;
-		auto rax = Buffer<Flt32 ,SIZE_OF<ARG1>> () ;
-		for (auto &&i : range (0 ,rax.size ())) {
-			rax[i] = 0 ;
-			rax[i] += r13x[i] * r9x ;
-			rax[i] += r14x[i] * r10x ;
-			rax[i] += r15x[i] * r11x ;
-			rax[i] += r16x[i] * r12x ;
-			rax[i] = MathProc::clamp (rax[i] ,Flt32 (0) ,Flt32 (255)) ;
-		}
-		return cvt_color_t (rax) ;
+		const auto r13x = Color (image.at (r5x ,r6x)) ;
+		const auto r14x = Color (image.at (r5x ,r4x)) ;
+		const auto r15x = Color (image.at (r3x ,r4x)) ;
+		const auto r16x = Color (image.at (r3x ,r6x)) ;
+		auto rax = Color::all (0) ;
+		rax += r13x * r9x ;
+		rax += r14x * r10x ;
+		rax += r15x * r11x ;
+		rax += r16x * r12x ;
+		rax = rax.sclamp () ;
+		return rax.bgr () ;
 	}
 
 	Buffer1<Flt32> cvt_color_t (CR<Color1B> a) const {
@@ -272,31 +317,31 @@ public:
 
 	Color1B cvt_color_t (CR<Buffer1<Flt32>> a) const {
 		Color1B ret ;
-		ret.mB = Byte (Val32 (a[0])) ;
+		ret.mB = Byte (a[0]) ;
 		return move (ret) ;
 	}
 
 	Color2B cvt_color_t (CR<Buffer2<Flt32>> a) const {
 		Color2B ret ;
-		ret.mB = Byte (Val32 (a[0])) ;
-		ret.mG = Byte (Val32 (a[1])) ;
+		ret.mB = Byte (a[0]) ;
+		ret.mG = Byte (a[1]) ;
 		return move (ret) ;
 	}
 
 	Color3B cvt_color_t (CR<Buffer3<Flt32>> a) const {
 		Color3B ret ;
-		ret.mB = Byte (Val32 (a[0])) ;
-		ret.mG = Byte (Val32 (a[1])) ;
-		ret.mR = Byte (Val32 (a[2])) ;
+		ret.mB = Byte (a[0]) ;
+		ret.mG = Byte (a[1]) ;
+		ret.mR = Byte (a[2]) ;
 		return move (ret) ;
 	}
 
 	Color4B cvt_color_t (CR<Buffer4<Flt32>> a) const {
 		Color4B ret ;
-		ret.mB = Byte (Val32 (a[0])) ;
-		ret.mG = Byte (Val32 (a[1])) ;
-		ret.mR = Byte (Val32 (a[2])) ;
-		ret.mA = Byte (Val32 (a[3])) ;
+		ret.mB = Byte (a[0]) ;
+		ret.mG = Byte (a[1]) ;
+		ret.mR = Byte (a[2]) ;
+		ret.mA = Byte (a[3]) ;
 		return move (ret) ;
 	}
 

@@ -502,7 +502,7 @@ public:
 	void make_RotationMatrix (CR<Vector> normal ,CR<Flt64> angle) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = normal.normalize () ;
-		const auto r2x = angle * MathProc::step (r1x.magnitude () - 0.5) ;
+		const auto r2x = angle * r1x.magnitude () ;
 		const auto r3x = MathProc::cos (r2x) ;
 		const auto r4x = r1x * MathProc::sin (r2x) ;
 		const auto r5x = r1x * (1 - r3x) ;
@@ -540,9 +540,8 @@ public:
 		const auto r1x = Flt64 (shape.mCX) * Flt64 (0.5) ;
 		const auto r2x = Flt64 (shape.mCY) * Flt64 (0.5) ;
 		const auto r3x = MathProc::tan (fovx * Flt64 (0.5)) ;
-		const auto r4x = MathProc::inverse (r3x) * r1x ;
-		const auto r5x = MathProc::inverse (r3x) * r2x ;
-		make_PerspectiveMatrix (r4x ,r5x ,r1x ,r2x) ;
+		const auto r4x = MathProc::inverse (r3x) ;
+		make_PerspectiveMatrix (r1x * r4x ,r2x * r4x ,r1x ,r2x) ;
 	}
 
 	void make_PerspectiveMatrix (CR<Flt64> fx ,CR<Flt64> fy ,CR<Flt64> cx ,CR<Flt64> cy) override {
@@ -556,6 +555,11 @@ public:
 		ret[3][2] = 1 ;
 		ret[2][3] = 1 ;
 		self = move (ret) ;
+	}
+
+	void make_ProjectionMatrix (CR<Vector> normal) override {
+		const auto r1x = normal.normalize () ;
+		self = Matrix::iden () - OuterProductMatrix (r1x ,r1x) ;
 	}
 
 	void make_ProjectionMatrix (CR<Vector> normal ,CR<Vector> center ,CR<Vector> light) override {
@@ -1102,7 +1106,7 @@ public:
 		const auto r1x = axis_of_index () ;
 		const auto r2x = rot * r1x[z] ;
 		const auto r3x = rotate_angle (r2x ,r1x[x] ,r1x[y]) ;
-		const auto r4x = -r3x.fetch () ;
+		const auto r4x = -r3x.pull () ;
 		ret[x] = RotationMatrix (r1x[x] ,r4x) ;
 		const auto r5x = ret[x].transpose () * rot ;
 		const auto r6x = MathProc::atan (r5x[x][z] ,r5x[z][z]) * rotate_sign (y ,z) ;
@@ -1111,9 +1115,7 @@ public:
 		const auto r8x = MathProc::atan (r7x[y][x] ,r7x[x][x]) * rotate_sign (z ,x) ;
 		ret[z] = RotationMatrix (r1x[z] ,r8x) ;
 		const auto r9x = ret[z].transpose () * r7x - Matrix::iden () ;
-		for (auto &&j : range (0 ,4 ,0 ,4)) {
-			assert (MathProc::abs (r9x[j]) < FLT32_EPS) ;
-		}
+		assert (r9x.magnitude () < FLT32_EPS) ;
 		return move (ret) ;
 	}
 
@@ -1157,8 +1159,8 @@ public:
 	}
 
 	Flt64 ortho_angle (CR<Flt64> x) const {
-		const auto r1x = MathProc::floor (x ,MATH_PI * 2) ;
-		const auto r2x = x - r1x - MATH_PI ;
+		const auto r1x = x - MathProc::floor (x ,MATH_PI * 2) ;
+		const auto r2x = r1x - MATH_PI ;
 		if (r2x <= -MATH_PI / 2)
 			return r2x + MATH_PI ;
 		if (r2x >= +MATH_PI / 2)
@@ -1173,6 +1175,118 @@ exports VFat<QuaternionHolder> QuaternionHolder::hold (VR<QuaternionLayout> that
 
 exports CFat<QuaternionHolder> QuaternionHolder::hold (CR<QuaternionLayout> that) {
 	return CFat<QuaternionHolder> (QuaternionImplHolder () ,that) ;
+}
+
+class SE3ImplHolder final implement Fat<SE3Holder ,SE3Layout> {
+public:
+	void initialize (CR<Matrix> that) override {
+		const auto r1x = Quaternion (that).vector () ;
+		const auto r2x = that * Vector::axis_w () ;
+		self.mSE3[0] = r1x[0] ;
+		self.mSE3[1] = r1x[1] ;
+		self.mSE3[2] = r1x[2] ;
+		self.mSE3[3] = r2x[0] ;
+		self.mSE3[4] = r2x[1] ;
+		self.mSE3[5] = r2x[2] ;
+	}
+
+	CR<Flt64> at (CR<Index> y) const leftvalue override {
+		return self.mSE3[y] ;
+	}
+
+	SE3Layout sadd (CR<SE3Layout> that) const override {
+		SE3Layout ret ;
+		for (auto &&i : range (0 ,ret.mSE3.size ())) {
+			ret.mSE3[i] = self.mSE3[i] + that.mSE3[i] ;
+		}
+		return move (ret) ;
+	}
+
+	SE3Layout smul (CR<Flt64> that) const override {
+		SE3Layout ret ;
+		for (auto &&i : range (0 ,ret.mSE3.size ())) {
+			ret.mSE3[i] = self.mSE3[i] * that ;
+		}
+		return move (ret) ;
+	}
+
+	SE3Layout sdiv (CR<Flt64> that) const override {
+		SE3Layout ret ;
+		for (auto &&i : range (0 ,ret.mSE3.size ())) {
+			ret.mSE3[i] = self.mSE3[i] / that ;
+		}
+		return move (ret) ;
+	}
+
+	Vector angular () const override {
+		return Vector (self.mSE3[0] ,self.mSE3[1] ,self.mSE3[2] ,0) ;
+	}
+
+	Vector linear () const override {
+		return Vector (self.mSE3[3] ,self.mSE3[4] ,self.mSE3[5] ,0) ;
+	}
+
+	Matrix matrix () const override {
+		const auto r1x = angular () ;
+		const auto r2x = Quaternion (r1x).matrix () ;
+		const auto r3x = linear () ;
+		const auto r4x = TranslationMatrix (r3x) ;
+		return r4x * r2x ;
+	}
+
+	SE3Layout jacobian (CR<Vector> dst ,CR<Vector> src) const override {
+		SE3Layout ret ;
+		const auto r1x = matrix () ;
+		const auto r2x = r1x * src ;
+		const auto r3x = dst - r2x ;
+		const auto r4x = r2x ^ r3x ;
+		ret.mSE3[0] = r4x[0] ;
+		ret.mSE3[1] = r4x[1] ;
+		ret.mSE3[2] = r4x[2] ;
+		ret.mSE3[3] = r3x[0] ;
+		ret.mSE3[4] = r3x[1] ;
+		ret.mSE3[5] = r3x[2] ;
+		return move (ret) ;
+	}
+
+	SE3Layout integrate (CR<Flt64> dt) const override {
+		SE3Layout ret ;
+		const auto r1x = angular () * dt ;
+		const auto r2x = linear () * dt ;
+		const auto r3x = Quaternion (r1x).vector () ;
+		const auto r4x = r3x.magnitude () ;
+		const auto r5x = CrossProductMatrix (r3x) ;
+		const auto r6x = (1 - MathProc::cos (r4x)) * MathProc::inverse (MathProc::square (r4x)) ;
+		const auto r7x = (r4x - MathProc::sin (r4x)) * MathProc::inverse (MathProc::cubic (r4x)) ;
+		const auto r8x = Matrix::iden () + r5x * r6x + r5x * r5x * r7x ;
+		const auto r9x = r8x * r2x ;
+		ret.mSE3[0] = r3x[0] ;
+		ret.mSE3[1] = r3x[1] ;
+		ret.mSE3[2] = r3x[2] ;
+		ret.mSE3[3] = r9x[0] ;
+		ret.mSE3[4] = r9x[1] ;
+		ret.mSE3[5] = r9x[2] ;
+		return move (ret) ;
+	}
+
+	SE3Layout slerp (CR<SE3Layout> into ,CR<Flt64> t) const override {
+		const auto r1x = MathProc::lerp (t ,Flt64 (0) ,Flt64 (1)) ;
+		const auto r2x = matrix () ;
+		const auto r3x = SE3Holder::hold (into)->matrix () ;
+		const auto r4x = r3x * r2x.inverse () ;
+		const auto r5x = SE3 (r4x) * r1x ;
+		const auto r6x = r5x.matrix () ;
+		const auto r7x = r6x * r2x ;
+		return SE3 (r7x) ;
+	}
+} ;
+
+exports VFat<SE3Holder> SE3Holder::hold (VR<SE3Layout> that) {
+	return VFat<SE3Holder> (SE3ImplHolder () ,that) ;
+}
+
+exports CFat<SE3Holder> SE3Holder::hold (CR<SE3Layout> that) {
+	return CFat<SE3Holder> (SE3ImplHolder () ,that) ;
 }
 
 template class External<LinearProcHolder ,LinearProcLayout> ;
@@ -1218,64 +1332,113 @@ exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CR<PointCloud
 	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::expr ,that) ;
 }
 
+struct PointCloudCommon {
+	RefLayout mPointCloud ;
+	RefBuffer<Flt32> mFloatView ;
+	PointCloudKDTree mKDTree ;
+} ;
+
+struct PointCloudLayout {
+	Length mSize ;
+	Length mChannel ;
+	SharedRef<PointCloudCommon> mCommon ;
+	DuplexMatrix mWorld ;
+	FarBuffer<Vector> mPointView ;
+} ;
+
 class PointCloudImplHolder final implement Fat<PointCloudHolder ,PointCloudLayout> {
 public:
 	void initialize (RR<Ref<Array<Point2F>>> pointcloud) override {
-		self.mRank = 2 ;
-		auto &&rax = keep[TYPE<Ref<Array<Point2F>>>::expr] (Pointer::from (self.mPointCloud)) ;
-		rax = move (pointcloud) ;
-		self.mWorld = Matrix::iden () ;
+		self.mSize = pointcloud->size () ;
+		self.mChannel = 2 ;
+		self.mCommon = SharedRef<PointCloudCommon>::make () ;
+		const auto r1x = address (pointcloud->ref) ;
+		const auto r2x = self.mSize * self.mChannel ;
+		self.mCommon->mFloatView = RefBuffer<Flt32>::reference (r1x ,r2x) ;
+		self.mCommon->mPointCloud = move (pointcloud) ;
+		reset_world (self) ;
 	}
 
 	void initialize (RR<Ref<Array<Point3F>>> pointcloud) override {
-		self.mRank = 3 ;
-		auto &&rax = keep[TYPE<Ref<Array<Point3F>>>::expr] (Pointer::from (self.mPointCloud)) ;
-		rax = move (pointcloud) ;
-		self.mWorld = Matrix::iden () ;
+		self.mSize = pointcloud->size () ;
+		self.mChannel = 3 ;
+		self.mCommon = SharedRef<PointCloudCommon>::make () ;
+		const auto r1x = address (pointcloud->ref) ;
+		const auto r2x = self.mSize * self.mChannel ;
+		self.mCommon->mFloatView = RefBuffer<Flt32>::reference (r1x ,r2x) ;
+		self.mCommon->mPointCloud = move (pointcloud) ;
+		reset_world (self) ;
 	}
 
 	void initialize (RR<Ref<Array<Vector>>> pointcloud) override {
-		self.mRank = 0 ;
-		auto &&rax = keep[TYPE<Ref<Array<Vector>>>::expr] (Pointer::from (self.mPointCloud)) ;
-		rax = move (pointcloud) ;
-		self.mWorld = Matrix::iden () ;
+		self.mSize = pointcloud->size () ;
+		self.mChannel = 3 ;
+		self.mCommon = SharedRef<PointCloudCommon>::make () ;
+		const auto r1x = self.mSize * self.mChannel ;
+		self.mCommon->mFloatView = RefBuffer<Flt32> (r1x) ;
+		for (auto &&i : range (0 ,self.mSize)) {
+			Index ix = i * 3 ;
+			const auto r2x = pointcloud.ref[i] ;
+			self.mCommon->mFloatView[ix + 0] = Flt32 (r2x[0]) ;
+			self.mCommon->mFloatView[ix + 1] = Flt32 (r2x[1]) ;
+			self.mCommon->mFloatView[ix + 2] = Flt32 (r2x[2]) ;
+		}
+		reset_world (self) ;
+	}
+
+	void reset_world (VR<PointCloudLayout> that) const {
+		auto &&rax = that.mCommon->mFloatView ;
+		that.mWorld = Matrix::iden () ;
+		that.mPointView = FarBuffer<Vector> (that.mSize) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (self.mChannel != 2)
+				discard ;
+			that.mPointView.use_getter ([&] (CR<Index> index ,VR<Vector> item) {
+				Index ix = index * 2 ;
+				const auto r1x = rax[ix + 0] ;
+				const auto r2x = rax[ix + 1] ;
+				item = Vector (r1x ,r2x ,0 ,1) ;
+				item = that.mWorld[0] * item ;
+			}) ;
+		}
+		if ifdo (act) {
+			if (self.mChannel != 3)
+				discard ;
+			that.mPointView.use_getter ([&] (CR<Index> index ,VR<Vector> item) {
+				Index ix = index * 3 ;
+				const auto r3x = rax[ix + 0] ;
+				const auto r4x = rax[ix + 1] ;
+				const auto r5x = rax[ix + 2] ;
+				item = Vector (r3x ,r4x ,r5x ,1) ;
+				item = that.mWorld[0] * item ;
+			}) ;
+		}
+		if ifdo (act) {
+			assume (FALSE) ;
+		}
 	}
 
 	Length size () const override {
-		return self.mPointCloud->size () ;
+		if (!self.mCommon.exist ())
+			return 0 ;
+		return self.mSize ;
+	}
+
+	Length channel () const override {
+		if (!self.mCommon.exist ())
+			return 0 ;
+		return self.mChannel ;
 	}
 
 	void get (CR<Index> index ,VR<Vector> item) const override {
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (self.mRank != 0)
-				discard ;
-			item = Vector (keep[TYPE<Vector>::expr] (self.mPointCloud.ref[index])) ;
-			item = item * self.mWorld ;
-		}
-		if ifdo (act) {
-			if (self.mRank != 2)
-				discard ;
-			item = Vector (keep[TYPE<Point2F>::expr] (self.mPointCloud.ref[index])) ;
-			item = item * self.mWorld ;
-		}
-		if ifdo (act) {
-			if (self.mRank != 3)
-				discard ;
-			item = Vector (keep[TYPE<Point3F>::expr] (self.mPointCloud.ref[index])) ;
-			item = item * self.mWorld ;
-		}
-		if ifdo (act) {
-			assert (FALSE) ;
-		}
+		item = self.mPointView[index] ;
 	}
 
 	Vector pca_center () const {
 		Vector ret = Vector::zero () ;
-		auto rax = Vector () ;
-		for (auto &&i : self.mPointCloud->iter ()) {
-			get (i ,rax) ;
-			ret += rax ;
+		for (auto &&i : range (0 ,self.mSize)) {
+			ret += self.mPointView[i] ;
 		}
 		ret = ret.projection () ;
 		return move (ret) ;
@@ -1285,10 +1448,8 @@ public:
 		const auto r1x = pca_center () ;
 		const auto r2x = invoke ([&] () {
 			Matrix ret = Matrix::zero () ;
-			auto rax = Vector () ;
-			for (auto &&i : self.mPointCloud->iter ()) {
-				get (i ,rax) ;
-				const auto r3x = rax - r1x ;
+			for (auto &&i : range (0 ,self.mSize)) {
+				const auto r3x = self.mPointView[i] - r1x ;
 				ret[0][0] += MathProc::square (r3x[0]) ;
 				ret[0][1] += r3x[0] * r3x[1] ;
 				ret[0][2] += r3x[0] * r3x[2] ;
@@ -1308,14 +1469,8 @@ public:
 		const auto r8x = r4x.mS[2][2] * r5x ;
 		const auto r9x = TranslationMatrix (r1x) ;
 		const auto r10x = MatrixProc::solve_trs (r4x.mV) ;
-		const auto r11x = DiagMatrix (sqrt_fix (r6x) ,sqrt_fix (r7x) ,sqrt_fix (r8x)) ;
+		const auto r11x = DiagMatrix (sqrt_side (r6x) ,sqrt_side (r7x) ,sqrt_side (r8x)) ;
 		return r9x * r10x.mR * r11x ;
-	}
-
-	Flt64 sqrt_fix (CR<Flt64> a) const {
-		if (a < FLT64_EPS)
-			return 1 ;
-		return MathProc::sqrt (a) ;
 	}
 
 	Vector box_center (CR<Line3F> a) const {
@@ -1330,11 +1485,11 @@ public:
 		const auto r1x = bound () ;
 		const auto r2x = box_center (r1x) ;
 		const auto r3x = (Vector (r1x.mMax) - Vector (r1x.mMin)) * Flt64 (0.5) ;
-		const auto r4x = MathProc::max_of (MathProc::square (r3x[0] + bx)) ;
-		const auto r5x = MathProc::max_of (MathProc::square (r3x[1] + by)) ;
-		const auto r6x = MathProc::max_of (MathProc::square (r3x[2] + bz)) ;
+		const auto r4x = MathProc::square (MathProc::max_of (r3x[0] + bx ,Flt64 (0))) ;
+		const auto r5x = MathProc::square (MathProc::max_of (r3x[1] + by ,Flt64 (0))) ;
+		const auto r6x = MathProc::square (MathProc::max_of (r3x[2] + bz ,Flt64 (0))) ;
 		const auto r7x = TranslationMatrix (r2x) ;
-		const auto r8x = DiagMatrix (sqrt_fix (r4x) ,sqrt_fix (r5x) ,sqrt_fix (r6x)) ;
+		const auto r8x = DiagMatrix (sqrt_side (r4x) ,sqrt_side (r5x) ,sqrt_side (r6x)) ;
 		return r7x * r8x ;
 	}
 
@@ -1356,8 +1511,15 @@ public:
 		const auto r7x = MathProc::min_of (r3x[2] ,r4x[2]) * MathProc::inverse (sz) ;
 		const auto r8x = MathProc::max_of (r5x ,r6x ,r7x) ;
 		const auto r9x = TranslationMatrix (r2x) ;
-		const auto r10x = DiagMatrix (sx * r8x ,sy * r8x ,sz * r8x) ;
-		return r9x * r10x ;
+		const auto r10x = MathProc::square (sx * r8x) ;
+		const auto r11x = MathProc::square (sy * r8x) ;
+		const auto r12x = MathProc::square (sz * r8x) ;
+		const auto r13x = DiagMatrix (sqrt_side (r10x) ,sqrt_side (r11x) ,sqrt_side (r12x)) ;
+		return r9x * r13x ;
+	}
+
+	Flt64 sqrt_side (CR<Flt64> a) const {
+		return MathProc::sqrt (a + MathProc::delta (a)) ;
 	}
 
 	Line3F bound () const override {
@@ -1368,47 +1530,59 @@ public:
 		ret.mMax.mX = -infinity ;
 		ret.mMax.mY = -infinity ;
 		ret.mMax.mZ = -infinity ;
-		auto rax = Vector () ;
-		for (auto &&i : self.mPointCloud->iter ()) {
-			get (i ,rax) ;
-			ret.mMin.mX = MathProc::min_of (ret.mMin.mX ,Flt32 (rax[0])) ;
-			ret.mMin.mY = MathProc::min_of (ret.mMin.mY ,Flt32 (rax[1])) ;
-			ret.mMin.mZ = MathProc::min_of (ret.mMin.mZ ,Flt32 (rax[2])) ;
-			ret.mMax.mX = MathProc::max_of (ret.mMax.mX ,Flt32 (rax[0])) ;
-			ret.mMax.mY = MathProc::max_of (ret.mMax.mY ,Flt32 (rax[1])) ;
-			ret.mMax.mZ = MathProc::max_of (ret.mMax.mZ ,Flt32 (rax[2])) ;
+		for (auto &&i : range (0 ,self.mSize)) {
+			const auto r1x = self.mPointView[i] ;
+			ret.mMin.mX = MathProc::min_of (ret.mMin.mX ,Flt32 (r1x[0])) ;
+			ret.mMin.mY = MathProc::min_of (ret.mMin.mY ,Flt32 (r1x[1])) ;
+			ret.mMin.mZ = MathProc::min_of (ret.mMin.mZ ,Flt32 (r1x[2])) ;
+			ret.mMax.mX = MathProc::max_of (ret.mMax.mX ,Flt32 (r1x[0])) ;
+			ret.mMax.mY = MathProc::max_of (ret.mMax.mY ,Flt32 (r1x[1])) ;
+			ret.mMax.mZ = MathProc::max_of (ret.mMax.mZ ,Flt32 (r1x[2])) ;
 		}
 		return move (ret) ;
 	}
 
-	PointCloudLayout smul (CR<Matrix> that) const override {
-		PointCloudLayout ret ;
-		ret.mRank = self.mRank ;
-		ret.mPointCloud = self.mPointCloud.share () ;
-		ret.mWorld = self.mWorld * that ;
+	Super<Ref<PointCloudLayout>> smul (CR<Matrix> that) const override {
+		Super<Ref<PointCloudLayout>> ret ;
+		ret.mThis = Ref<PointCloudLayout>::make () ;
+		ret.mThis->mSize = self.mSize ;
+		ret.mThis->mChannel = self.mChannel ;
+		ret.mThis->mCommon = self.mCommon ;
+		reset_world (ret.mThis.ref) ;
+		ret.mThis->mWorld = that.transpose () * self.mWorld[0] ;
 		return move (ret) ;
 	}
 
 	Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const override {
 		if ifdo (TRUE) {
-			if (self.mKDTree.mThis.exist ())
+			if (self.mCommon->mKDTree.mThis.exist ())
 				discard ;
-			const auto r1x = Pin<PointCloudKDTree> (self.mKDTree) ;
-			r1x.ref = PointCloudKDTree (self.mPointCloud.ref) ;
+			const auto r1x = address (self.mCommon->mFloatView.ref) ;
+			const auto r2x = self.mCommon->mFloatView.size () ;
+			auto rax = RefBuffer<Flt32>::reference (r1x ,r2x) ;
+			self.mCommon->mKDTree = PointCloudKDTree (move (rax) ,self.mChannel) ;
 		}
-		return self.mKDTree.search (center ,neighbor) ;
+		const auto r3x = self.mWorld[1] * center ;
+		return self.mCommon->mKDTree.search (r3x ,neighbor) ;
 	}
 
 	Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const override {
 		if ifdo (TRUE) {
-			if (self.mKDTree.mThis.exist ())
+			if (self.mCommon->mKDTree.mThis.exist ())
 				discard ;
-			const auto r1x = Pin<PointCloudKDTree> (self.mKDTree) ;
-			r1x.ref = PointCloudKDTree (self.mPointCloud.ref) ;
+			const auto r1x = address (self.mCommon->mFloatView.ref) ;
+			const auto r2x = self.mCommon->mFloatView.size () ;
+			auto rax = RefBuffer<Flt32>::reference (r1x ,r2x) ;
+			self.mCommon->mKDTree = PointCloudKDTree (move (rax) ,self.mChannel) ;
 		}
-		return self.mKDTree.search (center ,neighbor ,radius) ;
+		const auto r3x = self.mWorld[1] * center ;
+		return self.mCommon->mKDTree.search (r3x ,neighbor ,radius) ;
 	}
 } ;
+
+exports Ref<PointCloudLayout> PointCloudHolder::create () {
+	return Ref<PointCloudLayout>::make () ;
+}
 
 exports VFat<PointCloudHolder> PointCloudHolder::hold (VR<PointCloudLayout> that) {
 	return VFat<PointCloudHolder> (PointCloudImplHolder () ,that) ;
@@ -1416,63 +1590,5 @@ exports VFat<PointCloudHolder> PointCloudHolder::hold (VR<PointCloudLayout> that
 
 exports CFat<PointCloudHolder> PointCloudHolder::hold (CR<PointCloudLayout> that) {
 	return CFat<PointCloudHolder> (PointCloudImplHolder () ,that) ;
-}
-
-class SE3ImplHolder final implement Fat<SE3Holder ,SE3Layout> {
-public:
-	void initialize (CR<Matrix> that) override {
-		const auto r1x = Quaternion (that).vector () ;
-		const auto r2x = that * Vector::axis_w () ;
-		self.mSE3[0] = r1x[0] ;
-		self.mSE3[1] = r1x[1] ;
-		self.mSE3[2] = r1x[2] ;
-		self.mSE3[3] = r2x[0] ;
-		self.mSE3[4] = r2x[1] ;
-		self.mSE3[5] = r2x[2] ;
-	}
-
-	CR<Flt64> at (CR<Index> y) const leftvalue override {
-		return self.mSE3[y] ;
-	}
-
-	SE3Layout sadd (CR<SE3Layout> that) const override {
-		SE3Layout ret ;
-		for (auto &&i : range (0 ,ret.mSE3.size ())) {
-			ret.mSE3[i] = self.mSE3[i] + that.mSE3[i] ;
-		}
-		return move (ret) ;
-	}
-
-	SE3Layout smul (CR<Flt64> that) const override {
-		SE3Layout ret ;
-		for (auto &&i : range (0 ,ret.mSE3.size ())) {
-			ret.mSE3[i] = self.mSE3[i] * that ;
-		}
-		return move (ret) ;
-	}
-
-	SE3Layout sdiv (CR<Flt64> that) const override {
-		SE3Layout ret ;
-		for (auto &&i : range (0 ,ret.mSE3.size ())) {
-			ret.mSE3[i] = self.mSE3[i] / that ;
-		}
-		return move (ret) ;
-	}
-
-	Matrix matrix () const override {
-		const auto r1x = Vector (self.mSE3[0] ,self.mSE3[1] ,self.mSE3[2] ,0) ;
-		const auto r2x = Vector (self.mSE3[3] ,self.mSE3[4] ,self.mSE3[5] ,0) ;
-		const auto r3x = Quaternion (r1x).matrix () ;
-		const auto r4x = TranslationMatrix (r2x) ;
-		return r4x * r3x ;
-	}
-} ;
-
-exports VFat<SE3Holder> SE3Holder::hold (VR<SE3Layout> that) {
-	return VFat<SE3Holder> (SE3ImplHolder () ,that) ;
-}
-
-exports CFat<SE3Holder> SE3Holder::hold (CR<SE3Layout> that) {
-	return CFat<SE3Holder> (SE3ImplHolder () ,that) ;
 }
 } ;

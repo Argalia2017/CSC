@@ -1206,7 +1206,7 @@ public:
 			rax.mMantissa = MathProc::abs (item) ;
 			rax.mDownflow = 0 ;
 			rax.mExponent = 0 ;
-			rax.mPrecision = Length (log10p (rax.mMantissa)) ;
+			rax.mPrecision = Length (log10p_int (rax.mMantissa)) ;
 			auto rbx = WriteValueBuffer () ;
 			rbx.mWrite = rbx.mBuffer.size () ;
 			write_value (rax ,rbx) ;
@@ -1265,7 +1265,7 @@ public:
 		if ifdo (act) {
 			auto rax = FloatProc::decode (MathProc::abs (item)) ;
 			rax = FloatProc::fexp10_from_fexp2 (rax) ;
-			rax.mPrecision = Length (log10p (rax.mMantissa)) ;
+			rax.mPrecision = Length (log10p_int (rax.mMantissa)) ;
 			auto rbx = WriteValueBuffer () ;
 			rbx.mWrite = rbx.mBuffer.size () ;
 			write_float (rax ,rbx) ;
@@ -1325,7 +1325,7 @@ public:
 			rax.mMantissa = MathProc::abs (r6x) ;
 			rax.mDownflow = 0 ;
 			rax.mExponent = 0 ;
-			rax.mPrecision = Length (log10p (rax.mMantissa)) ;
+			rax.mPrecision = Length (log10p_int (rax.mMantissa)) ;
 			write_value (rax ,wvb) ;
 			wvb.mWrite-- ;
 			wvb.mBuffer[wvb.mWrite] = Stru32 ('E') ;
@@ -1446,14 +1446,45 @@ public:
 		}
 	}
 
-	Val64 log10p (CR<Val64> a) const {
+	Val64 log10p_int (CR<Val64> a) const {
+		if (a <= 0)
+			return 0 ;
 		Val64 ret = 0 ;
 		auto rax = a ;
-		while (TRUE) {
-			if (rax == 0)
-				break ;
-			ret++ ;
-			rax /= 10 ;
+		if ifdo (TRUE) {
+			if (rax < Val64 (10000000000000000))
+				discard ;
+			ret += 16 ;
+			rax /= Val64 (10000000000000000) ;
+		}
+		if ifdo (TRUE) {
+			if (rax < Val64 (100000000))
+				discard ;
+			ret += 8 ;
+			rax /= Val64 (100000000) ;
+		}
+		if ifdo (TRUE) {
+			if (rax < Val64 (10000))
+				discard ;
+			ret += 4 ;
+			rax /= Val64 (10000) ;
+		}
+		if ifdo (TRUE) {
+			if (rax < Val64 (100))
+				discard ;
+			ret += 2 ;
+			rax /= Val64 (100) ;
+		}
+		if ifdo (TRUE) {
+			if (rax < Val64 (10))
+				discard ;
+			ret += 1 ;
+			rax /= Val64 (10) ;
+		}
+		if ifdo (TRUE) {
+			if (rax == Val64 (0))
+				discard ;
+			ret += 1 ;
 		}
 		return move (ret) ;
 	}
@@ -1692,14 +1723,12 @@ public:
 
 	void once (CR<Wrapper<FatLayout>> params) const override {
 		assert (params.rank () <= self.mParams.size ()) ;
-		const auto r1x = Pin<BufferX<FatLayout>> (self.mParams) ;
-		const auto r2x = Pin<Length> (self.mWrite) ;
 		Index ix = 0 ;
 		for (auto &&i : range (0 ,params.rank ())) {
-			r1x.ref[ix] = params[i] ;
+			self.mPin->mParams[ix] = params[i] ;
 			ix++ ;
 		}
-		r2x.ref = ix ;
+		self.mPin->mWrite = ix ;
 	}
 } ;
 

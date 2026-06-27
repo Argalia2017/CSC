@@ -6,10 +6,10 @@
 
 #ifdef _DEBUG
 #define __CSC_VER_DEBUG__
-#elif defined _UNITTEST
-#define __CSC_VER_UNITTEST__
-#else
+#elif defined _RELEASE
 #define __CSC_VER_RELEASE__
+#else
+#define __CSC_VER_UNITTEST__
 #endif
 
 #if defined __GNUC__
@@ -322,11 +322,11 @@ class initializer_list ;
 
 #ifndef __macro_notice
 #ifdef __CSC_VER_DEBUG__
-#define __macro_notice(...) do { struct LINE ; CSC::inline_notice (TYPE<LINE>::expr ,__macro_sz (__VA_ARGS__) ,__VA_ARGS__) ; } while (false)
+#define __macro_notice(...) do { struct LINE ; CSC::inline_notice (TYPE<LINE>::expr ,__macro_sz (__VA_ARGS__) ,(__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_notice(...) do { struct LINE ; if (!inline_debug ()) break ; CSC::inline_notice (TYPE<LINE>::expr ,__macro_sz (__VA_ARGS__) ,__VA_ARGS__) ; } while (false)
+#define __macro_notice(...) do { struct LINE ; if (!inline_debug ()) break ; CSC::inline_notice (TYPE<LINE>::expr ,__macro_sz (__VA_ARGS__) ,(__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -582,7 +582,7 @@ template <class A>
 using MACRO_IS_COPY_ASSIGNABLE = ENUM<(__is_assignable (VR<A> ,CR<A>))> ;
 
 template <class A>
-using MACRO_IS_MOVE_ASSIGNABLE = ENUM<(__is_assignable (VR<A> ,RR<A>))> ;
+using MACRO_IS_MOVE_ASSIGNABLE = ENUM<(__is_nothrow_assignable (VR<A> ,RR<A>))> ;
 
 template <class A>
 using MACRO_IS_TRIVIAL_CONSTRUCTIBLE = ENUM<(__is_trivially_constructible (A))> ;

@@ -351,7 +351,6 @@ public:
 		self.mQB = Image<Flt64> (3 ,r2x) ;
 		for (auto &&i : range (0 ,r2x)) {
 			const auto r6x = self.mNSrc[1] * src[i] ;
-			Singleton<Console>::expr.info (Format (slice ("[$1] $2 : $3")) (i ,src[i][0] ,r6x[0])) ;
 			for (auto &&j : range (0 ,r1x)) {
 				self.mQA.at (j ,i) = bernstein (j ,self.mRank ,r6x[0]) ;
 			}
@@ -366,6 +365,10 @@ public:
 				self.mPCtrl[i][j] = self.mQC.at (j ,i) ;
 			}
 		}
+	}
+
+	CR<Array<Vector>> ref_m () const leftvalue override {
+		return self.mPCtrl ;
 	}
 
 	Vector smul (CR<Vector> that) const override {
@@ -385,13 +388,15 @@ public:
 	Flt64 bernstein (CR<Index> i ,CR<Length> n ,CR<Flt64> t) const {
 		Flt64 ret = 1 ;
 		for (auto &&j : range (0 ,i)) {
-			ret *= (n - j) ;
-			ret /= (j + 1) ;
+			ret *= Flt64 (n - j) ;
+			ret /= Flt64 (j + 1) ;
 		}
 		for (auto &&j : range (0 ,i)) {
+			noop (j) ;
 			ret *= t ;
 		}
 		for (auto &&j : range (0 ,n - i)) {
+			noop (j) ;
 			ret *= (1 - t) ;
 		}
 		return move (ret) ;
@@ -410,7 +415,7 @@ public:
 				return Flt64 (0) ;
 			return bernstein (i ,n - 1 ,t) ;
 		}) ;
-		return n * (r1x - r2x) ;
+		return Flt64 (n) * (r1x - r2x) ;
 	}
 
 	Matrix jacobian (CR<Vector> that) const override {
@@ -434,5 +439,132 @@ exports VFat<BCSFitHolder> BCSFitHolder::hold (VR<BCSFitLayout> that) {
 
 exports CFat<BCSFitHolder> BCSFitHolder::hold (CR<BCSFitLayout> that) {
 	return CFat<BCSFitHolder> (BCSFitImplHolder () ,that) ;
+}
+
+class FFTransformImplHolder final implement Fat<FFTransformHolder ,FFTransformLayout> {
+public:
+	void initialize (CR<Length> size_) override {
+		assert (size_ > 1) ;
+		self.mRank = ByteProc::log2p_bit (size_ - 1) ;
+		self.mSize = ByteProc::exp2p_bit (self.mRank) ;
+		self.mCosSin = Array<Array<Vector>> (self.mRank + 1) ;
+		for (auto &&i : range (0 ,self.mRank + 1)) {
+			const auto r1x = ByteProc::exp2p_bit (i) ;
+			self.mCosSin[i] = Array<Vector> (r1x) ;
+			const auto r2x = MATH_PI * MathProc::inverse (Flt64 (r1x)) ;
+			for (auto &&j : range (0 ,r1x)) {
+				const auto r3x = Flt64 (j) * r2x ;
+				self.mCosSin[i][j][0] = MathProc::cos (r3x) ;
+				self.mCosSin[i][j][1] = -MathProc::sin (r3x) ;
+				self.mCosSin[i][j][2] = 0 ;
+				self.mCosSin[i][j][3] = 0 ;
+			}
+		}
+		self.mScale[0] = 1 ;
+		self.mScale[1] = MathProc::inverse (Flt64 (self.mSize)) ;
+		self.mScale[2] = MathProc::sqrt (self.mScale[1]) ;
+	}
+
+	void set_unitary (CR<Bool> flag) override {
+		//@info: use [cos ,-sin] as main direction
+		//@info: det(DFT)=sqrt(N) ,normalize IDFT to implement det(IDFT(DFT*DFT))=1
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (!flag)
+				discard ;
+			swap (self.mScale[0] ,self.mScale[2]) ;
+			self.mScale[1] = self.mScale[0] ;
+		}
+		if ifdo (act) {
+			if (self.mScale[2] != 1)
+				discard ;
+			swap (self.mScale[0] ,self.mScale[2]) ;
+			self.mScale[1] = MathProc::inverse (Flt64 (self.mSize)) ;
+		}
+		if ifdo (act) {
+			swap (self.mScale[0] ,self.mScale[2]) ;
+			self.mScale[1] = 1 ;
+		}
+	}
+
+	Length size () const override {
+		return self.mSize ;
+	}
+
+	Array<Vector> smul (CR<Array<Vector>> that) const override {
+		assert (that.size () <= self.mSize) ;
+		Array<Vector> ret = Array<Vector> (self.mSize) ;
+		ret.fill (Vector::zero ()) ;
+		for (auto &&i : that.iter ())
+			ret[i] = that[i] ;
+		fft (ret ,self.mRank) ;
+		for (auto &&i : range (0 ,self.mSize)) {
+			ret[i] *= self.mScale[0] ;
+		}
+		return move (ret) ;
+	}
+
+	void fft (VR<Array<Vector>> pt ,CR<Length> n) const {
+		auto rax = Array<Vector> (self.mSize) ;
+		for (auto &&i : range (0 ,self.mRank)) {
+			const auto r1x = self.mRank - 1 - i ;
+			const auto r2x = ByteProc::exp2p_bit (i) ;
+			const auto r3x = r2x * 2 ;
+			const auto r4x = ByteProc::exp2p_bit (r1x) ;
+			const auto r5x = r4x * 2 ;
+			for (auto &&j : range (0 ,r4x)) {
+				for (auto &&k : range (0 ,r2x)) {
+					Index jx = j + k * r5x ;
+					Index jy = j + k * r5x + r4x ;
+					const auto r6x = pt[jx] ;
+					const auto r7x = complex_mul (self.mCosSin[i][k] ,pt[jy]) ;
+					rax[k] = r6x + r7x ;
+					rax[k + r2x] = r6x - r7x ;
+				}
+				for (auto &&k : range (0 ,r3x)) {
+					Index ix = j + k * r4x ;
+					pt[ix] = rax[k] ;
+				}
+			}
+		}
+	}
+
+	Vector complex_mul (CR<Vector> a ,CR<Vector> b) const {
+		Vector ret ;
+		ret[0] = a[0] * b[0] - a[1] * b[1] ;
+		ret[1] = a[1] * b[0] + a[0] * b[1] ;
+		ret[2] = 0 ;
+		ret[3] = 0 ;
+		return move (ret) ;
+	}
+
+	FFTransformLayout inverse () const override {
+		FFTransformLayout ret ;
+		ret.mSize = self.mSize ;
+		ret.mRank = self.mRank ;
+		ret.mCosSin = Array<Array<Vector>> (self.mRank + 1) ;
+		for (auto &&i : range (0 ,self.mRank + 1)) {
+			const auto r3x = self.mCosSin[i].length () ;
+			ret.mCosSin[i] = Array<Vector> (r3x) ;
+			for (auto &&j : range (0 ,r3x)) {
+				ret.mCosSin[i][j][0] = self.mCosSin[i][j][0] ;
+				ret.mCosSin[i][j][1] = -self.mCosSin[i][j][1] ;
+				ret.mCosSin[i][j][2] = 0 ;
+				ret.mCosSin[i][j][3] = 0 ;
+			}
+		}
+		ret.mScale[0] = self.mScale[1] ;
+		ret.mScale[1] = self.mScale[0] ;
+		ret.mScale[2] = self.mScale[2] ;
+		return move (ret) ;
+	}
+} ;
+
+exports VFat<FFTransformHolder> FFTransformHolder::hold (VR<FFTransformLayout> that) {
+	return VFat<FFTransformHolder> (FFTransformImplHolder () ,that) ;
+}
+
+exports CFat<FFTransformHolder> FFTransformHolder::hold (CR<FFTransformLayout> that) {
+	return CFat<FFTransformHolder> (FFTransformImplHolder () ,that) ;
 }
 } ;

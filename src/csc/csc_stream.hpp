@@ -217,7 +217,7 @@ public:
 	}
 
 	template <class ARG1>
-	ARG1 poll (TYPE<ARG1>) const {
+	ARG1 pull (TYPE<ARG1>) const {
 		ARG1 ret ;
 		read (ret) ;
 		return move (ret) ;
@@ -437,7 +437,7 @@ public:
 	}
 
 	template <class ARG1>
-	ARG1 poll (TYPE<ARG1>) {
+	ARG1 pull (TYPE<ARG1>) {
 		ARG1 ret ;
 		read (ret) ;
 		return move (ret) ;
@@ -657,7 +657,7 @@ public:
 	}
 
 	template <class ARG1>
-	ARG1 poll (TYPE<ARG1>) {
+	ARG1 pull (TYPE<ARG1>) {
 		ARG1 ret ;
 		read (ret) ;
 		return move (ret) ;
@@ -1540,6 +1540,7 @@ inline FatLayout PrintWriting (CR<ARG1> param) {
 }
 
 struct FormatLayout {
+	Pin<FormatLayout> mPin ;
 	Slice mFormat ;
 	BufferX<FatLayout> mParams ;
 	Index mWrite ;

@@ -3,6 +3,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\inl.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="..\..\src\test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util.h" />
@@ -52,6 +53,9 @@
       <Filter>csc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\csc\csc_type.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_algorithm.hpp">
       <Filter>csc</Filter>
     </ClInclude>
   </ItemGroup>
@@ -122,6 +126,9 @@
       <Filter>csc</Filter>
     </None>
     <None Include="..\..\src\csc\csc_thread.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_algorithm.inl">
       <Filter>csc</Filter>
     </None>
   </ItemGroup>

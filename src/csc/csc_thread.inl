@@ -44,9 +44,6 @@ public:
 } ;
 
 class WorkThreadImplHolder final implement Fat<WorkThreadHolder ,WorkThreadLayout> {
-private:
-	using THREAD_QUEUE_SIZE = ENUM<65536> ;
-
 public:
 	void initialize () override {
 		self.mThreadMutex = UniqueMutex () ;
@@ -91,7 +88,7 @@ public:
 	void friend_execute (CR<Index> slot) override {
 		try {
 			while (TRUE) {
-				poll (slot) ;
+				pull (slot) ;
 				for (auto &&i : self.mThreadQueue[slot]) {
 					self.mThreadFunc (i) ;
 				}
@@ -108,7 +105,7 @@ public:
 		rax.notify () ;
 	}
 
-	void poll (CR<Index> slot) {
+	void pull (CR<Index> slot) {
 		auto rax = UniqueLock (self.mThreadMutex) ;
 		while (TRUE) {
 			if (self.mThreadFlag != ThreadFlag::Running)
@@ -272,8 +269,8 @@ public:
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (self.mThread.size () > 0) ;
 		self.mBestSolution.mIteration = ZERO ;
-		self.mBestSolution.mAvgError = infinity ;
-		self.mBestSolution.mStdError = 0 ;
+		self.mBestSolution.mError.mAvg = infinity ;
+		self.mBestSolution.mError.mStd = 0 ;
 		self.mBestSolution.mInput = input ;
 		for (auto &&i : self.mThreadSolution.iter ())
 			self.mThreadSolution[i].mIteration = NONE ;
@@ -352,8 +349,8 @@ public:
 	Bool is_better (CR<CalcSolution> a ,CR<CalcSolution> b) const {
 		const auto r1x = Index (Flt64 (a.mIteration) * self.mConfidenceFator) ;
 		Index ix = MathProc::clamp (r1x ,ZERO ,self.mConfidence.length ()) ;
-		const auto r2x = a.mAvgError - a.mStdError * self.mConfidence[ix] ;
-		const auto r3x = b.mAvgError - b.mStdError * self.mConfidence[ix] ;
+		const auto r2x = a.mError.mAvg - a.mError.mStd * self.mConfidence[ix] ;
+		const auto r3x = b.mError.mAvg - b.mError.mStd * self.mConfidence[ix] ;
 		if (r2x < r3x)
 			return TRUE ;
 		return FALSE ;
@@ -384,8 +381,8 @@ public:
 			assume (self.mBestSolution.mIteration != NONE) ;
 			const auto r1x = bitset_xor (self.mThreadSolution[slot].mInput ,self.mSearchSolution[slot].mInput) ;
 			self.mThreadSolution[slot] = move (self.mSearchSolution[slot]) ;
-			self.mSearchSolution[slot].mAvgError = infinity ;
-			self.mSearchSolution[slot].mStdError = 0 ;
+			self.mSearchSolution[slot].mError.mAvg = infinity ;
+			self.mSearchSolution[slot].mError.mStd = 0 ;
 			self.mSearchSolution[slot].mInput = bitset_xor (self.mBestSolution.mInput ,r1x) ;
 		}
 		return FALSE ;
@@ -423,7 +420,7 @@ public:
 		return self.mNewSolution ;
 	}
 
-	CalcSolution poll () override {
+	CalcSolution pull () override {
 		auto rax = UniqueLock (self.mThreadMutex) ;
 		while (TRUE) {
 			if (self.mThreadFlag != ThreadFlag::Running)
@@ -639,7 +636,7 @@ public:
 		return FALSE ;
 	}
 
-	AutoRef<Pointer> poll () override {
+	AutoRef<Pointer> pull () override {
 		auto rax = UniqueLock (self.mThreadMutex) ;
 		while (TRUE) {
 			if (self.mThreadFlag != ThreadFlag::Running)
@@ -729,8 +726,9 @@ public:
 		unimplemented () ;
 	}
 
-	void until (RR<Ref<Bool>> flag) override {
+	Scope until () override {
 		unimplemented () ;
+		return Scope () ;
 	}
 
 	void execute () override {

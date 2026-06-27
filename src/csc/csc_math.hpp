@@ -34,10 +34,10 @@ struct MathProcHolder implement Interface {
 	virtual Val64 step (CR<Val64> a) const = 0 ;
 	virtual Flt32 step (CR<Flt32> a) const = 0 ;
 	virtual Flt64 step (CR<Flt64> a) const = 0 ;
-	virtual Val32 relu (CR<Val32> a) const = 0 ;
-	virtual Val64 relu (CR<Val64> a) const = 0 ;
-	virtual Flt32 relu (CR<Flt32> a) const = 0 ;
-	virtual Flt64 relu (CR<Flt64> a) const = 0 ;
+	virtual Val32 delta (CR<Val32> a) const = 0 ;
+	virtual Val64 delta (CR<Val64> a) const = 0 ;
+	virtual Flt32 delta (CR<Flt32> a) const = 0 ;
+	virtual Flt64 delta (CR<Flt64> a) const = 0 ;
 	virtual Val32 sign (CR<Val32> a) const = 0 ;
 	virtual Val64 sign (CR<Val64> a) const = 0 ;
 	virtual Flt32 sign (CR<Flt32> a) const = 0 ;
@@ -70,14 +70,16 @@ struct MathProcHolder implement Interface {
 	virtual Flt64 ceil (CR<Flt64> a ,CR<Flt64> b) const = 0 ;
 	virtual Flt32 round (CR<Flt32> a) const = 0 ;
 	virtual Flt64 round (CR<Flt64> a) const = 0 ;
-	virtual Flt32 fmod (CR<Flt32> a) const = 0 ;
-	virtual Flt64 fmod (CR<Flt64> a) const = 0 ;
+	virtual Val32 wrap (CR<Val32> a ,CR<Val32> max_) const = 0 ;
+	virtual Val64 wrap (CR<Val64> a ,CR<Val64> max_) const = 0 ;
 	virtual Val32 clamp (CR<Val32> a ,CR<Val32> min_ ,CR<Val32> max_) const = 0 ;
 	virtual Val64 clamp (CR<Val64> a ,CR<Val64> min_ ,CR<Val64> max_) const = 0 ;
 	virtual Flt32 clamp (CR<Flt32> a ,CR<Flt32> min_ ,CR<Flt32> max_) const = 0 ;
 	virtual Flt64 clamp (CR<Flt64> a ,CR<Flt64> min_ ,CR<Flt64> max_) const = 0 ;
 	virtual Val32 lerp (CR<Flt64> a ,CR<Val32> min_ ,CR<Val32> max_) const = 0 ;
 	virtual Val64 lerp (CR<Flt64> a ,CR<Val64> min_ ,CR<Val64> max_) const = 0 ;
+	virtual Flt32 lerp (CR<Flt64> a ,CR<Flt32> min_ ,CR<Flt32> max_) const = 0 ;
+	virtual Flt64 lerp (CR<Flt64> a ,CR<Flt64> min_ ,CR<Flt64> max_) const = 0 ;
 	virtual Flt32 cos (CR<Flt32> a) const = 0 ;
 	virtual Flt64 cos (CR<Flt64> a) const = 0 ;
 	virtual Flt32 sin (CR<Flt32> a) const = 0 ;
@@ -88,6 +90,8 @@ struct MathProcHolder implement Interface {
 	virtual Flt64 acos (CR<Flt64> a) const = 0 ;
 	virtual Flt32 asin (CR<Flt32> a) const = 0 ;
 	virtual Flt64 asin (CR<Flt64> a) const = 0 ;
+	virtual Flt32 atan (CR<Flt32> a) const = 0 ;
+	virtual Flt64 atan (CR<Flt64> a) const = 0 ;
 	virtual Flt32 atan (CR<Flt32> y ,CR<Flt32> x) const = 0 ;
 	virtual Flt64 atan (CR<Flt64> y ,CR<Flt64> x) const = 0 ;
 	virtual Flt32 exp (CR<Flt32> a) const = 0 ;
@@ -132,8 +136,8 @@ public:
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
-	static ARG1 relu (CR<ARG1> a) {
-		return MathProcHolder::hold (expr)->relu (a) ;
+	static ARG1 delta (CR<ARG1> a) {
+		return MathProcHolder::hold (expr)->delta (a) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
@@ -196,9 +200,9 @@ public:
 		return MathProcHolder::hold (expr)->round (a) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
-	static ARG1 fmod (CR<ARG1> a) {
-		return MathProcHolder::hold (expr)->fmod (a) ;
+	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
+	static ARG1 wrap (CR<ARG1> a ,CR<ARG1> max_) {
+		return MathProcHolder::hold (expr)->wrap (a ,max_) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
@@ -206,7 +210,7 @@ public:
 		return MathProcHolder::hold (expr)->clamp (a ,min_ ,max_) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
 	static ARG1 lerp (CR<Flt64> a ,CR<ARG1> min_ ,CR<ARG1> max_) {
 		return MathProcHolder::hold (expr)->lerp (a ,min_ ,max_) ;
 	}
@@ -234,6 +238,11 @@ public:
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	static ARG1 asin (CR<ARG1> a) {
 		return MathProcHolder::hold (expr)->asin (a) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
+	static ARG1 atan (CR<ARG1> a) {
+		return MathProcHolder::hold (expr)->atan (a) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
@@ -284,16 +293,18 @@ public:
 
 struct NormalErrorLayout {
 	Length mCount ;
-	Flt64 mMaxError ;
-	Flt64 mAvgError ;
-	Flt64 mStdError ;
+	Flt64 mMax ;
+	Flt64 mAvg ;
+	Flt64 mStd ;
+	Flt64 mRms ;
 
 public:
 	implicit NormalErrorLayout () noexcept {
 		mCount = 0 ;
-		mMaxError = 0 ;
-		mAvgError = 0 ;
-		mStdError = 0 ;
+		mMax = 0 ;
+		mAvg = 0 ;
+		mStd = 0 ;
+		mRms = 0 ;
 	}
 } ;
 
@@ -454,7 +465,8 @@ struct ByteProcHolder implement Interface {
 	virtual Word binary (CR<Word> a) const = 0 ;
 	virtual Char binary (CR<Char> a) const = 0 ;
 	virtual Quad binary (CR<Quad> a) const = 0 ;
-	virtual Index pow_bit (CR<Length> nth) const = 0 ;
+	virtual Index exp2p_bit (CR<Length> a) const = 0 ;
+	virtual Length log2p_bit (CR<Index> a) const = 0 ;
 	virtual Length popcount (CR<Byte> a) const = 0 ;
 	virtual Length lowcount (CR<Byte> a) const = 0 ;
 } ;
@@ -521,8 +533,12 @@ public:
 		return ByteProcHolder::hold (expr)->binary (a) ;
 	}
 
-	static Index pow_bit (CR<Length> nth) {
-		return ByteProcHolder::hold (expr)->pow_bit (nth) ;
+	static Index exp2p_bit (CR<Length> a) {
+		return ByteProcHolder::hold (expr)->exp2p_bit (a) ;
+	}
+
+	static Length log2p_bit (CR<Index> a) {
+		return ByteProcHolder::hold (expr)->log2p_bit (a) ;
 	}
 
 	static Length popcount (CR<Byte> a) {

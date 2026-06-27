@@ -62,7 +62,7 @@
 
 	<Type Name="CSC::Pin&lt;*&gt;">
 		<Expand HideRawView="true">
-			<Item Name="[+]">*($T1*)&amp;mStorage</Item>
+			<Item Name="[+]">*($T1*)(((char*)this)+mOffset)</Item>
 		</Expand>
 	</Type>
 
@@ -410,6 +410,12 @@
 	<Type Name="CSC::QuaternionLayout">
 		<Expand HideRawView="true">
 			<ExpandedItem>(double(*)[4])&amp;mQuaternion</ExpandedItem>
+		</Expand>
+	</Type>
+
+	<Type Name="CSC::SE3Layout">
+		<Expand HideRawView="true">
+			<ExpandedItem>(double(*)[6])&amp;mSE3</ExpandedItem>
 		</Expand>
 	</Type>
 

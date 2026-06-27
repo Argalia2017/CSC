@@ -24,6 +24,7 @@ exports CFat<PathHolder> PathHolder::hold (CR<PathLayout> that) {
 template class External<FileProcHolder ,FileProcLayout> ;
 
 struct FileProcLayout {
+	Pin<FileProcLayout> mPin ;
 	Mutex mMutex ;
 	List<UniqueRef<String<Str>>> mLockDirectory ;
 } ;
@@ -87,14 +88,13 @@ public:
 
 class StreamFileWriterImplHolder final implement Fat<StreamFileWriterHolder ,StreamFileWriterLayout> {
 public:
-	void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> option) override {
+	void initialize (CR<String<Str>> file) override {
 		self.mStreamFile = StreamFile (file) ;
 		self.mStreamFile.open_w (0) ;
 		self.mFileBuffer = RefBuffer<Byte> (STREAMFILE_CHUNK_STEP::expr) ;
-		set_writer (option) ;
 	}
-
-	void set_writer (CR<Just<StreamFileEncode>> option) {
+	
+	void open (CR<Just<StreamFileEncode>> option) override {
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (option != StreamFileEncode::ByteWriter)
@@ -115,7 +115,7 @@ public:
 		}) ;
 	}
 
-	CR<Writer> ref_m () leftvalue override {
+	CR<Writer> ref_m () const leftvalue override {
 		return self.mWriter.ref ;
 	}
 

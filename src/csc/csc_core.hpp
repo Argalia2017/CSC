@@ -258,7 +258,7 @@ static constexpr auto move = FUNCTION_move () ;
 struct FUNCTION_swap {
 	template <class ARG1>
 	forceinline void operator() (VR<ARG1> a ,VR<ARG1> b) const noexcept {
-		//@warn: no class should depend on its address
+		//@warn: none class could depend on its address
 		require (IS_DEFAULT<ARG1>) ;
 		auto rax = Union<ARG1> () ;
 		inline_memcpy (Pointer::from (rax) ,Pointer::from (a) ,SIZE_OF<ARG1>::expr) ;
@@ -560,25 +560,25 @@ struct FUNCTION_inline_compr {
 
 static constexpr auto inline_compr = FUNCTION_inline_compr () ;
 
-struct FUNCTION_inline_guid {
+struct FUNCTION_inline_expr {
 	template <class ARG1>
 	forceinline Flag operator() (TYPE<ARG1>) const noexcept {
-		return guid_impl (PHX ,TYPE<ARG1>::expr) ;
+		return expr_impl (PHX ,TYPE<ARG1>::expr) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (ARG1::expr)>>>
-	forceinline Flag guid_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
+	forceinline Flag expr_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
 		return address (ARG1::expr) ;
 	}
 
 	template <class ARG1>
-	forceinline Flag guid_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
+	forceinline Flag expr_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
 		assert (FALSE) ;
 		return ZERO ;
 	}
 } ;
 
-static constexpr auto inline_guid = FUNCTION_inline_guid () ;
+static constexpr auto inline_expr = FUNCTION_inline_expr () ;
 
 struct VisitorHolder implement Interface {
 	virtual void reset () = 0 ;
@@ -860,11 +860,9 @@ struct ReflectCreate implement Interface {
 
 template <class A>
 class ReflectCreateBinder final implement Fat<ReflectCreate ,void> {
-private:
-	require (IS_DEFAULT<A>) ;
-
 public:
 	void create (VR<Pointer> a ,CR<Length> size_) const noexcept override {
+		require (MACRO_IS_CONSTRUCTIBLE<A>) ;
 		if (MACRO_IS_TRIVIAL_CONSTRUCTIBLE<A>::expr)
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
@@ -886,6 +884,7 @@ template <class A>
 class ReflectDestroyBinder final implement Fat<ReflectDestroy ,void> {
 public:
 	void destroy (VR<Pointer> a ,CR<Length> size_) const noexcept override {
+		require (MACRO_IS_DESTRUCTIBLE<A>) ;
 		if (MACRO_IS_TRIVIAL_DESTRUCTIBLE<A>::expr)
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
@@ -896,7 +895,7 @@ public:
 } ;
 
 struct ReflectAssign implement Interface {
-	virtual void assign (VR<Pointer> a ,VR<Pointer> b) const noexcept = 0 ;
+	virtual void swap (VR<Pointer> a ,VR<Pointer> b) const noexcept = 0 ;
 
 	forceinline static consteval Flag expr_m () noexcept {
 		return 103 ;
@@ -906,8 +905,8 @@ struct ReflectAssign implement Interface {
 template <class A>
 class ReflectAssignBinder final implement Fat<ReflectAssign ,void> {
 public:
-	void assign (VR<Pointer> a ,VR<Pointer> b) const noexcept override {
-		CSC::assign (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
+	void swap (VR<Pointer> a ,VR<Pointer> b) const noexcept override {
+		CSC::swap (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
 	}
 } ;
 
@@ -1132,7 +1131,7 @@ public:
 		require (ENUM_COMPR_GTEQ<ALIGN_OF<B> ,ALIGN_OF<A>>) ;
 		if (exist ())
 			return ;
-		const auto r1x = address (mStorage) ;
+		const auto r1x = address (ref) ;
 		new (csc_device_t (r1x)) A (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
 		BoxHolder::hold (thiz)->remake (BoxUnknownBinder<A> () ,r1x) ;
 	}
@@ -1147,48 +1146,30 @@ public:
 } ;
 
 struct PinLayout {
-	Flag mLayout ;
+	Flag mOffset ;
 
 public:
 	implicit PinLayout () noexcept {
-		mLayout = ZERO ;
+		mOffset = ZERO ;
 	}
 } ;
 
 template <class A>
 class Pin implement PinLayout {
 protected:
-	using PinLayout::mLayout ;
-	mutable Union<A> mStorage ;
+	using PinLayout::mOffset ;
 
 public:
-	implicit Pin () = delete ;
+	implicit Pin () = default ;
 
-	explicit Pin (CR<A> that) {
-		const auto r1x = address (that) ;
-		mStorage = bitwise (Pointer::make (r1x)) ;
-		mLayout = r1x ;
+	void pinned (VR<A> addr) {
+		mOffset = address (addr) - address (thiz) ;
+		assert (mOffset >= ZERO) ;
 	}
-
-	explicit Pin (RR<A> that) = delete ;
-
-	implicit ~Pin () noexcept {
-		if (mLayout == ZERO)
-			return ;
-		bitwise (Pointer::make (mLayout)) = mStorage ;
-		mLayout = ZERO ;
-	}
-
-	implicit Pin (CR<Pin> that) = delete ;
-
-	forceinline VR<Pin> operator= (CR<Pin> that) = delete ;
-
-	implicit Pin (RR<Pin> that) = delete ;
-
-	forceinline VR<Pin> operator= (RR<Pin> that) = delete ;
 
 	VR<A> ref_m () const leftvalue {
-		return Pointer::from (mStorage) ;
+		const auto r1x = address (thiz) + mOffset ;
+		return Pointer::make (r1x) ;
 	}
 
 	forceinline PTR<VR<A>> operator-> () const leftvalue {
@@ -1227,7 +1208,7 @@ struct RefHolder implement Interface {
 
 	virtual void initialize (RR<BoxLayout> item) = 0 ;
 	virtual void initialize (CR<Unknown> holder ,CR<Unknown> extend ,CR<Length> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<Flag> extend ,CR<Flag> layout) = 0 ;
+	virtual void initialize (CR<Flag> holder ,CR<Flag> layout) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual RefLayout share () const = 0 ;
 	virtual Bool exist () const = 0 ;
@@ -1278,13 +1259,13 @@ public:
 
 	static Ref reference (VR<A> that) {
 		Ref ret ;
-		RefHolder::hold (ret)->initialize (RefUnknownBinder<A> () ,VARIABLE::expr ,address (that)) ;
+		RefHolder::hold (ret)->initialize (VARIABLE::expr ,address (that)) ;
 		return move (ret) ;
 	}
 
 	static Ref reference (CR<A> that) {
 		Ref ret ;
-		RefHolder::hold (ret)->initialize (RefUnknownBinder<A> () ,CONSTANT::expr ,address (that)) ;
+		RefHolder::hold (ret)->initialize (CONSTANT::expr ,address (that)) ;
 		return move (ret) ;
 	}
 
@@ -1595,8 +1576,6 @@ struct Super {
 public:
 	implicit Super () = default ;
 
-	implicit Super (RR<A> that) :mThis (move (that)) {}
-
 	using ITEM = typeof (nullof (A).ref) ;
 
 	VR<ITEM> ref_m () const leftvalue {
@@ -1608,14 +1587,24 @@ public:
 	}
 } ;
 
-struct ExternalLayout {
-	FatLayout mImplHolder ;
+template <class A>
+struct ExternalRoot {
+	FatLayout mImpl ;
+
+public:
+	static VR<ExternalRoot> expr_m () ;
 } ;
 
+template <class A>
+inline VR<ExternalRoot<A>> ExternalRoot<A>::expr_m () {
+	static auto mInstance = ExternalRoot<A> () ;
+	return mInstance ;
+}
+
 template <class A ,class B>
-class External implement ExternalLayout {
+class External implement Proxy {
 public:
-	implicit External () = default ;
+	implicit External () = delete ;
 
 	template <class ARG1>
 	explicit External (CR<ARG1> holder) {
@@ -1625,21 +1614,13 @@ public:
 		using R1X = typeof (nullof (ARG1).self) ;
 		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<B>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<R1X> ,ALIGN_OF<B>>) ;
-		root_ptr ().mImplHolder = bitwise (holder) ;
+		ExternalRoot<External>::expr = bitwise (holder) ;
 	}
-
-	static VR<ExternalLayout> root_ptr () ;
 
 	static CR<Fat<A ,B>> expr_m () {
-		return Pointer::from (root_ptr ().mImplHolder) ;
+		return Pointer::from (ExternalRoot<External>::expr) ;
 	}
 } ;
-
-template <class A ,class B>
-inline VR<ExternalLayout> External<A ,B>::root_ptr () {
-	static auto mInstance = ExternalLayout () ;
-	return mInstance ;
-}
 
 struct ReflectClone implement Interface {
 	virtual void clone (VR<Pointer> a ,CR<Pointer> b) const = 0 ;
@@ -1706,8 +1687,8 @@ public:
 } ;
 
 struct ReflectGuid implement Interface {
-	virtual Flag type_meta () const = 0 ;
 	virtual Flag type_guid () const = 0 ;
+	virtual Flag type_expr () const = 0 ;
 
 	forceinline static consteval Flag expr_m () noexcept {
 		return 114 ;
@@ -1717,12 +1698,12 @@ struct ReflectGuid implement Interface {
 template <class A>
 class ReflectGuidBinder final implement Fat<ReflectGuid ,void> {
 public:
-	Flag type_meta () const override {
+	Flag type_guid () const override {
 		return inline_vptr (thiz) ;
 	}
 
-	Flag type_guid () const override {
-		return inline_guid (TYPE<A>::expr) ;
+	Flag type_expr () const override {
+		return inline_expr (TYPE<A>::expr) ;
 	}
 } ;
 
@@ -1757,8 +1738,8 @@ struct ClazzHolder implement Interface {
 	virtual void initialize (CR<ClazzLayout> that) = 0 ;
 	virtual Length type_size () const = 0 ;
 	virtual Length type_align () const = 0 ;
-	virtual Flag type_meta () const = 0 ;
 	virtual Flag type_guid () const = 0 ;
+	virtual Flag type_expr () const = 0 ;
 	virtual Slice type_name () const = 0 ;
 	virtual Bool equal (CR<ClazzLayout> that) const = 0 ;
 	virtual Flag compr (CR<ClazzLayout> that) const = 0 ;
@@ -1815,12 +1796,12 @@ public:
 		return ClazzHolder::hold (thiz)->type_align () ;
 	}
 
-	Flag type_meta () const {
-		return ClazzHolder::hold (thiz)->type_meta () ;
-	}
-
 	Flag type_guid () const {
 		return ClazzHolder::hold (thiz)->type_guid () ;
+	}
+
+	Flag type_expr () const {
+		return ClazzHolder::hold (thiz)->type_expr () ;
 	}
 
 	Slice type_name () const {
@@ -1922,6 +1903,8 @@ protected:
 public:
 	implicit Scope () = default ;
 
+	implicit Scope (CR<typeof (NULL)>) {}
+
 	template <class ARG1>
 	explicit Scope (CR<ARG1> that) {
 		ScopeHolder::hold (thiz)->initialize (ScopeUnknownBinder<ARG1> () ,address (that)) ;
@@ -1932,6 +1915,14 @@ public:
 
 	Bool exist () const {
 		return ScopeHolder::hold (thiz)->exist () ;
+	}
+
+	forceinline Bool operator== (CR<typeof (NULL)>) const {
+		return (!exist ()) ;
+	}
+
+	forceinline Bool operator!= (CR<typeof (NULL)>) const {
+		return exist () ;
 	}
 } ;
 } ;

@@ -707,7 +707,7 @@ public:
 	}
 
 	template <class ARG1>
-	ARG1 poll (TYPE<ARG1>) {
+	ARG1 pull (TYPE<ARG1>) {
 		ARG1 ret ;
 		read (ret) ;
 		return move (ret) ;
