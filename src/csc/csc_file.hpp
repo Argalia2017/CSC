@@ -170,7 +170,7 @@ public:
 struct FileProcLayout ;
 
 struct FileProcHolder implement Interface {
-	imports CR<Super<Ref<FileProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<FileProcLayout>>> expr_m () ;
 	imports VFat<FileProcHolder> hold (VR<FileProcLayout> that) ;
 	imports CFat<FileProcHolder> hold (CR<FileProcLayout> that) ;
 
@@ -189,7 +189,7 @@ struct FileProcHolder implement Interface {
 	virtual Bool lock_dire (CR<String<Str>> dire) const = 0 ;
 } ;
 
-class FileProc implement Super<Ref<FileProcLayout>> {
+class FileProc implement Super<UniqueRef<FileProcLayout>> {
 public:
 	static CR<FileProc> expr_m () {
 		return keep[TYPE<FileProc>::expr] (FileProcHolder::expr) ;
@@ -263,8 +263,6 @@ struct StreamFileHolder implement Interface {
 	virtual void flush () = 0 ;
 } ;
 
-using STREAMFILE_CHUNK_STEP = ENUM<65536> ;
-
 class StreamFile implement Super<Ref<StreamFileLayout>> {
 public:
 	implicit StreamFile () = default ;
@@ -327,6 +325,7 @@ struct StreamFileWriterHolder implement Interface {
 	imports CFat<StreamFileWriterHolder> hold (CR<StreamFileWriterLayout> that) ;
 
 	virtual void initialize (CR<String<Str>> file) = 0 ;
+	virtual void set_chunk_step (CR<Length> step_) = 0 ;
 	virtual void open (CR<Just<StreamFileEncode>> option) = 0 ;
 	virtual CR<Writer> ref_m () const leftvalue = 0 ;
 	virtual void flush () = 0 ;
@@ -345,6 +344,10 @@ public:
 		mThis = StreamFileWriterHolder::create () ;
 		StreamFileWriterHolder::hold (thiz)->initialize (file) ;
 		open (option) ;
+	}
+
+	void set_chunk_step (CR<Length> step_) {
+		return StreamFileWriterHolder::hold (thiz)->set_chunk_step (step_) ;
 	}
 
 	void open (CR<Just<StreamFileEncode>> option) {
@@ -373,6 +376,7 @@ struct BufferFileHolder implement Interface {
 
 	virtual void initialize (CR<String<Str>> file) = 0 ;
 	virtual void set_block_step (CR<Length> step_) = 0 ;
+	virtual void set_chunk_step (CR<Length> step_) = 0 ;
 	virtual void set_cache_size (CR<Length> size_) = 0 ;
 	virtual void open_r () = 0 ;
 	virtual void open_w (CR<Length> size_) = 0 ;
@@ -394,6 +398,10 @@ public:
 
 	void set_block_step (CR<Length> step_) {
 		return BufferFileHolder::hold (thiz)->set_block_step (step_) ;
+	}
+
+	void set_chunk_step (CR<Length> step_) {
+		return BufferFileHolder::hold (thiz)->set_chunk_step (step_) ;
 	}
 
 	void set_cache_size (CR<Length> size_) {
@@ -438,7 +446,7 @@ struct UartFileHolder implement Interface {
 
 	virtual void initialize (CR<String<Str>> file) = 0 ;
 	virtual void set_port_rate (CR<Length> rate) = 0 ;
-	virtual void set_ring_size (CR<Length> size_) = 0 ;
+	virtual void set_ring_step (CR<Length> step_) = 0 ;
 	virtual void open () = 0 ;
 	virtual void read (VR<RefBuffer<Byte>> buffer ,CR<Index> offset ,CR<Length> size_) = 0 ;
 } ;
@@ -447,7 +455,7 @@ class UartFile implement Super<Ref<UartFileLayout>> {
 public:
 	implicit UartFile () = default ;
 
-	implicit UartFile (CR<String<Str>> file) {
+	explicit UartFile (CR<String<Str>> file) {
 		mThis = UartFileHolder::create () ;
 		UartFileHolder::hold (thiz)->initialize (file) ;
 	}
@@ -456,12 +464,20 @@ public:
 		return UartFileHolder::hold (thiz)->set_port_rate (rate) ;
 	}
 
-	void set_ring_size (CR<Length> size_) {
-		return UartFileHolder::hold (thiz)->set_ring_size (size_) ;
+	void set_ring_step (CR<Length> step_) {
+		return UartFileHolder::hold (thiz)->set_ring_step (step_) ;
 	}
 
 	void open () {
 		return UartFileHolder::hold (thiz)->open () ;
+	}
+
+	void read (VR<RefBuffer<Byte>> buffer) {
+		return UartFileHolder::hold (thiz)->read (buffer ,0 ,buffer.size ()) ;
+	}
+
+	void read (VR<RefBuffer<Byte>> buffer ,CR<Index> offset) {
+		return UartFileHolder::hold (thiz)->read (buffer ,offset ,buffer.size ()) ;
 	}
 
 	void read (VR<RefBuffer<Byte>> buffer ,CR<Index> offset ,CR<Length> size_) {
@@ -519,6 +535,12 @@ public:
 	template <class...ARG1>
 	void print (CR<ARG1>...params) const {
 		return ConsoleHolder::hold (thiz)->print (PrintFormat (params...)) ;
+	}
+
+	template <class ARG1>
+	forceinline CR<Console> operator<< (CR<ARG1> params) const {
+		print (params) ;
+		return thiz ;
 	}
 
 	template <class...ARG1>

@@ -40,19 +40,17 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <RemoteIntRelDir>$(SolutionName)/obj/$(ProjectName)/$(Configuration)/$(Platform)/</RemoteIntRelDir>
-    <RemoteOutRelDir>$(SolutionName)/lib/$(Configuration)/$(Platform)/</RemoteOutRelDir>
+    <RemoteIntRelDir>$(SolutionName)/obj/$(ProjectName)/$(Platform)/$(Configuration)/</RemoteIntRelDir>
+    <RemoteOutRelDir>$(SolutionName)/lib/$(Platform)/$(Configuration)/</RemoteOutRelDir>
     <RemoteDeployDir>$(RemoteRootDir)/$(SolutionName)/bin</RemoteDeployDir>
     <TargetExt>.exe</TargetExt>
-    <IncludePath>C:\Users\Administrator\AppData\Local\Microsoft\Linux\HeaderCache\1.0\0\usr\include</IncludePath>
     <MultiProcNumber>8</MultiProcNumber>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <RemoteIntRelDir>$(SolutionName)/obj/$(ProjectName)/$(Configuration)/$(Platform)/</RemoteIntRelDir>
-    <RemoteOutRelDir>$(SolutionName)/lib/$(Configuration)/$(Platform)/</RemoteOutRelDir>
+    <RemoteIntRelDir>$(SolutionName)/obj/$(ProjectName)/$(Platform)/$(Configuration)/</RemoteIntRelDir>
+    <RemoteOutRelDir>$(SolutionName)/lib/$(Platform)/$(Configuration)/</RemoteOutRelDir>
     <RemoteDeployDir>$(RemoteRootDir)/$(SolutionName)/bin</RemoteDeployDir>
     <TargetExt>.exe</TargetExt>
-    <IncludePath>C:\Users\Administrator\AppData\Local\Microsoft\Linux\HeaderCache\1.0\0\usr\include</IncludePath>
     <MultiProcNumber>8</MultiProcNumber>
   </PropertyGroup>
   <ItemGroup>
@@ -110,11 +108,13 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(RemoteRootDir)/$(SolutionName)/src;$(RemoteRootDir)/$(SolutionName)/src/csc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-g -rdynamic %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(RemoteRootDir)/$(SolutionName)/src;$(RemoteRootDir)/$(SolutionName)/src/csc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-g -rdynamic %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

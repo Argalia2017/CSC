@@ -1,8 +1,7 @@
 ﻿#include "util.h"
 
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <csc_end.h>
+#define _CRT_SECURE_NO_WARNINGS
 #ifdef __CSC_SYSTEM_WINDOWS__
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -22,23 +21,25 @@
 #include <csc_array.inl>
 #include <csc_image.inl>
 #include <csc_matrix.inl>
-#include <csc_algorithm.inl>
 #include <csc_stream.inl>
 #include <csc_string.inl>
 #include <csc_runtime.inl>
 #include <csc_file.inl>
 #include <csc_thread.inl>
+#include <csc_algorithm.inl>
 
 #ifdef __CSC_COMPILER_MSVC__
-#define __CSC_API_WITH_EIGEN__
-#define __CSC_API_WITH_NANOFLANN__
+#ifdef __CSC_PLATFORM_X64__
+#define LIB_WITH_EIGEN
+#define LIB_WITH_NANOFLANN
 
 #ifdef __CSC_VER_DEBUG__
-#define __CSC_API_WITH_FREEIMAGE__
+#define LIB_WITH_FREEIMAGE
 #endif
 
 #ifndef __CSC_VER_DEBUG__
-#define __CSC_API_WITH_OPENCV__
+#define LIB_WITH_OPENCV
+#endif
 #endif
 #endif
 
@@ -54,34 +55,24 @@
 #include <csc_file.linux.inl>
 #endif
 
-#ifdef __CSC_API_WITH_EIGEN__
-#ifdef __CSC_PLATFORM_X64__
+#ifdef LIB_WITH_EIGEN
 #include <csc_matrix.eigen.inl>
 #endif
-#endif
 
-#ifdef __CSC_API_WITH_NANOFLANN__
-#ifdef __CSC_PLATFORM_X64__
+#ifdef LIB_WITH_NANOFLANN
 #include <csc_matrix.nanoflann.inl>
 #endif
-#endif
 
-#ifdef __CSC_API_WITH_OPENCV__
-#ifdef __CSC_PLATFORM_X64__
+#ifdef LIB_WITH_OPENCV
 #include <csc_image.opencv.inl>
-
-#ifdef __CSC_PLATFORM_X64__
+#ifdef __CSC_COMPILER_MSVC__
 #pragma comment (lib ,"opencv_world4120.lib")
 #endif
 #endif
-#endif
 
-#ifdef __CSC_API_WITH_FREEIMAGE__
-#ifdef __CSC_PLATFORM_X64__
+#ifdef LIB_WITH_FREEIMAGE
 #include <csc_image.freeimage.inl>
-
-#ifdef __CSC_PLATFORM_X64__
+#ifdef __CSC_COMPILER_MSVC__
 #pragma comment (lib ,"FreeImage.lib")
-#endif
 #endif
 #endif

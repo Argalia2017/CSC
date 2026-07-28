@@ -13,26 +13,48 @@
 #include "csc_image.hpp"
 
 namespace CSC {
-struct Point2F {
-	Flt32 mX ;
-	Flt32 mY ;
+template <class A>
+struct Point2 {
+	A mX ;
+	A mY ;
 } ;
 
-struct Point3F {
-	Flt32 mX ;
-	Flt32 mY ;
-	Flt32 mZ ;
+template <class A>
+struct Point3 {
+	A mX ;
+	A mY ;
+	A mZ ;
 } ;
 
-struct Line2F {
-	Point2F mMin ;
-	Point2F mMax ;
+template <class A>
+struct Ploy2 {
+	A mA ;
+	A mB ;
 } ;
 
-struct Line3F {
-	Point3F mMin ;
-	Point3F mMax ;
+template <class A>
+struct Ploy3 {
+	A mA ;
+	A mB ;
+	A mC ;
 } ;
+
+template <class A>
+struct Bound {
+	A mMin ;
+	A mMax ;
+} ;
+
+using Point2F = Point2<Flt32> ;
+using Point2D = Point2<Flt64> ;
+using Point3F = Point3<Flt32> ;
+using Point3D = Point3<Flt64> ;
+using Line2F = Ploy2<Point2F> ;
+using Line2D = Ploy2<Point2D> ;
+using Line3F = Ploy2<Point3F> ;
+using Line3D = Ploy2<Point3D> ;
+using Triangle3F = Ploy3<Point3F> ;
+using Triangle3D = Ploy3<Point3D> ;
 
 template <class A>
 class XYZProxy implement Proxy {
@@ -91,6 +113,7 @@ struct VectorHolder implement Interface {
 	virtual VectorLayout cross (CR<VectorLayout> that) const = 0 ;
 	virtual VectorLayout sabs () const = 0 ;
 	virtual VectorLayout minus () const = 0 ;
+	virtual Flt64 norm () const = 0 ;
 	virtual Flt64 magnitude () const = 0 ;
 	virtual VectorLayout normalize () const = 0 ;
 	virtual VectorLayout projection () const = 0 ;
@@ -306,8 +329,16 @@ public:
 		return move (keep[TYPE<Vector>::expr] (ret)) ;
 	}
 
+	forceinline Vector operator+ () const {
+		return thiz ;
+	}
+
 	forceinline Vector operator- () const {
 		return minus () ;
+	}
+
+	Flt64 norm () const {
+		return VectorHolder::hold (thiz)->norm () ;
 	}
 
 	Flt64 magnitude () const {
@@ -353,7 +384,7 @@ struct MatrixHolder implement Interface {
 	virtual MatrixLayout smul (CR<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout sabs () const = 0 ;
 	virtual MatrixLayout minus () const = 0 ;
-	virtual Flt64 magnitude () const = 0 ;
+	virtual Flt64 norm () const = 0 ;
 	virtual MatrixLayout transpose () const = 0 ;
 	virtual MatrixLayout triangular () const = 0 ;
 	virtual MatrixLayout homogenize () const = 0 ;
@@ -583,12 +614,16 @@ public:
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
 	}
 
+	forceinline Matrix operator+ () const {
+		return thiz ;
+	}
+
 	forceinline Matrix operator- () const {
 		return minus () ;
 	}
 
-	Flt64 magnitude () const {
-		return MatrixHolder::hold (thiz)->magnitude () ;
+	Flt64 norm () const {
+		return MatrixHolder::hold (thiz)->norm () ;
 	}
 
 	Matrix transpose () const {
@@ -646,7 +681,7 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_RotationMatrix (CR<Vector> normal ,CR<Flt64> angle) = 0 ;
 	virtual void make_RotationMatrix (CR<Vector> from ,CR<Vector> into) = 0 ;
 	virtual void make_TranslationMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) = 0 ;
-	virtual void make_PerspectiveMatrix (CR<Flt64> fovx ,CR<ImageShape> shape) = 0 ;
+	virtual void make_PerspectiveMatrix (CR<Vector> fov ,CR<ImageShape> shape) = 0 ;
 	virtual void make_PerspectiveMatrix (CR<Flt64> fx ,CR<Flt64> fy ,CR<Flt64> cx ,CR<Flt64> cy) = 0 ;
 	virtual void make_ProjectionMatrix (CR<Vector> normal) = 0 ;
 	virtual void make_ProjectionMatrix (CR<Vector> normal ,CR<Vector> center ,CR<Vector> light) = 0 ;
@@ -706,9 +741,9 @@ inline Matrix TranslationMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) {
 	return move (ret) ;
 }
 
-inline Matrix PerspectiveMatrix (CR<Flt64> fovx ,CR<ImageShape> shape) {
+inline Matrix PerspectiveMatrix (CR<Vector> fov ,CR<ImageShape> shape) {
 	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fovx ,shape) ;
+	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fov ,shape) ;
 	return move (ret) ;
 }
 
@@ -825,7 +860,7 @@ struct SVDResult {
 struct MatrixProcLayout ;
 
 struct MatrixProcHolder implement Interface {
-	imports CR<Super<Ref<MatrixProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<MatrixProcLayout>>> expr_m () ;
 	imports VFat<MatrixProcHolder> hold (VR<MatrixProcLayout> that) ;
 	imports CFat<MatrixProcHolder> hold (CR<MatrixProcLayout> that) ;
 
@@ -836,14 +871,24 @@ struct MatrixProcHolder implement Interface {
 	virtual KRTResult solve_krt (CR<Matrix> a) const = 0 ;
 	virtual SVDResult solve_svd (CR<Matrix> a) const = 0 ;
 	virtual Matrix solve_llt (CR<Matrix> a) const = 0 ;
-	virtual Vector intersection (CR<Vector> p1 ,CR<Vector> v1 ,CR<Vector> p2 ,CR<Vector> v2) const = 0 ;
-	virtual Flt64 atan_angle (CR<Vector> v1 ,CR<Vector> vx ,CR<Vector> vy) const = 0 ;
+	virtual Vector mid_point (CR<Vector> p1 ,CR<Vector> v1 ,CR<Vector> p2 ,CR<Vector> v2) const = 0 ;
+	virtual Flt64 atan_angle (CR<Vector> v1 ,CR<Slice> xy) const = 0 ;
+	virtual Vector mean (CR<Array<Vector>> point) const = 0 ;
+	virtual Matrix solve_icp (CR<Array<Vector>> point_l ,CR<Array<Vector>> point_r) const = 0 ;
 } ;
 
-class MatrixProc implement Super<Ref<MatrixProcLayout>> {
+class MatrixProc implement Super<UniqueRef<MatrixProcLayout>> {
 public:
 	static CR<MatrixProc> expr_m () {
 		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::expr) ;
+	}
+
+	static Array<Flt64> flatten (CR<Matrix> a) {
+		return MatrixProcHolder::hold (expr)->flatten (a) ;
+	}
+
+	static Matrix flatten (CR<Array<Flt64>> a) {
+		return MatrixProcHolder::hold (expr)->flatten (a) ;
 	}
 
 	static TRSResult solve_trs (CR<Matrix> a) {
@@ -862,12 +907,20 @@ public:
 		return MatrixProcHolder::hold (expr)->solve_llt (a) ;
 	}
 
-	static Vector intersection (CR<Vector> p1 ,CR<Vector> v1 ,CR<Vector> p2 ,CR<Vector> v2) {
-		return MatrixProcHolder::hold (expr)->intersection (p1 ,v1 ,p2 ,v2) ;
+	static Vector mid_point (CR<Vector> p1 ,CR<Vector> v1 ,CR<Vector> p2 ,CR<Vector> v2) {
+		return MatrixProcHolder::hold (expr)->mid_point (p1 ,v1 ,p2 ,v2) ;
 	}
 
-	static Flt64 atan_angle (CR<Vector> v1 ,CR<Vector> vx ,CR<Vector> vy) {
-		return MatrixProcHolder::hold (expr)->atan_angle (v1 ,vx ,vy) ;
+	static Flt64 atan_angle (CR<Vector> v1 ,CR<Slice> xy) {
+		return MatrixProcHolder::hold (expr)->atan_angle (v1 ,xy) ;
+	}
+
+	static Vector mean (CR<Array<Vector>> point) {
+		return MatrixProcHolder::hold (expr)->mean (point) ;
+	}
+
+	static Matrix solve_icp (CR<Array<Vector>> point_l ,CR<Array<Vector>> point_r) {
+		return MatrixProcHolder::hold (expr)->solve_icp (point_l ,point_r) ;
 	}
 } ;
 
@@ -1064,9 +1117,11 @@ struct SE3Holder implement Interface {
 	imports VFat<SE3Holder> hold (VR<SE3Layout> that) ;
 	imports CFat<SE3Holder> hold (CR<SE3Layout> that) ;
 
+	virtual void initialize (CR<Buffer<Flt64 ,RANK6>> that) = 0 ;
 	virtual void initialize (CR<Matrix> that) = 0 ;
 	virtual CR<Flt64> at (CR<Index> y) const leftvalue = 0 ;
 	virtual SE3Layout sadd (CR<SE3Layout> that) const = 0 ;
+	virtual SE3Layout ssub (CR<SE3Layout> that) const = 0 ;
 	virtual SE3Layout smul (CR<Flt64> that) const = 0 ;
 	virtual SE3Layout sdiv (CR<Flt64> that) const = 0 ;
 	virtual Vector angular () const = 0 ;
@@ -1084,6 +1139,10 @@ protected:
 public:
 	implicit SE3 () = default ;
 
+	explicit SE3 (CR<Buffer<Flt64 ,RANK6>> that) {
+		SE3Holder::hold (thiz)->initialize (that) ;
+	}
+
 	explicit SE3 (CR<Matrix> that) {
 		SE3Holder::hold (thiz)->initialize (that) ;
 	}
@@ -1092,9 +1151,34 @@ public:
 		return SE3Holder::hold (thiz)->at (y) ;
 	}
 
+	forceinline CR<Flt64> operator[] (CR<Index> y) const leftvalue {
+		return at (y) ;
+	}
+
 	SE3 sadd (CR<SE3> that) const {
 		SE3Layout ret = SE3Holder::hold (thiz)->sadd (that) ;
 		return move (keep[TYPE<SE3>::expr] (ret)) ;
+	}
+
+	forceinline SE3 operator+ (CR<SE3> that) const {
+		return sadd (that) ;
+	}
+
+	forceinline void operator+= (CR<SE3> that) {
+		thiz = sadd (that) ;
+	}
+
+	SE3 ssub (CR<SE3> that) const {
+		SE3Layout ret = SE3Holder::hold (thiz)->ssub (that) ;
+		return move (keep[TYPE<SE3>::expr] (ret)) ;
+	}
+
+	forceinline SE3 operator- (CR<SE3> that) const {
+		return ssub (that) ;
+	}
+
+	forceinline void operator-= (CR<SE3> that) {
+		thiz = ssub (that) ;
 	}
 
 	SE3 smul (CR<Flt64> that) const {
@@ -1154,20 +1238,30 @@ public:
 struct LinearProcLayout ;
 
 struct LinearProcHolder implement Interface {
-	imports CR<Super<Ref<LinearProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<LinearProcLayout>>> expr_m () ;
 	imports VFat<LinearProcHolder> hold (VR<LinearProcLayout> that) ;
 	imports CFat<LinearProcHolder> hold (CR<LinearProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual SVDResult solve_svd (CR<Matrix> a) const = 0 ;
+	virtual Array<Flt64> solve_eig (CR<Image<Flt64>> a) const = 0 ;
 	virtual Image<Flt64> solve_lsm (CR<Image<Flt64>> a) const = 0 ;
 	virtual Image<Flt64> solve_lsm (CR<Image<Flt64>> a ,CR<Image<Flt64>> b) const = 0 ;
 	virtual Image<Flt64> solve_inv (CR<Image<Flt64>> a) const = 0 ;
 } ;
 
-class LinearProc implement Super<Ref<LinearProcLayout>> {
+class LinearProc implement Super<UniqueRef<LinearProcLayout>> {
 public:
 	static CR<LinearProc> expr_m () {
 		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::expr) ;
+	}
+
+	static SVDResult solve_svd (CR<Matrix> a) {
+		return LinearProcHolder::hold (expr)->solve_svd (a) ;
+	}
+
+	static Array<Flt64> solve_eig (CR<Image<Flt64>> a) {
+		return LinearProcHolder::hold (expr)->solve_eig (a) ;
 	}
 
 	static Image<Flt64> solve_lsm (CR<Image<Flt64>> a) {
@@ -1190,33 +1284,43 @@ struct PointCloudKDTreeHolder implement Interface {
 	imports VFat<PointCloudKDTreeHolder> hold (VR<PointCloudKDTreeLayout> that) ;
 	imports CFat<PointCloudKDTreeHolder> hold (CR<PointCloudKDTreeLayout> that) ;
 
-	virtual void initialize (RR<RefBuffer<Flt32>> view ,CR<Length> channel) = 0 ;
-	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const = 0 ;
-	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const = 0 ;
+	virtual void initialize (RR<RefBuffer<Flt32>> pointcloud ,CR<Length> channel) = 0 ;
+	virtual void initialize (RR<RefBuffer<Flt64>> pointcloud ,CR<Length> channel) = 0 ;
+	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) = 0 ;
 } ;
 
 class PointCloudKDTree implement Super<Ref<PointCloudKDTreeLayout>> {
 public:
 	implicit PointCloudKDTree () = default ;
 
-	explicit PointCloudKDTree (RR<RefBuffer<Flt32>> view ,CR<Length> channel) {
+	explicit PointCloudKDTree (RR<RefBuffer<Flt32>> pointcloud ,CR<Length> channel) {
 		mThis = PointCloudKDTreeHolder::create () ;
-		PointCloudKDTreeHolder::hold (thiz)->initialize (move (view) ,channel) ;
+		PointCloudKDTreeHolder::hold (thiz)->initialize (move (pointcloud) ,channel) ;
 	}
 
-	Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const {
-		return PointCloudKDTreeHolder::hold (thiz)->search (center ,neighbor) ;
+	explicit PointCloudKDTree (RR<RefBuffer<Flt64>> pointcloud ,CR<Length> channel) {
+		mThis = PointCloudKDTreeHolder::create () ;
+		PointCloudKDTreeHolder::hold (thiz)->initialize (move (pointcloud) ,channel) ;
 	}
 
-	Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const {
+	Array<Index> search (CR<Vector> center ,CR<Length> neighbor) {
+		return PointCloudKDTreeHolder::hold (thiz)->search (center ,neighbor ,infinity) ;
+	}
+
+	Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) {
 		return PointCloudKDTreeHolder::hold (thiz)->search (center ,neighbor ,radius) ;
 	}
 } ;
 
-struct PointCloudLayout ;
+struct PointCloudTree ;
+
+struct PointCloudLayout {
+	SharedRef<PointCloudTree> mThis ;
+	Ref<DuplexMatrix> mWorld ;
+	FarBuffer<Vector> mPointView ;
+} ;
 
 struct PointCloudHolder implement Interface {
-	imports Ref<PointCloudLayout> create () ;
 	imports VFat<PointCloudHolder> hold (VR<PointCloudLayout> that) ;
 	imports CFat<PointCloudHolder> hold (CR<PointCloudLayout> that) ;
 
@@ -1224,33 +1328,35 @@ struct PointCloudHolder implement Interface {
 	virtual void initialize (RR<Ref<Array<Point3F>>> pointcloud) = 0 ;
 	virtual void initialize (RR<Ref<Array<Vector>>> pointcloud) = 0 ;
 	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
 	virtual Length channel () const = 0 ;
 	virtual void get (CR<Index> index ,VR<Vector> item) const = 0 ;
 	virtual Matrix pca_matrix () const = 0 ;
 	virtual Matrix box_matrix (CR<Flt64> bx ,CR<Flt64> by ,CR<Flt64> bz) const = 0 ;
 	virtual Matrix cut_matrix (CR<Flt64> sx ,CR<Flt64> sy ,CR<Flt64> sz) const = 0 ;
-	virtual Line3F bound () const = 0 ;
-	virtual Super<Ref<PointCloudLayout>> smul (CR<Matrix> that) const = 0 ;
-	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const = 0 ;
+	virtual Bound<Vector> bound () const = 0 ;
+	virtual PointCloudLayout smul (CR<Matrix> that) const = 0 ;
 	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const = 0 ;
 } ;
 
-class PointCloud implement Super<Ref<PointCloudLayout>> {
+class PointCloud implement PointCloudLayout {
+protected:
+	using PointCloudLayout::mThis ;
+	using PointCloudLayout::mWorld ;
+	using PointCloudLayout::mPointView ;
+
 public:
 	implicit PointCloud () = default ;
 
 	explicit PointCloud (RR<Ref<Array<Point2F>>> pointcloud) {
-		mThis = PointCloudHolder::create () ;
 		PointCloudHolder::hold (thiz)->initialize (move (pointcloud)) ;
 	}
 
 	explicit PointCloud (RR<Ref<Array<Point3F>>> pointcloud) {
-		mThis = PointCloudHolder::create () ;
 		PointCloudHolder::hold (thiz)->initialize (move (pointcloud)) ;
 	}
 
 	explicit PointCloud (RR<Ref<Array<Vector>>> pointcloud) {
-		mThis = PointCloudHolder::create () ;
 		PointCloudHolder::hold (thiz)->initialize (move (pointcloud)) ;
 	}
 
@@ -1284,12 +1390,12 @@ public:
 		return PointCloudHolder::hold (thiz)->cut_matrix (sx ,sy ,sz) ;
 	}
 
-	Line3F bound () const {
+	Bound<Vector> bound () const {
 		return PointCloudHolder::hold (thiz)->bound () ;
 	}
 
 	PointCloud smul (CR<Matrix> that) const {
-		Super<Ref<PointCloudLayout>> ret = PointCloudHolder::hold (thiz)->smul (that) ;
+		PointCloudLayout ret = PointCloudHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<PointCloud>::expr] (ret)) ;
 	}
 
@@ -1302,7 +1408,7 @@ public:
 	}
 
 	Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const {
-		return PointCloudHolder::hold (thiz)->search (center ,neighbor) ;
+		return PointCloudHolder::hold (thiz)->search (center ,neighbor ,infinity) ;
 	}
 
 	Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const {

@@ -29,11 +29,12 @@ struct FileProcLayout {
 	List<UniqueRef<String<Str>>> mLockDirectory ;
 } ;
 
-exports CR<Super<Ref<FileProcLayout>>> FileProcHolder::expr_m () {
+exports CR<Super<UniqueRef<FileProcLayout>>> FileProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<FileProcLayout>> ret ;
-		ret.mThis = Ref<FileProcLayout>::make () ;
-		FileProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<FileProcLayout>> ret ;
+		ret.mThis = UniqueRef<FileProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		FileProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -91,7 +92,12 @@ public:
 	void initialize (CR<String<Str>> file) override {
 		self.mStreamFile = StreamFile (file) ;
 		self.mStreamFile.open_w (0) ;
-		self.mFileBuffer = RefBuffer<Byte> (STREAMFILE_CHUNK_STEP::expr) ;
+		set_chunk_step (65536) ;
+	}
+
+	void set_chunk_step (CR<Length> step_) override {
+		assert (!self.mWriter.exist ()) ;
+		self.mFileBuffer = RefBuffer<Byte> (step_) ;
 	}
 	
 	void open (CR<Just<StreamFileEncode>> option) override {
@@ -123,8 +129,8 @@ public:
 		const auto r1x = self.mWriter->length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = Flag (self.mFileBuffer.ref) ;
-		self.mStreamFile.write (RefBuffer<Byte>::reference (r2x ,r1x)) ;
+		const auto r2x = Slice (Flag (self.mFileBuffer.ref) ,r1x , 1) ;
+		self.mStreamFile.write (RefBuffer<Byte>::reference (r2x)) ;
 		self.mWriter->reset () ;
 		self.mStreamFile.flush () ;
 	}

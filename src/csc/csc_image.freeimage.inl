@@ -191,6 +191,7 @@ public:
 	}
 
 	ImageLayout convert_image (CR<ImageLayout> image ,CR<Length> channel) const override {
+		assert (ImageHolder::hold (image)->fixed ()) ;
 		assert (channel >= 1) ;
 		assert (channel <= 4) ;
 		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (ImageHolder::hold (image)->raw ()).ref ;
@@ -225,6 +226,7 @@ public:
 	}
 
 	void save_image (CR<String<Str>> file ,CR<ImageLayout> image) const override {
+		assert (ImageHolder::hold (image)->fixed ()) ;
 		const auto r1x = StringProc::stra_from (file) ;
 		const auto r2x = FreeImage_GetFIFFromFilename (r1x.ref) ;
 		assume (r2x != FIF_UNKNOWN) ;
@@ -283,66 +285,6 @@ public:
 		rax += r16x * r12x ;
 		rax = rax.sclamp () ;
 		return rax.bgr () ;
-	}
-
-	Buffer1<Flt32> cvt_color_t (CR<Color1B> a) const {
-		Buffer1<Flt32> ret ;
-		ret[0] = Flt32 (a.mB) ;
-		return move (ret) ;
-	}
-
-	Buffer2<Flt32> cvt_color_t (CR<Color2B> a) const {
-		Buffer2<Flt32> ret ;
-		ret[0] = Flt32 (a.mB) ;
-		ret[1] = Flt32 (a.mG) ;
-		return move (ret) ;
-	}
-
-	Buffer3<Flt32> cvt_color_t (CR<Color3B> a) const {
-		Buffer3<Flt32> ret ;
-		ret[0] = Flt32 (a.mB) ;
-		ret[1] = Flt32 (a.mG) ;
-		ret[2] = Flt32 (a.mR) ;
-		return move (ret) ;
-	}
-
-	Buffer4<Flt32> cvt_color_t (CR<Color4B> a) const {
-		Buffer4<Flt32> ret ;
-		ret[0] = Flt32 (a.mB) ;
-		ret[1] = Flt32 (a.mG) ;
-		ret[2] = Flt32 (a.mR) ;
-		ret[3] = Flt32 (a.mA) ;
-		return move (ret) ;
-	}
-
-	Color1B cvt_color_t (CR<Buffer1<Flt32>> a) const {
-		Color1B ret ;
-		ret.mB = Byte (a[0]) ;
-		return move (ret) ;
-	}
-
-	Color2B cvt_color_t (CR<Buffer2<Flt32>> a) const {
-		Color2B ret ;
-		ret.mB = Byte (a[0]) ;
-		ret.mG = Byte (a[1]) ;
-		return move (ret) ;
-	}
-
-	Color3B cvt_color_t (CR<Buffer3<Flt32>> a) const {
-		Color3B ret ;
-		ret.mB = Byte (a[0]) ;
-		ret.mG = Byte (a[1]) ;
-		ret.mR = Byte (a[2]) ;
-		return move (ret) ;
-	}
-
-	Color4B cvt_color_t (CR<Buffer4<Flt32>> a) const {
-		Color4B ret ;
-		ret.mB = Byte (a[0]) ;
-		ret.mG = Byte (a[1]) ;
-		ret.mR = Byte (a[2]) ;
-		ret.mA = Byte (a[3]) ;
-		return move (ret) ;
 	}
 
 	Flt32 sampler (CR<Image<Flt32>> image ,CR<Flt64> x ,CR<Flt64> y) const override {

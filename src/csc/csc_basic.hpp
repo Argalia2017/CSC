@@ -23,7 +23,7 @@ struct OptionalHolder implement Interface {
 	imports VFat<OptionalHolder> hold (VR<OptionalLayout> that) ;
 	imports CFat<OptionalHolder> hold (CR<OptionalLayout> that) ;
 
-	virtual void initialize (CR<Flag> code ,VR<BoxLayout> addr) = 0 ;
+	virtual void initialize (CR<Flag> code ,VR<BoxLayout> item) = 0 ;
 	virtual Bool exist () const = 0 ;
 	virtual Flag code () const = 0 ;
 	virtual void pull (VR<BoxLayout> item) const = 0 ;
@@ -75,8 +75,7 @@ public:
 	}
 
 	void once (CR<A> item) const {
-		auto rax = Box<A>::make (move (item)) ;
-		OptionalHolder::hold (thiz)->push (move (rax)) ;
+		once (move (item)) ;
 	}
 
 	void once (RR<A> item) const {
@@ -200,12 +199,12 @@ public:
 		return mRank ;
 	}
 
-	CR<A> at (CR<Index> index) const {
+	CR<A> at (CR<Index> index) const leftvalue {
 		assert (inline_between (index ,0 ,mRank)) ;
 		return Pointer::make (mWrapper.ref[index]) ;
 	}
 
-	forceinline CR<A> operator[] (CR<Index> index) const {
+	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 } ;
@@ -217,7 +216,7 @@ inline Wrapper<Pointer ,RANK0> MakeWrapper () {
 template <class ARG1 ,class...ARG2>
 inline Wrapper<ARG1 ,RANK_OF<TYPE<ARG1 ,ARG2...>>> MakeWrapper (CR<ARG1> params1 ,CR<ARG2>...params2) {
 	using R1X = RANK_OF<TYPE<ARG1 ,ARG2...>> ;
-	//@fatal: GCC is so bad
+	//@fatal: GCC is so stupid
 	return Wrapper<ARG1 ,R1X> (Buffer<Flag ,R1X> ({address (params1) ,address (params2)...})) ;
 }
 
@@ -246,29 +245,29 @@ public:
 
 	template <class...ARG1 ,class...ARG2>
 	forceinline void invoke_impl (CR<A> func ,CR<Wrapper<Pointer>> params ,TYPE<ARG1...> ,TYPE<ARG2...>) const {
-		//@fatal: GCC is so bad
+		//@fatal: GCC is so stupid
 		return func (keep[TYPE<XR<ARG1>>::expr] (Pointer::make (address (params[ARG2::expr])))...) ;
 	}
 } ;
 
 template <class A ,class B ,class C>
-class FunctionTBind ;
+class FunctionBindT ;
 
 template <class A ,class B ,class...C>
-class FunctionTBind<A ,B ,TYPE<C...>> implement Proxy {
+class FunctionBindT<A ,B ,TYPE<C...>> implement Proxy {
 protected:
 	A mThat ;
 	B mBind ;
 
 public:
-	implicit FunctionTBind () = delete ;
+	implicit FunctionBindT () = delete ;
 
-	implicit FunctionTBind (RR<A> func_ ,CR<B> bind_) :mThat (move (func_)) {
+	explicit FunctionBindT (RR<A> func_ ,CR<B> bind_) :mThat (move (func_)) {
 		mBind = bind_ ;
 	}
 
 	forceinline void operator() (XR<C>...params) const {
-		return mThat (mBind ,params...) ;
+		return mThat (mBind ,keep[TYPE<XR<C>>::expr] (params)...) ;
 	}
 } ;
 
@@ -363,7 +362,7 @@ public:
 	FunctionT<ARG2> bind (RR<ARG1> that) const {
 		using R1X = TYPE_M1ST_ITEM<FUNCTION_PARAMS<ARG1>> ;
 		require (IS_SAME<R1X ,FunctionT>) ;
-		return FunctionT<ARG2> (FunctionTBind<ARG1 ,FunctionT ,ARG2> (move (that) ,thiz)) ;
+		return FunctionT<ARG2> (FunctionBindT<ARG1 ,FunctionT ,ARG2> (move (that) ,thiz)) ;
 	}
 
 	Scope until () const {
@@ -452,12 +451,12 @@ struct AutoRefHolder implement Interface {
 	virtual Bool exist () const = 0 ;
 	virtual VR<BoxLayout> raw () leftvalue = 0 ;
 	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
-	virtual Clazz clazz () const = 0 ;
 	virtual VR<Pointer> ref_m () leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
+	virtual AutoRefLayout recast (CR<Unknown> extend) = 0 ;
+	virtual Clazz clazz () const = 0 ;
 	virtual VR<Pointer> rebind (CR<Clazz> clazz_) leftvalue = 0 ;
 	virtual CR<Pointer> rebind (CR<Clazz> clazz_) const leftvalue = 0 ;
-	virtual AutoRefLayout recast (CR<Unknown> extend) = 0 ;
 } ;
 
 inline AutoRefLayout::~AutoRefLayout () noexcept {
@@ -501,10 +500,6 @@ public:
 		return AutoRefHolder::hold (thiz)->raw () ;
 	}
 
-	Clazz clazz () const {
-		return AutoRefHolder::hold (thiz)->clazz () ;
-	}
-
 	VR<A> ref_m () leftvalue {
 		return AutoRefHolder::hold (thiz)->ref ;
 	}
@@ -534,6 +529,17 @@ public:
 	forceinline Bool operator!= (CR<AutoRef> that) = delete ;
 
 	template <class ARG1>
+	AutoRef<ARG1> recast (TYPE<ARG1>) {
+		const auto r1x = Unknown (RecastUnknownBinder<ARG1 ,A> ()) ;
+		AutoRefLayout ret = AutoRefHolder::hold (thiz)->recast (r1x) ;
+		return move (keep[TYPE<AutoRef<ARG1>>::expr] (ret)) ;
+	}
+
+	Clazz clazz () const {
+		return AutoRefHolder::hold (thiz)->clazz () ;
+	}
+
+	template <class ARG1>
 	VR<AutoRef<ARG1>> rebind (TYPE<ARG1>) leftvalue {
 		return AutoRefHolder::hold (thiz)->rebind (Clazz (TYPE<ARG1>::expr)) ;
 	}
@@ -541,13 +547,6 @@ public:
 	template <class ARG1>
 	CR<AutoRef<ARG1>> rebind (TYPE<ARG1>) const leftvalue {
 		return AutoRefHolder::hold (thiz)->rebind (Clazz (TYPE<ARG1>::expr)) ;
-	}
-
-	template <class ARG1>
-	AutoRef<ARG1> recast (TYPE<ARG1>) {
-		const auto r1x = Unknown (RecastUnknownBinder<ARG1 ,A> ()) ;
-		AutoRefLayout ret = AutoRefHolder::hold (thiz)->recast (r1x) ;
-		return move (keep[TYPE<AutoRef<ARG1>>::expr] (ret)) ;
 	}
 } ;
 
@@ -588,9 +587,10 @@ struct SharedRefHolder implement Interface {
 	virtual Bool exist () const = 0 ;
 	virtual VR<BoxLayout> raw () leftvalue = 0 ;
 	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
-	virtual Length counter () const = 0 ;
 	virtual VR<Pointer> ref_m () const leftvalue = 0 ;
 	virtual SharedRefLayout recast (CR<Unknown> extend) = 0 ;
+	virtual Length counter () const = 0 ;
+	virtual Bool is_weak () const = 0 ;
 	virtual SharedRefLayout weak () const = 0 ;
 } ;
 
@@ -647,10 +647,6 @@ public:
 		return SharedRefHolder::hold (thiz)->raw () ;
 	}
 
-	Length counter () const {
-		return SharedRefHolder::hold (thiz)->counter () ;
-	}
-
 	VR<A> ref_m () const leftvalue {
 		return SharedRefHolder::hold (thiz)->ref ;
 	}
@@ -672,6 +668,14 @@ public:
 		const auto r1x = Unknown (RecastUnknownBinder<ARG1 ,A> ()) ;
 		SharedRefLayout ret = SharedRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<SharedRef<ARG1>>::expr] (ret)) ;
+	}
+
+	Length counter () const {
+		return SharedRefHolder::hold (thiz)->counter () ;
+	}
+
+	Bool is_weak () const {
+		return SharedRefHolder::hold (thiz)->is_weak () ;
 	}
 
 	SharedRef weak () const {
@@ -718,7 +722,7 @@ struct UniqueRefHolder implement Interface {
 	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
 	virtual UniqueRefLayout recast (CR<Unknown> extend) = 0 ;
-	virtual Bool done () = 0 ;
+	virtual RefLayout borrow () const leftvalue = 0 ;
 } ;
 
 inline UniqueRefLayout::~UniqueRefLayout () noexcept {
@@ -803,8 +807,9 @@ public:
 		return move (keep[TYPE<UniqueRef<ARG1>>::expr] (ret)) ;
 	}
 
-	Bool done () {
-		return UniqueRefHolder::hold (thiz)->done () ;
+	Ref<A> borrow () const leftvalue {
+		RefLayout ret = UniqueRefHolder::hold (thiz)->borrow () ;
+		return move (keep[TYPE<Ref<A>>::expr] (ret)) ;
 	}
 } ;
 
@@ -860,7 +865,7 @@ struct RefBufferHolder implement Interface {
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
 	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Slice> buffer ,RR<BoxLayout> item) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual Bool exist () const = 0 ;
 	virtual Bool fixed () const = 0 ;
@@ -908,10 +913,10 @@ struct RefBufferImplLayout<Pointer> implement RefBufferLayout {} ;
 template <class A>
 class RefBuffer implement RefBufferImplLayout<A> {
 protected:
-	using RefBufferImplLayout<A>::mThis ;
-	using RefBufferImplLayout<A>::mBuffer ;
-	using RefBufferImplLayout<A>::mSize ;
-	using RefBufferImplLayout<A>::mStep ;
+	using RefBufferLayout::mThis ;
+	using RefBufferLayout::mBuffer ;
+	using RefBufferLayout::mSize ;
+	using RefBufferLayout::mStep ;
 
 public:
 	implicit RefBuffer () = default ;
@@ -920,10 +925,10 @@ public:
 		RefBufferHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,size_) ;
 	}
 
-	static RefBuffer reference (CR<Flag> buffer ,CR<Length> size_) {
+	static RefBuffer reference (CR<Slice> buffer) {
+		require (IS_TRIVIAL<A>) ;
 		RefBuffer ret ;
-		const auto r1x = Slice (buffer ,size_ ,SIZE_OF<A>::expr) ;
-		RefBufferHolder::hold (ret)->initialize (BufferUnknownBinder<A> () ,r1x ,Box<int>::make ()) ;
+		RefBufferHolder::hold (ret)->initialize (BufferUnknownBinder<A> () ,buffer ,Box<A>::make ()) ;
 		return move (ret) ;
 	}
 
@@ -1043,7 +1048,7 @@ template <>
 struct FarBufferImplLayout<Pointer> implement FarBufferLayout {} ;
 
 template <class A>
-class FarBuffer implement FarBufferLayout {
+class FarBuffer implement FarBufferImplLayout<A> {
 protected:
 	using FarBufferLayout::mThis ;
 	using FarBufferLayout::mBuffer ;
@@ -1111,7 +1116,9 @@ public:
 } ;
 
 template <class A ,class B>
-struct UnionPair implement Tuple<Union<A> ,B> {} ;
+struct UnionPair implement Tuple<Union<A> ,B> {
+	require (IS_TRIVIAL<B>) ;
+} ;
 
 struct AllocatorNode {
 	Index mNext ;
@@ -1194,18 +1201,21 @@ public:
 
 template <class A ,class B>
 struct AllocatorImplLayout implement AllocatorLayout {
+private:
+	using Node = UnionPair<A ,B> ;
+
 public:
 	implicit AllocatorImplLayout () noexcept ;
 } ;
 
-template <class A ,class B>
-inline AllocatorImplLayout<A ,B>::AllocatorImplLayout () noexcept {
-	noop (RefBuffer<UnionPair<A ,B>> ()) ;
-	AllocatorHolder::hold (thiz)->prepare (AllocatorUnknownBinder<A ,B> ()) ;
-}
-
 template <class B>
 struct AllocatorImplLayout<Pointer ,B> implement AllocatorLayout {} ;
+
+template <class A ,class B>
+inline AllocatorImplLayout<A ,B>::AllocatorImplLayout () noexcept {
+	noop (UnionPair<A ,B> ()) ;
+	AllocatorHolder::hold (thiz)->prepare (AllocatorUnknownBinder<A ,B> ()) ;
+}
 
 using ALLOCATOR_MIN_SIZE = ENUM<256> ;
 
@@ -1215,10 +1225,10 @@ private:
 	require (IS_TRIVIAL<B>) ;
 
 protected:
-	using AllocatorImplLayout<A ,B>::mAllocator ;
-	using AllocatorImplLayout<A ,B>::mOffset ;
-	using AllocatorImplLayout<A ,B>::mLength ;
-	using AllocatorImplLayout<A ,B>::mFree ;
+	using AllocatorLayout::mAllocator ;
+	using AllocatorLayout::mOffset ;
+	using AllocatorLayout::mLength ;
+	using AllocatorLayout::mFree ;
 
 public:
 	implicit Allocator () = default ;

@@ -10,90 +10,113 @@ namespace CSC {
 class DisjointImplHolder final implement Fat<DisjointHolder ,DisjointLayout> {
 public:
 	void initialize (CR<Length> size_) override {
-		self.mTable = Array<Index> (size_) ;
-		self.mTable.fill (NONE) ;
+		self.mTable = Array<DisjointNode> (size_) ;
+		const auto r1x = invoke ([&] () {
+			DisjointNode ret ;
+			ret.mUp = NONE ;
+			ret.mWidth = 0 ;
+			return move (ret) ;
+		}) ;
+		self.mTable.fill (r1x) ;
 	}
 
 	Length size () const override {
 		return self.mTable.size () ;
 	}
 
-	Index lead (CR<Index> from_) override {
-		Index ix = from_ ;
-		while (TRUE) {
-			if (ix == NONE)
-				break ;
-			ix = parent (ix) ;
-		}
-		Index ret = ix ;
+	Index lead (CR<Index> from) override {
+		Index ret = from ;
 		if ifdo (TRUE) {
-			if (ix == NONE)
+			if (self.mTable[ret].mUp == NONE)
 				discard ;
-			ix = from_ ;
+			while (TRUE) {
+				if (self.mTable[ret].mUp == ret)
+					break ;
+				ret = self.mTable[ret].mUp ;
+			}
+			Index ix = from ;
 			Index iy = NONE ;
 			while (TRUE) {
-				if (ix == NONE)
+				iy = ix ;
+				ix = self.mTable[iy].mUp ;
+				if (ix == ret)
 					break ;
-				iy = parent (ix) ;
-				self.mTable[ix] = ret ;
-				ix = iy ;
+				self.mTable[iy].mUp = ret ;
+				self.mTable[ix].mWidth -= self.mTable[iy].mWidth ;
 			}
 		}
 		return move (ret) ;
 	}
 
-	Index parent (CR<Index> curr) const {
-		if (curr == self.mTable[curr])
-			return NONE ;
-		return self.mTable[curr] ;
+	Length width (CR<Index> from) const override {
+		if (self.mTable[from].mUp == NONE)
+			return 0 ;
+		return self.mTable[from].mWidth ;
 	}
 
-	void joint (CR<Index> from_ ,CR<Index> to_) override {
-		Index ix = lead (from_) ;
-		Index iy = lead (to_) ;
-		self.mTable[ix] = ix ;
-		self.mTable[iy] = ix ;
+	void joint (CR<Index> from ,CR<Index> into) override {
+		Index ix = lead (from) ;
+		Index iy = lead (into) ;
+		if ifdo (TRUE) {
+			if (ix != NONE)
+				discard ;
+			ix = from ;
+			self.mTable[ix].mUp = ix ;
+			self.mTable[ix].mWidth = 1 ;
+		}
+		if ifdo (TRUE) {
+			if (iy != NONE)
+				discard ;
+			iy = into ;
+			self.mTable[iy].mUp = iy ;
+			self.mTable[iy].mWidth = 1 ;
+		}
+		if (ix == iy)
+			return ;
+		if ifdo (TRUE) {
+			if (self.mTable[ix].mWidth >= self.mTable[iy].mWidth)
+				discard ;
+			swap (ix ,iy) ;
+		}
+		self.mTable[iy].mUp = ix ;
+		self.mTable[ix].mWidth += self.mTable[iy].mWidth ;
 	}
 
-	Bool edge (CR<Index> from_ ,CR<Index> to_) override {
-		Index ix = lead (from_) ;
-		Index iy = lead (to_) ;
+	Bool is_edge (CR<Index> from ,CR<Index> into) override {
+		Index ix = lead (from) ;
+		Index iy = lead (into) ;
+		if (ix == NONE)
+			return FALSE ;
+		if (iy == NONE)
+			return FALSE ;
 		return ix == iy ;
 	}
 
-	Length depth (CR<Index> from_) override {
-		Length ret = 0 ;
-		Index ix = from_ ;
-		while (TRUE) {
-			if (ix == NONE)
-				break ;
-			ret++ ;
-			ix = parent (ix) ;
-		}
-		return move (ret) ;
-	}
-
-	Deque<Index> cluster (CR<Index> from_) override {
+	Deque<Index> cluster (CR<Index> from) override {
 		Deque<Index> ret ;
-		Index ix = from_ ;
-		while (TRUE) {
+		if ifdo (TRUE) {
+			Index ix = lead (from) ;
 			if (ix == NONE)
-				break ;
-			ret.add (ix) ;
-			ix = parent (ix) ;
+				discard ;
+			for (auto &&i : self.mTable.iter ()) {
+				Index iy = lead (i) ;
+				if (ix != iy)
+					continue ;
+				ret.add (i) ;
+			}
 		}
 		return move (ret) ;
 	}
 
-	Array<Index> jump (CR<Index> from_) override {
+	Array<Index> closure () override {
 		Array<Index> ret = Array<Index> (self.mTable.size ()) ;
 		ret.fill (NONE) ;
-		for (auto &&i : range (0 ,self.mTable.size ())) {
+		for (auto &&i : self.mTable.iter ()) {
 			Index ix = lead (i) ;
 			if (ix == NONE)
 				continue ;
-			ret[ix] = ret[i] ;
-			ret[i] = ix ;
+			ret[i] = ret[ix] ;
+			ret[ix] = i ;
 		}
 		return move (ret) ;
 	}
@@ -107,31 +130,136 @@ exports CFat<DisjointHolder> DisjointHolder::hold (CR<DisjointLayout> that) {
 	return CFat<DisjointHolder> (DisjointImplHolder () ,that) ;
 }
 
-class KMMatchImplHolder final implement Fat<KMMatchHolder ,KMMatchLayout> {
+class RansacImplHolder final implement Fat<RansacHolder ,RansacLayout> {
 public:
-	void initialize (CR<Length> size_) override {
+	void initialize (CR<Length> rank_ ,CR<Length> size_) override {
+		assert (size_ > 0) ;
+		assert (rank_ <= size_) ;
+		self.mRank = rank_ ;
 		self.mSize = size_ ;
-		self.mThreshold = Flt32 (0.1) ;
-		self.mUser = Array<Flt32> (self.mSize) ;
-		self.mWork = Array<Flt32> (self.mSize) ;
-		self.mUserVisit = BitSet (self.mSize) ;
-		self.mWorkVisit = BitSet (self.mSize) ;
-		self.mMatch = Array<Index> (self.mSize) ;
-		self.mLack = Array<Flt32> (self.mSize) ;
+		self.mRandom = CurrentRandom () ;
+		set_iteration (10000) ;
+		set_probability (0.9973) ;
 	}
 
-	void set_threshold (CR<Flt64> threshold) override {
-		self.mThreshold = Flt32 (threshold) ;
+	void set_seed (CR<Flag> seed_) override {
+		self.mRandom = Random (seed_) ;
+	}
+
+	void set_probability (CR<Flt64> probability) override {
+		//@info: gaussion distribution: [0.6826 ,0.9544 ,0.9973]
+		const auto r1x = MathProc::clamp (probability ,Flt64 (0) ,Flt64 (1) - FLT64_EPS) ;
+		self.mProbFactor = MathProc::log (r1x + FLT64_EPS) ;
+	}
+
+	void set_iteration (CR<Length> iteration) override {
+		self.mIteration = 0 ;
+		self.mMaxIteration = iteration ;
 	}
 
 	Length size () const override {
 		return self.mSize ;
 	}
 
-	Array<Index> sort (CR<Image<Flt32>> love) override {
+	void sample () override {
+		if ifdo (TRUE) {
+			if (self.mSample.size () > 0)
+				discard ;
+			self.mSample = Array<Index> (self.mRank) ;
+			self.mCurrInlier = BitSet (self.mSize) ;
+			self.mBestInlier = BitSet (self.mSize) ;
+			self.mCurrSize = 0 ;
+			self.mBestSize = 0 ;
+		}
+		self.mRandom.random_pick (self.mRank ,self.mSize ,self.mCurrInlier) ;
+		Index ix = 0 ;
+		for (auto &&i : self.mCurrInlier) {
+			self.mSample[ix] = i ;
+			ix++ ;
+		}
+		self.mCurrInlier.clear () ;
+		self.mCurrSize = 0 ;
+	}
+
+	CR<Pointer> peek () const leftvalue override {
+		return Pointer::from (self.mSample[0]) ;
+	}
+
+	Bool good () const override {
+		return self.mIteration < self.mMaxIteration ;
+	}
+
+	void next () override {
+		self.mCurrSize = self.mCurrInlier.length () ;
+		if ifdo (TRUE) {
+			if (self.mCurrSize <= self.mBestSize)
+				discard ;
+			swap (self.mCurrSize ,self.mBestSize) ;
+			swap (self.mCurrInlier ,self.mBestInlier) ;
+		}
+		self.mIteration++ ;
+		const auto r1x = Flt64 (self.mBestSize) * MathProc::inverse (Flt64 (self.mSize)) ;
+		const auto r2x = 1 - MathProc::pow (r1x ,Val32 (self.mRank)) ;
+		const auto r3x = MathProc::clamp (r2x ,Flt64 (0) ,Flt64 (1) - FLT64_EPS) ;
+		const auto r4x = MathProc::log (r3x + FLT64_EPS) ;
+		const auto r5x = MathProc::delta (r4x) * Flt64 (self.mMaxIteration) ;
+		const auto r6x = self.mProbFactor * MathProc::inverse (r4x) + r5x ;
+		self.mMaxIteration = MathProc::clamp (Length (r6x) ,Length (1) ,self.mMaxIteration) ;
+	}
+
+	void add (CR<Index> index) override {
+		self.mCurrInlier.add (index) ;
+	}
+
+	BitSet cluster () const override {
+		return self.mBestInlier ;
+	}
+
+	Length iteration () const override {
+		return self.mIteration ;
+	}
+
+	Flt64 percent () const override {
+		const auto r1x = Flt64 (self.mBestSize) * MathProc::inverse (Flt64 (self.mSize)) ;
+		const auto r2x = MathProc::round (r1x * 10000) / 100 ;
+		return r2x ;
+	}
+} ;
+
+exports VFat<RansacHolder> RansacHolder::hold (VR<RansacLayout> that) {
+	return VFat<RansacHolder> (RansacImplHolder () ,that) ;
+}
+
+exports CFat<RansacHolder> RansacHolder::hold (CR<RansacLayout> that) {
+	return CFat<RansacHolder> (RansacImplHolder () ,that) ;
+}
+
+class KMMatchImplHolder final implement Fat<KMMatchHolder ,KMMatchLayout> {
+public:
+	void initialize (CR<Length> size_) override {
+		assert (size_ > 0) ;
+		self.mSize = size_ ;
+		self.mThreshold = Flt64 (0.1) ;
+		self.mUser = Array<Flt64> (self.mSize) ;
+		self.mWork = Array<Flt64> (self.mSize) ;
+		self.mUserVisit = BitSet (self.mSize) ;
+		self.mWorkVisit = BitSet (self.mSize) ;
+		self.mMatch = Array<Index> (self.mSize) ;
+		self.mLack = Array<Flt64> (self.mSize) ;
+	}
+
+	void set_threshold (CR<Flt64> threshold) override {
+		self.mThreshold = Flt64 (threshold) ;
+	}
+
+	Length size () const override {
+		return self.mSize ;
+	}
+
+	Array<Index> solve (CR<Image<Flt64>> love) override {
 		assert (self.mMatch.size () > 0) ;
 		assert (love.size () == MathProc::square (self.mSize)) ;
-		self.mLove = Ref<Image<Flt32>>::reference (love) ;
+		self.mLove = Ref<Image<Flt64>>::reference (love) ;
 		self.mUser.fill (0) ;
 		self.mWork.fill (0) ;
 		self.mUserVisit.clear () ;
@@ -158,7 +286,7 @@ public:
 				if (dfs (i))
 					break ;
 				const auto r2x = invoke ([&] () {
-					Flt32 ret = infinity ;
+					Flt64 ret = infinity ;
 					for (auto &&j : range (0 ,self.mSize)) {
 						if (self.mWorkVisit[j])
 							continue ;
@@ -226,6 +354,188 @@ exports VFat<KMMatchHolder> KMMatchHolder::hold (VR<KMMatchLayout> that) {
 
 exports CFat<KMMatchHolder> KMMatchHolder::hold (CR<KMMatchLayout> that) {
 	return CFat<KMMatchHolder> (KMMatchImplHolder () ,that) ;
+}
+
+class MinCutImplHolder final implement Fat<MinCutHolder ,MinCutLayout> {
+public:
+	void initialize (CR<Length> size_) override {
+		assert (size_ > 0) ;
+		self.mSize = size_ + 2 ;
+		self.mRootS = self.mSize - 2 ;
+		self.mRootT = self.mSize - 1 ;
+		self.mFirst = Array<Index> (self.mSize) ;
+		self.mFirst.fill (NONE) ;
+		self.mCurrent = Array<Index> (self.mSize) ;
+		self.mDepth = Array<Length> (self.mSize) ;
+		self.mEdge = List<MinCutEdge> (self.mSize * 4) ;
+		self.mDeque = Deque<Index> (self.mSize) ;
+		self.mReady = FALSE ;
+	}
+
+	Length size () const override {
+		return self.mSize - 2 ;
+	}
+
+	Index root_s () const override {
+		return self.mRootS ;
+	}
+
+	Index root_t () const override {
+		return self.mRootT ;
+	}
+
+	void joint (CR<Index> from ,CR<Index> into ,CR<Val64> weight) override {
+		assert (weight >= 0) ;
+		assert (inline_between (from ,0 ,self.mSize)) ;
+		assert (inline_between (into ,0 ,self.mSize)) ;
+		assert (!self.mReady) ;
+		if (from == into)
+			return ;
+		const auto r1x = invoke ([&] () {
+			Tuple<Index ,Index> ret ;
+			ret.m1st = from ;
+			ret.m2nd = into ;
+			if ifdo (TRUE) {
+				if (ret.m2nd != self.mRootS)
+					discard ;
+				swap (ret.m1st ,ret.m2nd) ;
+			}
+			if ifdo (TRUE) {
+				if (ret.m2nd != self.mRootT)
+					discard ;
+				swap (ret.m1st ,ret.m2nd) ;
+			}
+			return move (ret) ;
+		}) ;
+		const auto r2x = r1x.m1st ;
+		const auto r3x = r1x.m2nd ;
+		assume (r3x != self.mRootS) ;
+		assume (r3x != self.mRootT) ;
+		Index ix = self.mEdgeKey.map (r1x) ;
+		Index iy = NONE ;
+		if ifdo (TRUE) {
+			if (ix != NONE)
+				discard ;
+			ix = self.mEdge.insert () ;
+			iy = self.mEdge.insert () ;
+			if ifdo (TRUE) {
+				self.mEdge[ix].mFrom = r2x ;
+				self.mEdge[ix].mInto = r3x ;
+				self.mEdge[ix].mNext = self.mFirst[r2x] ;
+				self.mFirst[r2x] = ix ;
+				self.mEdge[ix].mWeight = 0 ;
+				self.mEdge[ix].mInv = iy ;
+			}
+			if ifdo (TRUE) {
+				self.mEdge[iy].mFrom = r3x ;
+				self.mEdge[iy].mInto = r2x ;
+				self.mEdge[iy].mNext = self.mFirst[r3x] ;
+				self.mFirst[r3x] = iy ;
+				self.mEdge[iy].mWeight = 0 ;
+				self.mEdge[iy].mInv = ix ;
+			}
+			self.mEdgeKey.add (r1x ,ix) ;
+		}
+		iy = self.mEdge[ix].mInv ;
+		if ifdo (TRUE) {
+			if (r2x == self.mRootT)
+				discard ;
+			self.mEdge[ix].mWeight += weight ;
+		}
+		if ifdo (TRUE) {
+			if (r2x == self.mRootS)
+				discard ;
+			self.mEdge[iy].mWeight += weight ;
+		}
+	}
+
+	Val64 solve () override {
+		Val64 ret = 0 ;
+		while (TRUE) {
+			self.mDeque.clear () ;
+			self.mDeque.add (self.mRootS) ;
+			bfs_level (self.mRootS) ;
+			if (self.mDepth[self.mRootT] == 0)
+				break ;
+			for (auto &&i : self.mCurrent.iter ())
+				self.mCurrent[i] = self.mFirst[i] ;
+			while (TRUE) {
+				const auto r1x = dfs_flow (self.mRootS ,VAL64_MAX) ;
+				if (r1x == 0)
+					break ;
+				ret += r1x ;
+			}
+		}
+		self.mReady = TRUE ;
+		return move (ret) ;
+	}
+
+	Val64 dfs_flow (CR<Index> u ,CR<Val64> limit) {
+		if (u == self.mRootT)
+			return limit ;
+		Val64 ret = 0 ;
+		for (Index jx = self.mCurrent[u] ; jx != NONE ; jx = self.mEdge[jx].mNext) {
+			self.mCurrent[u] = jx ;
+			Index iy = self.mEdge[jx].mInto ;
+			if (self.mEdge[jx].mWeight <= 0)
+				continue ;
+			if (self.mDepth[iy] != self.mDepth[u] + 1)
+				continue ;
+			const auto r1x = limit - ret ;
+			const auto r2x = MathProc::min_of (r1x ,self.mEdge[jx].mWeight) ;
+			const auto r3x = dfs_flow (iy ,r2x) ;
+			if (r3x <= 0)
+				continue ;
+			Index jz = self.mEdge[jx].mInv ;
+			self.mEdge[jx].mWeight -= r3x ;
+			self.mEdge[jz].mWeight += r3x ;
+			ret += r3x ;
+			if (ret == limit)
+				break ;
+		}
+		return move (ret) ;
+	}
+
+	void bfs_level (CR<Index> s) {
+		self.mDepth.fill (0) ;
+		self.mDepth[s] = 1 ;
+		Index ix = NONE ;
+		Index iy = NONE ;
+		while (TRUE) {
+			if (self.mDeque.empty ())
+				break ;
+			self.mDeque.take (ix) ;
+			for (Index jx = self.mFirst[ix] ; jx != NONE ; jx = self.mEdge[jx].mNext) {
+				iy = self.mEdge[jx].mInto ;
+				if (self.mEdge[jx].mWeight <= 0)
+					continue ;
+				if (self.mDepth[iy] > 0)
+					continue ;
+				self.mDepth[iy] = self.mDepth[ix] + 1 ;
+				self.mDeque.add (iy) ;
+			}
+		}
+	}
+
+	BitSet cluster () const override {
+		assert (self.mReady) ;
+		const auto r1x = size () ;
+		BitSet ret = BitSet (r1x) ;
+		for (auto &&i : range (0 ,r1x)) {
+			if (self.mDepth[i] == 0)
+				continue ;
+			ret.add (i) ;
+		}
+		return move (ret) ;
+	}
+} ;
+
+exports VFat<MinCutHolder> MinCutHolder::hold (VR<MinCutLayout> that) {
+	return VFat<MinCutHolder> (MinCutImplHolder () ,that) ;
+}
+
+exports CFat<MinCutHolder> MinCutHolder::hold (CR<MinCutLayout> that) {
+	return CFat<MinCutHolder> (MinCutImplHolder () ,that) ;
 }
 
 class TPSFitImplHolder final implement Fat<TPSFitHolder ,TPSFitLayout> {
@@ -367,7 +677,7 @@ public:
 		}
 	}
 
-	CR<Array<Vector>> ref_m () const leftvalue override {
+	CR<Array<Vector>> control () const leftvalue override {
 		return self.mPCtrl ;
 	}
 
@@ -385,36 +695,28 @@ public:
 		return move (ret) ;
 	}
 
-	Flt64 bernstein (CR<Index> i ,CR<Length> n ,CR<Flt64> t) const {
+	Flt64 bernstein (CR<Index> x ,CR<Length> n ,CR<Flt64> t) const {
 		Flt64 ret = 1 ;
-		for (auto &&j : range (0 ,i)) {
+		for (auto &&j : range (0 ,x)) {
 			ret *= Flt64 (n - j) ;
 			ret /= Flt64 (j + 1) ;
 		}
-		for (auto &&j : range (0 ,i)) {
+		for (auto &&j : range (0 ,x)) {
 			noop (j) ;
 			ret *= t ;
 		}
-		for (auto &&j : range (0 ,n - i)) {
+		for (auto &&j : range (0 ,n - x)) {
 			noop (j) ;
 			ret *= (1 - t) ;
 		}
 		return move (ret) ;
 	}
 
-	Flt64 bernstein_diff (CR<Index> i ,CR<Length> n ,CR<Flt64> t) const {
+	Flt64 bernstein_diff (CR<Index> x ,CR<Length> n ,CR<Flt64> t) const {
 		if (n <= 0)
 			return 0 ;
-		const auto r1x = invoke ([&] () {
-			if (i <= 0)
-				return Flt64 (0) ;
-			return bernstein (i - 1 ,n - 1 ,t) ;
-		}) ;
-		const auto r2x = invoke ([&] () {
-			if (i >= n)
-				return Flt64 (0) ;
-			return bernstein (i ,n - 1 ,t) ;
-		}) ;
+		const auto r1x = x > 0 ? bernstein (x - 1 ,n - 1 ,t) : Flt64 (0) ;
+		const auto r2x = x < n ? bernstein (x ,n - 1 ,t) : Flt64 (0) ;
 		return Flt64 (n) * (r1x - r2x) ;
 	}
 
@@ -445,11 +747,11 @@ class FFTransformImplHolder final implement Fat<FFTransformHolder ,FFTransformLa
 public:
 	void initialize (CR<Length> size_) override {
 		assert (size_ > 1) ;
-		self.mRank = ByteProc::log2p_bit (size_ - 1) ;
-		self.mSize = ByteProc::exp2p_bit (self.mRank) ;
+		self.mRank = MathProc::log2_bit (size_ - 1) ;
+		self.mSize = MathProc::exp2_bit (self.mRank) ;
 		self.mCosSin = Array<Array<Vector>> (self.mRank + 1) ;
 		for (auto &&i : range (0 ,self.mRank + 1)) {
-			const auto r1x = ByteProc::exp2p_bit (i) ;
+			const auto r1x = MathProc::exp2_bit (i) ;
 			self.mCosSin[i] = Array<Vector> (r1x) ;
 			const auto r2x = MATH_PI * MathProc::inverse (Flt64 (r1x)) ;
 			for (auto &&j : range (0 ,r1x)) {
@@ -508,9 +810,9 @@ public:
 		auto rax = Array<Vector> (self.mSize) ;
 		for (auto &&i : range (0 ,self.mRank)) {
 			const auto r1x = self.mRank - 1 - i ;
-			const auto r2x = ByteProc::exp2p_bit (i) ;
+			const auto r2x = MathProc::exp2_bit (i) ;
 			const auto r3x = r2x * 2 ;
-			const auto r4x = ByteProc::exp2p_bit (r1x) ;
+			const auto r4x = MathProc::exp2_bit (r1x) ;
 			const auto r5x = r4x * 2 ;
 			for (auto &&j : range (0 ,r4x)) {
 				for (auto &&k : range (0 ,r2x)) {
@@ -544,9 +846,9 @@ public:
 		ret.mRank = self.mRank ;
 		ret.mCosSin = Array<Array<Vector>> (self.mRank + 1) ;
 		for (auto &&i : range (0 ,self.mRank + 1)) {
-			const auto r3x = self.mCosSin[i].length () ;
-			ret.mCosSin[i] = Array<Vector> (r3x) ;
-			for (auto &&j : range (0 ,r3x)) {
+			const auto r1x = self.mCosSin[i].length () ;
+			ret.mCosSin[i] = Array<Vector> (r1x) ;
+			for (auto &&j : range (0 ,r1x)) {
 				ret.mCosSin[i][j][0] = self.mCosSin[i][j][0] ;
 				ret.mCosSin[i][j][1] = -self.mCosSin[i][j][1] ;
 				ret.mCosSin[i][j][2] = 0 ;

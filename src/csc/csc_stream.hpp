@@ -15,7 +15,7 @@ namespace CSC {
 struct StreamProcLayout ;
 
 struct StreamProcHolder implement Interface {
-	imports CR<Super<Ref<StreamProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<StreamProcLayout>>> expr_m () ;
 	imports VFat<StreamProcHolder> hold (VR<StreamProcLayout> that) ;
 	imports CFat<StreamProcHolder> hold (CR<StreamProcLayout> that) ;
 
@@ -39,7 +39,7 @@ struct StreamProcHolder implement Interface {
 	virtual Stru32 ctrl_from_word (CR<Stru32> str) const = 0 ;
 } ;
 
-class StreamProc implement Super<Ref<StreamProcLayout>> {
+class StreamProc implement Super<UniqueRef<StreamProcLayout>> {
 public:
 	static CR<StreamProc> expr_m () {
 		return keep[TYPE<StreamProc>::expr] (StreamProcHolder::expr) ;
@@ -114,9 +114,29 @@ public:
 	}
 } ;
 
-struct StreamShape {
+struct StreamShapeLayout {
 	Index mRead ;
 	Index mWrite ;
+
+public:
+	implicit StreamShapeLayout () noexcept {
+		mRead = 0 ;
+		mWrite = 0 ;
+	}
+} ;
+
+class StreamShape implement StreamShapeLayout {
+public:
+	implicit StreamShape () = default ;
+
+	explicit StreamShape (CR<Index> read_ ,CR<Index> write_) {
+		mRead = read_ ;
+		mWrite = write_ ;
+	}
+
+	Length size () const {
+		return MathProc::abs (mRead - mWrite) ;
+	}
 } ;
 
 static constexpr auto BOM = RANK1 () ;
@@ -1589,7 +1609,7 @@ public:
 	}
 
 	template <class...ARG1>
-	CR<Format> operator() (CR<ARG1>...params) const {
+	forceinline CR<Format> operator() (CR<ARG1>...params) const {
 		once (params...) ;
 		return thiz ;
 	}
@@ -1668,7 +1688,7 @@ public:
 struct StreamTextProcLayout ;
 
 struct StreamTextProcHolder implement Interface {
-	imports CR<Super<Ref<StreamTextProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<StreamTextProcLayout>>> expr_m () ;
 	imports VFat<StreamTextProcHolder> hold (VR<StreamTextProcLayout> that) ;
 	imports CFat<StreamTextProcHolder> hold (CR<StreamTextProcLayout> that) ;
 
@@ -1680,9 +1700,11 @@ struct StreamTextProcHolder implement Interface {
 	virtual void read_blank (CR<Reader> reader ,VR<String<Stru>> item) const = 0 ;
 	virtual void read_endline (CR<Reader> reader ,VR<String<Stru>> item) const = 0 ;
 	virtual void write_aligned (CR<Writer> writer ,CR<Val64> number ,CR<Length> align) const = 0 ;
+	virtual void read_base64u (CR<Reader> reader ,VR<RefBuffer<Byte>> item) const = 0 ;
+	virtual void write_base64u (CR<Writer> writer ,CR<RefBuffer<Byte>> item) const = 0 ;
 } ;
 
-class StreamTextProc implement Super<Ref<StreamTextProcLayout>> {
+class StreamTextProc implement Super<UniqueRef<StreamTextProcLayout>> {
 public:
 	static CR<StreamTextProc> expr_m () {
 		return keep[TYPE<StreamTextProc>::expr] (StreamTextProcHolder::expr) ;
@@ -1714,6 +1736,14 @@ public:
 
 	static void write_aligned (CR<Writer> writer ,CR<Val64> number ,CR<Length> align) {
 		return StreamTextProcHolder::hold (expr)->write_aligned (writer ,number ,align) ;
+	}
+
+	static void read_base64u (CR<Reader> reader ,VR<RefBuffer<Byte>> item) {
+		return StreamTextProcHolder::hold (expr)->read_base64u (reader ,item) ;
+	}
+
+	static void write_base64u (CR<Writer> writer ,CR<RefBuffer<Byte>> item) {
+		return StreamTextProcHolder::hold (expr)->write_base64u (writer ,item) ;
 	}
 } ;
 

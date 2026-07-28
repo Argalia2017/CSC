@@ -6,15 +6,11 @@
 
 #include "csc_basic.hpp"
 
-#include "csc_end.h"
-#include <mutex>
-#include "csc_begin.h"
-
 namespace CSC {
 class OptionalImplHolder final implement Fat<OptionalHolder ,OptionalLayout> {
 public:
-	void initialize (CR<Flag> code ,VR<BoxLayout> addr) override {
-		self.mPin.pinned (addr) ;
+	void initialize (CR<Flag> code ,VR<BoxLayout> item) override {
+		self.mPin.pinned (item) ;
 		self.mCode = code ;
 	}
 
@@ -72,14 +68,17 @@ public:
 class FunctionImplHolder final implement Fat<FunctionHolder ,FunctionLayout> {
 public:
 	void initialize (CR<Unknown> holder) override {
-		self.mThis.prepare (holder) ;
+		self.mThis.intrusive (holder) ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<FunctionTree> () ,holder ,1) ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		BoxHolder::hold (raw ())->release () ;
 	}
 
 	void initialize (CR<FunctionLayout> that) override {
-		self.mThis = that.mThis.share () ;
+		if (that.mThis == NULL)
+			return ;
+		self.mThis = Ref<FunctionTree>::reference (that.mThis.ref) ;
+		self.mThis.intrusive (that.mThis.unknown ()) ;
 	}
 
 	Unknown unknown () const {
@@ -173,12 +172,6 @@ public:
 		return self.mThis->mValue ;
 	}
 
-	Clazz clazz () const override {
-		if (!exist ())
-			return Clazz () ;
-		return self.mThis->mClazz ;
-	}
-
 	VR<Pointer> ref_m () leftvalue override {
 		assert (exist ()) ;
 		return Pointer::make (self.mLayout) ;
@@ -187,6 +180,20 @@ public:
 	CR<Pointer> ref_m () const leftvalue override {
 		assert (exist ()) ;
 		return Pointer::make (self.mLayout) ;
+	}
+
+	AutoRefLayout recast (CR<Unknown> extend) override {
+		AutoRefLayout ret ;
+		ret.mThis = move (self.mThis) ;
+		const auto r1x = RFat<ReflectRecast> (extend) ;
+		ret.mLayout = r1x->recast (self.mLayout) ;
+		return move (ret) ;
+	}
+
+	Clazz clazz () const override {
+		if (!exist ())
+			return Clazz () ;
+		return self.mThis->mClazz ;
 	}
 
 	VR<Pointer> rebind (CR<Clazz> clazz_) leftvalue override {
@@ -206,14 +213,6 @@ public:
 		assume (r1x == r2x) ;
 		return Pointer::from (self) ;
 	}
-
-	AutoRefLayout recast (CR<Unknown> extend) override {
-		AutoRefLayout ret ;
-		ret.mThis = move (self.mThis) ;
-		const auto r1x = RFat<ReflectRecast> (extend) ;
-		ret.mLayout = r1x->recast (self.mLayout) ;
-		return move (ret) ;
-	}
 } ;
 
 exports VFat<AutoRefHolder> AutoRefHolder::hold (VR<AutoRefLayout> that) {
@@ -224,8 +223,6 @@ exports CFat<AutoRefHolder> AutoRefHolder::hold (CR<AutoRefLayout> that) {
 	return CFat<AutoRefHolder> (AutoRefImplHolder () ,that) ;
 }
 
-static constexpr auto SHAREDREF_HEADER = Flag (QUAD_ENDIAN) ;
-
 struct SharedRefTree {
 	Flag mHeader ;
 	Heap mMutex ;
@@ -233,10 +230,13 @@ struct SharedRefTree {
 	BoxLayout mValue ;
 } ;
 
+static constexpr auto SHAREDREF_HEADER = Flag (QUAD_ENDIAN) ;
+
 class SharedRefImplHolder final implement Fat<SharedRefHolder ,SharedRefLayout> {
 public:
 	void initialize (CR<Unknown> holder) override {
 		assert (!exist ()) ;
+		self.mThis.intrusive (RefUnknownBinder<SharedRefTree> ()) ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<SharedRefTree> () ,holder ,1) ;
 		self.mThis->mHeader = SHAREDREF_HEADER ;
 		self.mThis->mMutex = Heap::expr ;
@@ -273,12 +273,10 @@ public:
 			if (layout >= r7x + r1x->type_size ())
 				discard ;
 			Scope anonymous (rax.mMutex) ;
-			const auto r8x = rax.mCounter ;
-			if (r8x <= 0)
+			RefHolder::hold (self.mThis)->initialize (REGISTER::expr ,r6x) ;
+			self.mThis.intrusive (RefUnknownBinder<SharedRefTree> ()) ;
+			if(self.mThis == NULL)
 				discard ;
-			const auto r9x = inline_vptr (RefUnknownBinder<SharedRefTree> ()) ;
-			RefHolder::hold (self.mThis)->initialize (r9x ,r6x) ;
-			self.mLayout = layout ;
 			self.mThis->mCounter++ ;
 		}
 	}
@@ -289,9 +287,9 @@ public:
 			if (that.mThis == NULL)
 				discard ;
 			Scope anonymous (that.mThis->mMutex) ;
-			self.mThis = that.mThis.share () ;
-			self.mThis.prepare (RefUnknownBinder<SharedRefTree> ()) ;
-			self.mLayout = address (BoxHolder::hold (raw ())->ref) ;
+			self.mThis = Ref<SharedRefTree>::reference (that.mThis.ref) ;
+			self.mThis.intrusive (RefUnknownBinder<SharedRefTree> ()) ;
+			self.mLayout = that.mLayout ;
 			self.mThis->mCounter++ ;
 		}
 	}
@@ -301,11 +299,10 @@ public:
 			return ;
 		if ifdo (TRUE) {
 			Scope anonymous (self.mThis->mMutex) ;
-			const auto r1x = RFat<ReflectSize> (self.mThis.unknown ()) ;
-			if (r1x->type_size () != SIZE_OF<SharedRefTree>::expr)
+			if (is_weak ())
 				discard ;
-			const auto r2x = --self.mThis->mCounter ;
-			if (r2x > 0)
+			const auto r1x = --self.mThis->mCounter ;
+			if (r1x > 0)
 				discard ;
 			BoxHolder::hold (raw ())->destroy () ;
 			self.mThis->mHeader = ZERO ;
@@ -329,13 +326,6 @@ public:
 		return self.mThis->mValue ;
 	}
 
-	Length counter () const override {
-		if (!exist ())
-			return 0 ;
-		Scope anonymous (self.mThis->mMutex) ;
-		return self.mThis->mCounter ;
-	}
-
 	VR<Pointer> ref_m () const leftvalue override {
 		assert (exist ()) ;
 		return Pointer::make (self.mLayout) ;
@@ -349,11 +339,28 @@ public:
 		return move (ret) ;
 	}
 
+	Length counter () const override {
+		if (!exist ())
+			return 0 ;
+		Scope anonymous (self.mThis->mMutex) ;
+		return self.mThis->mCounter ;
+	}
+
+	Bool is_weak () const override {
+		auto &&rax = keep[TYPE<RefLayout>::expr] (self.mThis) ;
+		return rax.mExtend == ORDINARY::expr ;
+	}
+
 	SharedRefLayout weak () const override {
 		SharedRefLayout ret ;
-		ret.mThis = self.mThis.share () ;
-		ret.mThis.prepare (RefUnknownBinder<int> ()) ;
-		ret.mLayout = self.mLayout ;
+		if ifdo (TRUE) {
+			if (self.mThis == NULL)
+				discard ;
+			ret.mThis = Ref<SharedRefTree>::reference (self.mThis.ref) ;
+			ret.mThis.intrusive (RefUnknownBinder<SharedRefTree> ()) ;
+			ret.mThis.reveal () ;
+			ret.mLayout = self.mLayout ;
+		}
 		return move (ret) ;
 	}
 } ;
@@ -367,7 +374,8 @@ exports CFat<SharedRefHolder> SharedRefHolder::hold (CR<SharedRefLayout> that) {
 }
 
 struct UniqueRefTree {
-	Bool mOnlyOnce ;
+	Pin<UniqueRefTree> mPin ;
+	Bool mUnique ;
 	Function<VR<Pointer>> mOwner ;
 	BoxLayout mValue ;
 } ;
@@ -377,15 +385,18 @@ public:
 	void initialize (CR<Unknown> holder ,CR<Function<VR<Pointer>>> owner) override {
 		assert (!exist ()) ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<UniqueRefTree> () ,holder ,1) ;
-		self.mThis->mOnlyOnce = FALSE ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		self.mLayout = address (BoxHolder::hold (raw ())->ref) ;
 		BoxHolder::hold (raw ())->release () ;
+		self.mThis->mUnique = FALSE ;
 		self.mThis->mOwner = owner ;
 	}
 
 	void initialize (CR<UniqueRefLayout> that) override {
-		self.mThis = that.mThis.share () ;
+		if (that.mThis == NULL)
+			return ;
+		self.mThis = Ref<UniqueRefTree>::reference (that.mThis.ref) ;
+		self.mThis.intrusive (that.mThis.unknown ()) ;
 		self.mLayout = that.mLayout ;
 	}
 
@@ -429,13 +440,11 @@ public:
 		return move (ret) ;
 	}
 
-	Bool done () override {
-		if (!exist ())
-			return FALSE ;
-		if (self.mThis->mOnlyOnce)
-			return FALSE ;
-		self.mThis->mOnlyOnce = TRUE ;
-		return TRUE ;
+	RefLayout borrow () const leftvalue override {
+		assert (exist ()) ;
+		assume (!self.mThis->mUnique) ;
+		self.mThis->mPin->mUnique = TRUE ;
+		return Ref<Pointer>::reference (Pointer::make (self.mLayout)) ;
 	}
 } ;
 
@@ -455,12 +464,12 @@ struct RefBufferTree {
 class RefBufferImplHolder final implement Fat<RefBufferHolder ,RefBufferLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		self.mThis.prepare (holder) ;
+		self.mThis.intrusive (holder) ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<Length> size_) override {
 		assert (!exist ()) ;
-		self.mThis.prepare (holder) ;
+		self.mThis.intrusive (holder) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (size_ <= 0)
@@ -483,16 +492,16 @@ public:
 		}
 	}
 
-	void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<Slice> buffer ,RR<BoxLayout> item) override {
 		assert (!exist ()) ;
-		self.mThis.prepare (holder) ;
+		self.mThis.intrusive (holder) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<RefBufferTree> () ,r1x ,1) ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
-		self.mBuffer = buffer.mBuffer ;
-		self.mSize = buffer.mSize ;
-		self.mStep = buffer.mStep ;
+		self.mBuffer = buffer.offset (0) ;
+		self.mSize = buffer.size () ;
+		self.mStep = buffer.step () ;
 		self.mThis->mCapacity = USED ;
 	}
 
@@ -577,23 +586,29 @@ public:
 			return ;
 		assume (!fixed ()) ;
 		assume (self.mThis.exclusive ()) ;
-		const auto r2x = inline_min (r1x ,size ()) ;
 		auto rax = RefBufferLayout () ;
-		rax.mThis.prepare (unknown ()) ;
-		const auto r3x = RFat<ReflectElement> (unknown ())->element () ;
-		RefHolder::hold (rax.mThis)->initialize (RefUnknownBinder<RefBufferTree> () ,r3x ,r1x) ;
-		BoxHolder::hold (rax.mThis->mValue)->initialize (r3x) ;
+		rax.mThis.intrusive (unknown ()) ;
+		const auto r2x = RFat<ReflectElement> (unknown ())->element () ;
+		const auto r3x = RFat<ReflectSize> (r2x) ;
+		const auto r4x = r3x->type_size () ;
+		const auto r5x = inline_min (r1x ,size ()) ;
+		const auto r6x = step () > 0 ? step () : r4x ;
+		const auto r7x = r5x * r6x / r4x ;
+		const auto r8x = r1x * r6x / r4x ;
+		assert (r7x * r4x == r5x * r6x) ;
+		assert (r8x * r4x == r1x * r6x) ;
+		RefHolder::hold (rax.mThis)->initialize (RefUnknownBinder<RefBufferTree> () ,r2x ,r8x) ;
+		BoxHolder::hold (rax.mThis->mValue)->initialize (r2x) ;
 		rax.mBuffer = address (BoxHolder::hold (rax.mThis->mValue)->ref) ;
 		rax.mSize = r1x ;
-		const auto r4x = RFat<ReflectSize> (r3x) ;
-		rax.mStep = r4x->type_size () ;
-		const auto r5x = r4x->type_size () * r2x ;
-		inline_memcpy (Pointer::make (rax.mBuffer) ,ref ,r5x) ;
-		inline_memset (ref ,r5x) ;
-		const auto r6x = rax.mBuffer + r5x ;
-		const auto r7x = RFat<ReflectCreate> (r3x) ;
-		r7x->create (Pointer::make (r6x) ,r1x - r2x) ;
-		rax.mThis->mCapacity = r1x ;
+		rax.mStep = r6x ;
+		const auto r9x = r7x * r4x ;
+		inline_memcpy (Pointer::make (rax.mBuffer) ,ref ,r9x) ;
+		inline_memset (ref ,r9x) ;
+		const auto r10x = RFat<ReflectCreate> (r2x) ;
+		const auto r11x = rax.mBuffer + r9x ;
+		r10x->create (Pointer::make (r11x) ,r8x - r7x) ;
+		rax.mThis->mCapacity = r8x ;
 		swap (self ,rax) ;
 	}
 
@@ -627,30 +642,44 @@ private:
 
 public:
 	void prepare (CR<Unknown> holder) override {
-		self.mThis.prepare (holder) ;
+		self.mThis.intrusive (holder) ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<Length> size_) override {
 		assert (!exist ()) ;
-		self.mThis.prepare (holder) ;
-		const auto r1x = RFat<ReflectElement> (holder)->element () ;
-		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<FarBufferTree> () ,r1x ,FARBUFF_MAX_CHECK::expr) ;
-		BoxHolder::hold (raw ())->initialize (r1x) ;
-		self.mBuffer = address (BoxHolder::hold (raw ())->ref) ;
-		self.mSize = size_ ;
-		const auto r2x = RFat<ReflectSize> (r1x) ;
-		self.mStep = r2x->type_size () ;
-		self.mThis->mIndex = NONE ;
-		self.mThis->mCheck = 0 ;
-		const auto r3x = RFat<ReflectCreate> (r1x) ;
-		r3x->create (ref ,FARBUFF_MAX_CHECK::expr) ;
+		self.mThis.intrusive (holder) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (size_ <= 0)
+				discard ;
+			const auto r1x = RFat<ReflectElement> (holder)->element () ;
+			RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<FarBufferTree> () ,r1x ,FARBUFF_MAX_CHECK::expr) ;
+			BoxHolder::hold (raw ())->initialize (r1x) ;
+			self.mBuffer = address (BoxHolder::hold (raw ())->ref) ;
+			self.mSize = size_ ;
+			const auto r2x = RFat<ReflectSize> (r1x) ;
+			self.mStep = r2x->type_size () ;
+			self.mThis->mIndex = NONE ;
+			self.mThis->mCheck = 0 ;
+			const auto r3x = RFat<ReflectCreate> (r1x) ;
+			r3x->create (ref ,FARBUFF_MAX_CHECK::expr) ;
+		}
+		if ifdo (act) {
+			self.mBuffer = ZERO ;
+			self.mSize = 0 ;
+			self.mStep = 0 ;
+		}
 	}
 
 	void use_getter (CR<Function<CR<Index> ,VR<Pointer>>> getter) override {
+		if (self.mThis == NULL)
+			return ;
 		self.mThis->mGetter = getter ;
 	}
 
 	void use_setter (CR<Function<CR<Index> ,CR<Pointer>>> setter) override {
+		if (self.mThis == NULL)
+			return ;
 		self.mThis->mSetter = setter ;
 	}
 
@@ -706,7 +735,8 @@ public:
 			return ;
 		refresh () ;
 		self.mThis->mPin->mIndex = index ;
-		self.mThis->mPin->mCheck = (self.mThis->mCheck + 1) % FARBUFF_MAX_CHECK::expr ;
+		self.mThis->mPin->mCheck++ ;
+		replace (self.mThis->mPin->mCheck ,FARBUFF_MAX_CHECK::expr ,0) ;
 		self.mThis->mGetter (index ,ref) ;
 	}
 
@@ -821,6 +851,7 @@ public:
 	}
 
 	Index alloc () override {
+		check_exist () ;
 		check_resize () ;
 		Index ret = self.mFree ;
 		self.mFree = ptr (self ,ret).mNext ;
@@ -832,6 +863,7 @@ public:
 	}
 
 	Index alloc (RR<BoxLayout> item) override {
+		check_exist () ;
 		check_resize () ;
 		Index ret = self.mFree ;
 		self.mFree = ptr (self ,ret).mNext ;

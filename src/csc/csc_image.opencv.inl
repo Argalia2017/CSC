@@ -159,6 +159,7 @@ public:
 	}
 
 	ImageLayout convert_image (CR<ImageLayout> image ,CR<Length> channel) const override {
+		assert (ImageHolder::hold (image)->fixed ()) ;
 		assert (channel >= 1) ;
 		assert (channel <= 4) ;
 		auto &&rax = keep[TYPE<Box<UniqueRef<cv::Mat>>>::expr] (ImageHolder::hold (image)->raw ()).ref ;
@@ -193,6 +194,7 @@ public:
 	}
 
 	void save_image (CR<String<Str>> file ,CR<ImageLayout> image) const override {
+		assert (ImageHolder::hold (image)->fixed ()) ;
 		const auto r1x = StringProc::stra_from (file) ;
 		const auto r2x = ImageHolder::hold (image)->bx () ;
 		const auto r3x = ImageHolder::hold (image)->by () ;

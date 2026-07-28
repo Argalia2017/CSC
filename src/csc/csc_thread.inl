@@ -55,7 +55,7 @@ public:
 
 	void set_thread_size (CR<Length> size_) override {
 		Scope anonymous (self.mThreadMutex) ;
-		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
+		assert (self.mThreadFlag == ThreadFlag::Preparing) ;
 		self.mThread = Array<Thread> (size_) ;
 		self.mThreadJoin = BitSet (size_) ;
 		self.mThreadQueue = Array<IndexIterator> (size_) ;
@@ -65,8 +65,7 @@ public:
 	void set_queue_size (CR<Length> size_) override {
 		assert (size_ > 0) ;
 		Scope anonymous (self.mThreadMutex) ;
-		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
-		assume (self.mItemQueue.empty ()) ;
+		assert (self.mThreadFlag == ThreadFlag::Preparing) ;
 		self.mItemQueue = Deque<IndexIterator> (size_) ;
 	}
 
@@ -125,7 +124,7 @@ public:
 		self.mItemLoadLength -= self.mThreadLoadLength[slot] ;
 		Index ix = self.mItemQueue.head () ;
 		const auto r1x = inline_alignas (self.mItemLoadLength ,self.mThread.size ()) / self.mThread.size () ;
-		const auto r2x = MathProc::max_of (r1x / 2 ,Length (1)) ;
+		const auto r2x = MathProc::max_of (r1x / 2 ,IDEN) ;
 		const auto r3x = MathProc::min_of (r2x ,self.mItemQueue[ix].length ()) ;
 		self.mThreadLoadLength[slot] = r3x ;
 		auto &&rbx = keep[TYPE<IndexIteratorLayout>::expr] (self.mItemQueue[ix]) ;
@@ -255,8 +254,7 @@ public:
 
 	void set_thread_size (CR<Length> size_) override {
 		Scope anonymous (self.mThreadMutex) ;
-		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
-		assume (self.mThreadSolution.size () == 0) ;
+		assert (self.mThreadFlag == ThreadFlag::Preparing) ;
 		self.mThread = Array<Thread> (size_) ;
 		self.mThreadJoin = BitSet (size_) ;
 		self.mSearchSolution = Array<CalcSolution> (size_) ;
@@ -266,8 +264,8 @@ public:
 
 	void set_start_input (CR<BitSet> input ,CR<Flt64> factor) override {
 		Scope anonymous (self.mThreadMutex) ;
-		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
-		assume (self.mThread.size () > 0) ;
+		assert (self.mThreadFlag == ThreadFlag::Preparing) ;
+		assert (self.mThread.size () > 0) ;
 		self.mBestSolution.mIteration = ZERO ;
 		self.mBestSolution.mError.mAvg = infinity ;
 		self.mBestSolution.mError.mStd = 0 ;
@@ -519,7 +517,7 @@ public:
 
 	void set_retry (CR<Bool> flag) override {
 		Scope anonymous (self.mThreadMutex) ;
-		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
+		assert (self.mThreadFlag == ThreadFlag::Preparing) ;
 		self.mRetryFlag = flag ;
 	}
 
@@ -694,11 +692,11 @@ exports CFat<PromiseHolder> PromiseHolder::hold (CR<PromiseLayout> that) {
 	return CFat<PromiseHolder> (PromiseImplHolder () ,that) ;
 }
 
-struct SyntaxLayout {
+struct ExecutionLayout {
 	Set<Clazz> mTree ;
 } ;
 
-class SyntaxImplHolder final implement Fat<SyntaxHolder ,SyntaxLayout> {
+class ExecutionImplHolder final implement Fat<ExecutionHolder ,ExecutionLayout> {
 public:
 	void initialize () override {
 		unimplemented () ;
@@ -736,15 +734,15 @@ public:
 	}
 } ;
 
-exports Ref<SyntaxLayout> SyntaxHolder::create () {
-	return Ref<SyntaxLayout>::make () ;
+exports Ref<ExecutionLayout> ExecutionHolder::create () {
+	return Ref<ExecutionLayout>::make () ;
 }
 
-exports VFat<SyntaxHolder> SyntaxHolder::hold (VR<SyntaxLayout> that) {
-	return VFat<SyntaxHolder> (SyntaxImplHolder () ,that) ;
+exports VFat<ExecutionHolder> ExecutionHolder::hold (VR<ExecutionLayout> that) {
+	return VFat<ExecutionHolder> (ExecutionImplHolder () ,that) ;
 }
 
-exports CFat<SyntaxHolder> SyntaxHolder::hold (CR<SyntaxLayout> that) {
-	return CFat<SyntaxHolder> (SyntaxImplHolder () ,that) ;
+exports CFat<ExecutionHolder> ExecutionHolder::hold (CR<ExecutionLayout> that) {
+	return CFat<ExecutionHolder> (ExecutionImplHolder () ,that) ;
 }
 } ;

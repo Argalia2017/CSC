@@ -76,6 +76,18 @@ public:
 		return RefBufferHolder::hold (self.mArray)->ref ;
 	}
 
+	Ref<RefBuffer<Byte>> borrow () leftvalue override {
+		assert (self.mArray.exist ()) ;
+		auto &&rax = keep[TYPE<RefBuffer<Byte>>::expr] (Pointer::from (self.mArray)) ;
+		return Ref<RefBuffer<Byte>>::reference (rax) ;
+	}
+
+	Ref<RefBuffer<Byte>> borrow () const leftvalue override {
+		assert (self.mArray.exist ()) ;
+		auto &&rax = keep[TYPE<RefBuffer<Byte>>::expr] (Pointer::from (self.mArray)) ;
+		return Ref<RefBuffer<Byte>>::reference (rax) ;
+	}
+
 	VR<Pointer> at (CR<Index> index) leftvalue override {
 		return self.mArray.at (index) ;
 	}
@@ -182,7 +194,7 @@ public:
 		if (size_ <= 0)
 			return ;
 		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mString) ;
-		const auto r1x = size_ + 1 ;
+		const auto r1x = size_ + 2 ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (step_ != 1)
@@ -228,7 +240,7 @@ public:
 	Length size () const override {
 		if (!self.mString.exist ())
 			return 0 ;
-		return self.mString.size () - 1 ;
+		return self.mString.size () - 2 ;
 	}
 
 	Length step () const override {
@@ -411,9 +423,11 @@ public:
 	}
 
 	void trunc (CR<Index> index) override {
-		if (!inline_between (index ,0 ,self.mString.size ()))
-			return ;
-		set (index ,Stru32 (0X00)) ;
+		for (auto &&i : range (index ,index + 2)) {
+			if (!inline_between (i ,0 ,self.mString.size ()))
+				continue ;
+			set (i ,Stru32 (0X00)) ;
+		}
 	}
 
 	void fill (CR<Stru32> item) override {
@@ -467,7 +481,7 @@ public:
 		Index ix = 0 ;
 		for (auto &&i : range (1 ,r1x.m2nd)) {
 			if (i % 2 == 0)
-				continue ;	
+				continue ;
 			ret[ix] = segment (r1x.m1st[i - 1] ,r1x.m1st[i]) ;
 			ix++ ;
 		}
@@ -618,14 +632,14 @@ public:
 	VR<Pointer> at (CR<Index> index) leftvalue override {
 		assert (inline_between (index ,0 ,length ())) ;
 		const auto r1x = self.mDeque.size () ;
-		Index ix = (index + self.mRead) % r1x ;
+		Index ix = MathProc::wrap (index + self.mRead ,r1x) ;
 		return self.mDeque.at (ix) ;
 	}
 
 	CR<Pointer> at (CR<Index> index) const leftvalue override {
 		assert (inline_between (index ,0 ,length ())) ;
 		const auto r1x = self.mDeque.size () ;
-		Index ix = (index + self.mRead) % r1x ;
+		Index ix = MathProc::wrap (index + self.mRead ,r1x) ;
 		return self.mDeque.at (ix) ;
 	}
 
@@ -677,10 +691,10 @@ public:
 		noop (r1x) ;
 		assert (r1x > 0) ;
 		Index ix = self.mRead ;
-		const auto r2x = RFat<ReflectCreate> (self.mDeque.unknown ()) ;
+		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
 		const auto r3x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
 		r3x->destroy (self.mDeque[ix] ,1) ;
-		r2x->create (self.mDeque[ix] ,1) ;
+		r2x->drop (self.mDeque[ix]) ;
 		self.mRead++ ;
 		check_bound () ;
 	}
@@ -689,7 +703,7 @@ public:
 		check_exist () ;
 		check_resize () ;
 		const auto r1x = self.mDeque.size () ;
-		Index ix = (self.mRead - 1 + r1x) % r1x ;
+		Index ix = MathProc::wrap (self.mRead - 1 ,r1x) ;
 		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
 		r2x->swap (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
 		self.mRead-- ;
@@ -701,10 +715,10 @@ public:
 		noop (r1x) ;
 		assert (r1x > 0) ;
 		Index ix = self.mWrite - 1 ;
-		const auto r2x = RFat<ReflectCreate> (self.mDeque.unknown ()) ;
+		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
 		const auto r3x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
 		r3x->destroy (self.mDeque[ix] ,1) ;
-		r2x->create (self.mDeque[ix] ,1) ;
+		r2x->drop (self.mDeque[ix]) ;
 		self.mWrite-- ;
 	}
 
@@ -738,6 +752,7 @@ public:
 				r3x->swap (self.mDeque.at (iy) ,self.mDeque.at (ix)) ;
 			}
 			self.mRead += r2x - r1x ;
+			self.mWrite += r2x - r1x ;
 			check_bound () ;
 		}
 	}
@@ -774,9 +789,7 @@ public:
 	}
 
 	void initialize (CR<Unknown> holder ,CR<Length> size_) override {
-		if (size_ <= 0)
-			return ;
-		const auto r1x = size_ + 1 ;
+		const auto r1x = size_ + MathProc::step (size_ - 1) ;
 		RefBufferHolder::hold (self.mPriority)->initialize (holder ,r1x) ;
 		clear () ;
 	}
@@ -863,10 +876,9 @@ public:
 		Index ix = self.mWrite - 1 ;
 		const auto r1x = RFat<ReflectAssign> (self.mPriority.unknown ()) ;
 		const auto r2x = RFat<ReflectDestroy> (self.mPriority.unknown ()) ;
-		const auto r3x = RFat<ReflectCreate> (self.mPriority.unknown ()) ;
+		r2x->destroy (self.mPriority.at (0) ,1) ;
+		r1x->drop (self.mPriority.at (0)) ;
 		r1x->swap (self.mPriority.at (0) ,self.mPriority.at (ix)) ;
-		r2x->destroy (self.mPriority.at (ix) ,1) ;
-		r3x->create (self.mPriority.at (ix) ,1) ;
 		self.mWrite = ix ;
 		update_insert (0) ;
 	}
@@ -1084,7 +1096,10 @@ public:
 
 	Index insert (CR<Index> index ,RR<BoxLayout> item) override {
 		check_exist () ;
-		assert (self.mList.used (index)) ;
+		if (!inline_between (index ,0 ,self.mList.size ()))
+			return NONE ;
+		if (!self.mList.used (index))
+			return NONE ;
 		Index ret = self.mList.alloc (move (item)) ;
 		Index ix = self.mList.bt (index).mLeft ;
 		self.mList.bt (ret).mLeft = ix ;
@@ -1103,7 +1118,7 @@ public:
 		self.mList.free (index) ;
 	}
 
-	void order (CR<Array<Index>> range_) override {
+	void arrange (CR<Array<Index>> range_) override {
 		assert (length () == range_.length ()) ;
 		if (range_.length () == 0)
 			return ;
@@ -1248,8 +1263,10 @@ public:
 
 	Index insert (CR<Index> index ,RR<BoxLayout> item) override {
 		check_exist () ;
-		assert (inline_between (index ,0 ,self.mRange.size ())) ;
-		assert (!self.mList.used (self.mRange[index])) ;
+		if (!inline_between (index ,0 ,self.mRange.size ()))
+			return NONE ;
+		if (self.mList.used (self.mRange[index]))
+			return NONE ;
 		Index ix = self.mList.alloc (move (item)) ;
 		check_resize () ;
 		Index ret = index ;
@@ -1266,7 +1283,7 @@ public:
 		self.mRemap = FALSE ;
 	}
 
-	void order (CR<Array<Index>> range_) override {
+	void arrange (CR<Array<Index>> range_) override {
 		assert (length () == range_.length ()) ;
 		if (range_.length () == 0)
 			return ;
@@ -1439,10 +1456,10 @@ public:
 		if (!self.mThis.exist ())
 			return NONE ;
 		assert (self.mRemap) ;
+		const auto r1x = RFat<ReflectCompr> (self.mThis->mList.unknown ()) ;
 		Index ix = 0 ;
 		Index iy = length () - 1 ;
 		Index iz = 0 ;
-		const auto r1x = RFat<ReflectCompr> (self.mThis->mList.unknown ()) ;
 		while (TRUE) {
 			if (ix > iy)
 				break ;
@@ -1468,15 +1485,25 @@ public:
 		if (!self.mThis.exist ())
 			return move (ret) ;
 		assert (self.mRemap) ;
+		const auto r1x = search_next (0 ,length () ,begin_) ;
+		const auto r2x = search_next (r1x ,length () ,end_) ;
+		ret = Array<Index> (r2x - r1x) ;
+		for (auto &&i : ret.iter ()) {
+			ret[i] = i + r1x ;
+		}
+		return move (ret) ;
+	}
+
+	Index search_next (CR<Index> ib ,CR<Index> ie ,CR<Pointer> item) const {
 		const auto r1x = RFat<ReflectCompr> (self.mThis->mList.unknown ()) ;
-		Index ix = 0 ;
-		Index iy = length () ;
+		Index ix = ib ;
+		Index iy = ie ;
 		Index iz = 0 ;
 		while (TRUE) {
 			if (ix >= iy)
 				break ;
 			iz = ix + (iy - ix) / 2 ;
-			const auto r2x = r1x->compr (self.mThis->mList.at (self.mRange[iz]) ,begin_) ;
+			const auto r2x = r1x->compr (self.mThis->mList.at (self.mRange[iz]) ,item) ;
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (r2x >= ZERO)
@@ -1487,29 +1514,7 @@ public:
 				iy = iz ;
 			}
 		}
-		const auto r3x = ix ;
-		iy = length () ;
-		while (TRUE) {
-			if (ix >= iy)
-				break ;
-			iz = ix + (iy - ix) / 2 ;
-			const auto r4x = r1x->compr (self.mThis->mList.at (self.mRange[iz]) ,end_) ;
-			auto act = TRUE ;
-			if ifdo (act) {
-				if (r4x >= ZERO)
-					discard ;
-				ix = iz + 1 ;
-			}
-			if ifdo (act) {
-				iy = iz ;
-			}
-		}
-		const auto r5x = ix ;
-		ret = Array<Index> (r5x - r3x) ;
-		for (auto &&i : ret.iter ()) {
-			ret[i] = i + r3x ;
-		}
-		return move (ret) ;
+		return ix ;
 	}
 
 	Bool contain (CR<Pointer> item) const override {
@@ -1816,16 +1821,8 @@ public:
 			eswap (index ,find_successor (index)) ;
 		}
 		Index ix = NONE ;
-		if ifdo (TRUE) {
-			if (ix != NONE)
-				discard ;
-			ix = self.mSet.bt (index).mLeft ;
-		}
-		if ifdo (TRUE) {
-			if (ix != NONE)
-				discard ;
-			ix = self.mSet.bt (index).mRight ;
-		}
+		replace (ix ,NONE ,self.mSet.bt (index).mLeft) ;
+		replace (ix ,NONE ,self.mSet.bt (index).mRight) ;
 		const auto r1x = parent (index) ;
 		curr_next (r1x) = ix ;
 		curr_prev (ix ,r1x.mBin) = r1x.mUp ;
@@ -2207,6 +2204,7 @@ public:
 	void clear () override {
 		self.mSet.clear () ;
 		self.mRange = RefBuffer<Index> () ;
+		self.mWrite = 0 ;
 	}
 
 	Length size () const override {
@@ -2281,9 +2279,23 @@ public:
 
 	void update_emplace (CR<Index> curr) {
 		assert (self.mRange.size () > 0) ;
-		Index ix = self.mSet.bt (curr).mHash % self.mRange.size () ;
-		self.mSet.bt (curr).mDown = self.mRange[ix] ;
+		const auto r1x = self.mSet.bt (curr).mHash ;
+		Index ix = r1x % self.mRange.size () ;
+		while (TRUE) {
+			if (self.mRange[ix] == NONE)
+				break ;
+			if (self.mRange[ix] == USED)
+				break ;
+			ix++ ;
+			replace (ix ,self.mRange.size () ,0) ;
+		}
+		if ifdo (TRUE) {
+			if (self.mRange[ix] != USED)
+				discard ;
+			self.mWrite-- ;
+		}
 		self.mRange[ix] = curr ;
+		self.mWrite++ ;
 	}
 
 	Index find (CR<Pointer> item) const override {
@@ -2293,22 +2305,24 @@ public:
 			return NONE ;
 		const auto r1x = hashcode (item) ;
 		Index ix = r1x % self.mRange.size () ;
-		Index ret = self.mRange[ix] ;
 		const auto r2x = RFat<ReflectEqual> (self.mSet.unknown ()) ;
 		while (TRUE) {
-			if (ret == NONE)
+			if (self.mRange[ix] == NONE)
 				break ;
 			if ifdo (TRUE) {
-				if (self.mSet.bt (ret).mHash != r1x)
+				if (self.mRange[ix] == USED)
 					discard ;
-				const auto r3x = r2x->equal (item ,self.mSet.at (ret)) ;
+				if (self.mSet.bt (self.mRange[ix]).mHash != r1x)
+					discard ;
+				const auto r3x = r2x->equal (item ,self.mSet.at (self.mRange[ix])) ;
 				if (!r3x)
 					discard ;
-				return move (ret) ;
+				return self.mRange[ix] ;
 			}
-			ret = self.mSet.bt (ret).mDown ;
+			ix++ ;
+			replace (ix ,self.mRange.size () ,0) ;
 		}
-		return move (ret) ;
+		return NONE ;
 	}
 
 	Bool contain (CR<Pointer> item) const override {
@@ -2323,31 +2337,18 @@ public:
 	}
 
 	void remove (CR<Index> index) override {
-		Index ix = self.mSet.bt (index).mHash % self.mRange.size () ;
-		Index iy = find_successor (ix ,index) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (iy != NONE)
-				discard ;
-			self.mSet.bt (iy).mDown = self.mSet.bt (index).mDown ;
-		}
-		if ifdo (act) {
-			self.mRange[ix] = iy ;
-		}
-		self.mSet.free (index) ;
-	}
-
-	Index find_successor (CR<Index> first ,CR<Index> index) const {
-		if (first == index)
-			return NONE ;
-		Index ret = first ;
+		const auto r1x = self.mSet.bt (index).mHash ;
+		Index ix = r1x % self.mRange.size () ;
 		while (TRUE) {
-			Index iy = self.mSet.bt (ret).mDown ;
-			if (iy == index)
+			if (self.mRange[ix] == NONE)
 				break ;
-			ret = iy ;
+			if (self.mRange[ix] == index)
+				break ;
+			ix++ ;
+			replace (ix ,self.mRange.size () ,0) ;
 		}
-		return move (ret) ;
+		replace (self.mRange[ix] ,index ,USED) ;
+		self.mSet.free (index) ;
 	}
 
 	void erase (CR<Pointer> item) override {
@@ -2364,13 +2365,20 @@ public:
 	}
 
 	void check_resize (CR<Index> curr) {
-		const auto r1x = self.mSet.size () ;
+		const auto r1x = self.mSet.size () * 2 ;
 		const auto r2x = self.mRange.size () ;
-		if (r2x == r1x)
+		if ifdo (TRUE) {
+			if (r2x == r1x)
+				discard ;
+			self.mRange = RefBuffer<Index> (r1x) ;
+			self.mWrite = r1x ;
+		}
+		const auto r3x = Length (Flt64 (r1x) * Flt64 (0.6666)) ;
+		if (self.mWrite < r3x)
 			return ;
-		self.mRange = RefBuffer<Index> (r1x) ;
 		for (auto &&i : range (0 ,r1x))
 			self.mRange[i] = NONE ;
+		self.mWrite = 0 ;
 		for (auto &&i : range (0 ,self.mSet.size ())) {
 			if (i == curr)
 				continue ;
@@ -2394,7 +2402,7 @@ public:
 	void initialize (CR<Length> size_) override {
 		if (size_ <= 0)
 			return ;
-		const auto r1x = (size_ + 8 - 1) / 8 ;
+		const auto r1x = inline_alignas (size_ ,8) / 8 ;
 		self.mSet = RefBuffer<Byte> (r1x) ;
 		self.mWidth = size_ ;
 		clear () ;
@@ -2435,17 +2443,17 @@ public:
 	Length length () const override {
 		Length ret = 0 ;
 		for (auto &&i : range (0 ,self.mSet.size ()))
-			ret += ByteProc::popcount (self.mSet[i]) ;
+			ret += ByteProc::pop_count (self.mSet[i]) ;
 		return move (ret) ;
 	}
 
 	void get (CR<Index> index ,VR<Bool> item) const override {
-		const auto r1x = ByteProc::exp2p_bit (index % 8) ;
+		const auto r1x = MathProc::exp2_bit (index % 8) ;
 		item = ByteProc::any_bit (self.mSet[index / 8] ,r1x) ;
 	}
 
 	void set (CR<Index> index ,CR<Bool> item) override {
-		const auto r1x = ByteProc::exp2p_bit (index % 8) ;
+		const auto r1x = MathProc::exp2_bit (index % 8) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (!item)
@@ -2472,11 +2480,11 @@ public:
 			const auto r1x = index % 8 + 1 ;
 			if (r1x == 8)
 				discard ;
-			const auto r2x = ByteProc::exp2p_bit (r1x) - 1 ;
+			const auto r2x = MathProc::exp2_bit (r1x) - 1 ;
 			const auto r3x = self.mSet[ix] & ~Byte (r2x) ;
 			if (r3x == Byte (0X00))
 				discard ;
-			const auto r4x = ByteProc::lowcount (r3x) ;
+			const auto r4x = ByteProc::low_count (r3x) ;
 			const auto r5x = ix * 8 + r4x ;
 			return inline_min (r5x ,size ()) ;
 		}
@@ -2493,7 +2501,7 @@ public:
 			if ifdo (TRUE) {
 				if (self.mSet[ix] == Byte (0X00))
 					discard ;
-				const auto r1x = ByteProc::lowcount (self.mSet[ix]) ;
+				const auto r1x = ByteProc::low_count (self.mSet[ix]) ;
 				return ix * 8 + r1x ;
 			}
 			ix++ ;
@@ -2567,6 +2575,19 @@ public:
 		check_mask (self) ;
 	}
 
+	void resize (CR<Length> size_) override {
+		const auto r1x = inline_max (size_ ,0) ;
+		if (size () == r1x)
+			return ;
+		const auto r2x = inline_alignas (r1x ,8) / 8 ;
+		const auto r3x = self.mSet.size () ;
+		self.mSet.resize (r2x) ;
+		for (auto &&i : range (r3x ,self.mSet.size ()))
+			self.mSet[i] = Byte (0X00) ;
+		self.mWidth = r1x ;
+		check_mask (self) ;
+	}
+
 	BitSetLayout sand (CR<BitSetLayout> that) const override {
 		BitSetLayout ret ;
 		const auto r1x = size () ;
@@ -2635,7 +2656,7 @@ public:
 		if (ix < 0)
 			return ;
 		const auto r1x = that.mWidth % 8 ;
-		const auto r2x = ByteProc::exp2p_bit (r1x) - 1 ;
+		const auto r2x = MathProc::exp2_bit (r1x) - 1 ;
 		that.mSet[ix] &= Byte (r2x) ;
 	}
 } ;

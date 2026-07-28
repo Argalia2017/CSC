@@ -16,11 +16,12 @@ namespace CSC {
 struct StringProcLayout ;
 
 struct StringProcHolder implement Interface {
-	imports CR<Super<Ref<StringProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<StringProcLayout>>> expr_m () ;
 	imports VFat<StringProcHolder> hold (VR<StringProcLayout> that) ;
 	imports CFat<StringProcHolder> hold (CR<StringProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual Bool is_encode (CR<StringLayout> a ,CR<Just<StringEncode>> encode_) const = 0 ;
 	virtual String<Stra> stra_from_strw (CR<String<Strw>> a) const = 0 ;
 	virtual String<Strw> strw_from_stra (CR<String<Stra>> a) const = 0 ;
 	virtual String<Stru> stru8_from_stru16 (CR<String<Stru16>> a) const = 0 ;
@@ -61,10 +62,14 @@ struct StringProcHolder implement Interface {
 	virtual String<Stru32> stru32_from (CR<String<Stru32>> a) const = 0 ;
 } ;
 
-class StringProc implement Super<Ref<StringProcLayout>> {
+class StringProc implement Super<UniqueRef<StringProcLayout>> {
 public:
 	static CR<StringProc> expr_m () {
 		return keep[TYPE<StringProc>::expr] (StringProcHolder::expr) ;
+	}
+
+	static Bool is_encode (CR<StringLayout> a ,CR<Just<StringEncode>> encode_) {
+		return StringProcHolder::hold (expr)->is_encode (a ,encode_) ;
 	}
 
 	static String<Stra> stra_from_strw (CR<String<Strw>> a) {
@@ -250,7 +255,7 @@ struct RegexHolder implement Interface {
 	imports CFat<RegexHolder> hold (CR<RegexLayout> that) ;
 
 	virtual void initialize (CR<String<Str>> format) = 0 ;
-	virtual Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) = 0 ;
+	virtual Index search (RR<Ref<String<Str>>> text ,CR<Index> offset ,CR<Length> size_) = 0 ;
 	virtual Slice match (CR<Index> index) const = 0 ;
 } ;
 
@@ -263,8 +268,16 @@ public:
 		RegexHolder::hold (thiz)->initialize (format) ;
 	}
 
+	Index search (RR<Ref<String<Str>>> text) {
+		return RegexHolder::hold (thiz)->search (move (text) ,0 ,text->size ()) ;
+	}
+
 	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) {
-		return RegexHolder::hold (thiz)->search (move (text) ,offset) ;
+		return RegexHolder::hold (thiz)->search (move (text) ,offset ,text->size ()) ;
+	}
+
+	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset ,CR<Length> size_) {
+		return RegexHolder::hold (thiz)->search (move (text) ,offset ,size_) ;
 	}
 
 	Slice match (CR<Index> index) const {

@@ -60,6 +60,10 @@ public:
 		self.mTime = that.mTime ;
 	}
 
+	Ref<TimeLayout> borrow () leftvalue override {
+		return Ref<TimeLayout>::reference (self) ;
+	}
+
 	Ref<TimeLayout> borrow () const leftvalue override {
 		return Ref<TimeLayout>::reference (self) ;
 	}
@@ -159,11 +163,12 @@ template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 
 struct RuntimeProcLayout {} ;
 
-exports CR<Super<Ref<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
+exports CR<Super<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<RuntimeProcLayout>> ret ;
-		ret.mThis = Ref<RuntimeProcLayout>::make () ;
-		RuntimeProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<RuntimeProcLayout>> ret ;
+		ret.mThis = UniqueRef<RuntimeProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		RuntimeProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -269,6 +274,10 @@ public:
 	}
 
 	Ref<MutexLayout> borrow () leftvalue override {
+		return Ref<MutexLayout>::reference (self) ;
+	}
+
+	Ref<MutexLayout> borrow () const leftvalue override {
 		return Ref<MutexLayout>::reference (self) ;
 	}
 
@@ -380,7 +389,6 @@ public:
 	}
 
 	void leave () override {
-		std::atomic_thread_fence (std::memory_order_release) ;
 		self.mMutex->mShared.replace (NONE ,IDEN) ;
 		self.mMutex->mBasic->unlock () ;
 	}
@@ -552,6 +560,34 @@ public:
 		self.mLocale = std::locale (r1x) ;
 	}
 
+#ifdef __CSC_SYSTEM_WINDOWS__
+	Array<String<Str>> env (CR<String<Str>> name) const override {
+		const auto r1x = StringProc::stra_from (name) ;
+		const auto r2x = getenv (r1x.ref) ;
+		const auto r3x = Slice (Flag (r2x) ,SLICE_MAX_SIZE::expr ,1).eos () ;
+		const auto r4x = String<Str> (r3x) ;
+		const auto r5x = r4x.split (Stru32 (';')) ;
+		Array<String<Str>> ret = Array<String<Str>> (r5x.length ()) ;
+		for (auto &&i : ret.iter ())
+			ret[i] = r5x[i] ;
+		return move (ret) ;
+	}
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
+	Array<String<Str>> env (CR<String<Str>> name) const override {
+		const auto r1x = StringProc::stra_from (name) ;
+		const auto r2x = getenv (r1x.ref) ;
+		const auto r3x = Slice (Flag (r2x) ,SLICE_MAX_SIZE::expr ,1).eos () ;
+		const auto r4x = String<Str> (r3x) ;
+		const auto r5x = r4x.split (Stru32 (':')) ;
+		Array<String<Str>> ret = Array<String<Str>> (r5x.length ()) ;
+		for (auto &&i : ret.iter ())
+			ret[i] = r5x[i] ;
+		return move (ret) ;
+	}
+#endif
+
 	void execute (CR<String<Str>> command) const override {
 		const auto r1x = StringProc::stra_from (command) ;
 		const auto r2x = Flag (std::system (r1x)) ;
@@ -603,15 +639,6 @@ public:
 
 	Quad random_byte () {
 		return Quad (self.mRandom.ref ()) ;
-	}
-
-	Val32 random_value (CR<Val32> min_ ,CR<Val32> max_) override {
-		assert (min_ <= max_) ;
-		const auto r1x = Val32 (max_) - Val32 (min_) + 1 ;
-		assert (r1x > 0) ;
-		const auto r2x = Val32 (random_byte ()) & VAL32_MAX ;
-		const auto r3x = r2x % r1x + min_ ;
-		return r3x ;
 	}
 
 	Val64 random_value (CR<Val64> min_ ,CR<Val64> max_) override {
@@ -666,21 +693,20 @@ public:
 		if ifdo (act) {
 			result.fill (Byte (0XFF)) ;
 			const auto r2x = random_shuffle (size_ - length_ ,size_) ;
-			for (auto &&i : range (size_ - length_ ,size_))
+			for (auto &&i : range (length_ ,size_))
 				result.erase (r2x[i]) ;
 		}
 	}
 
 	Flt64 random_float () {
-		static const Val64 M_EXP10[] = {1 ,10 ,100 ,1000 ,10000 ,100000 ,1000000 ,10000000 ,100000000} ;
-		const auto r1x = Length (8) ;
-		const auto r2x = Flt64 (random_value (Val64 (0) ,M_EXP10[r1x])) ;
-		const auto r3x = r2x * MathProc::inverse (Flt64 (M_EXP10[r1x])) ;
+		const auto r1x = Length (100000000) ;
+		const auto r2x = Flt64 (random_value (Val64 (0) ,Val64 (r1x))) ;
+		const auto r3x = r2x * MathProc::inverse (Flt64 (r1x)) ;
 		return r3x ;
 	}
 
-	Bool random_draw (CR<Flt64> possibility) override {
-		if (random_float () < possibility)
+	Bool random_draw (CR<Flt64> probability) override {
+		if (random_float () < probability)
 			return TRUE ;
 		return FALSE ;
 	}
@@ -700,7 +726,7 @@ public:
 				discard ;
 			const auto r1x = random_float () ;
 			const auto r2x = random_float () ;
-			const auto r3x = MathProc::clamp (r1x ,FLT64_EPS ,Flt64 (1)) ;
+			const auto r3x = MathProc::min_of (r1x + FLT64_EPS ,Flt64 (1)) ;
 			const auto r4x = MathProc::sqrt (Flt64 (-2) * MathProc::log (r3x)) ;
 			const auto r5x = MATH_PI * 2 * r2x ;
 			self.mNormal.mNX = r4x * MathProc::cos (r5x) ;
@@ -730,17 +756,17 @@ exports CFat<RandomHolder> RandomHolder::hold (CR<RandomLayout> that) {
 
 template class External<SingletonProcHolder ,SingletonProcLayout> ;
 
-struct SingletonRoot {
-	Pin<SingletonRoot> mPin ;
+struct SingletonImplLayout {
+	Pin<SingletonImplLayout> mPin ;
 	Mutex mMutex ;
 	Set<Clazz> mClazzSet ;
 
 public:
-	static VR<SingletonRoot> expr_m () ;
+	static VR<SingletonImplLayout> expr_m () ;
 } ;
 
-inline VR<SingletonRoot> SingletonRoot::expr_m () {
-	static auto mInstance = SingletonRoot () ;
+inline VR<SingletonImplLayout> SingletonImplLayout::expr_m () {
+	static auto mInstance = SingletonImplLayout () ;
 	return mInstance ;
 }
 
@@ -757,7 +783,7 @@ struct SingletonProcLayout {
 	String<Str> mName ;
 	UniqueRef<csc_handle_t> mMapping ;
 	SingletonLocal mLocal ;
-	Ref<SingletonRoot> mRoot ;
+	Ref<SingletonImplLayout> mRoot ;
 
 public:
 	implicit SingletonProcLayout () = default ;
@@ -765,15 +791,16 @@ public:
 	implicit ~SingletonProcLayout () noexcept {
 		if (mRoot == NULL)
 			return ;
-		mRoot->~SingletonRoot () ;
+		mRoot->~SingletonImplLayout () ;
 	}
 } ;
 
-exports CR<Super<Ref<SingletonProcLayout>>> SingletonProcHolder::expr_m () {
+exports CR<Super<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<SingletonProcLayout>> ret ;
-		ret.mThis = Ref<SingletonProcLayout>::make () ;
-		SingletonProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<SingletonProcLayout>> ret ;
+		ret.mThis = UniqueRef<SingletonProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		SingletonProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }

@@ -184,11 +184,12 @@ public:
 	}
 } ;
 
-exports CR<Super<Ref<StreamProcLayout>>> StreamProcHolder::expr_m () {
+exports CR<Super<UniqueRef<StreamProcLayout>>> StreamProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<StreamProcLayout>> ret ;
-		ret.mThis = Ref<StreamProcLayout>::make () ;
-		StreamProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<StreamProcLayout>> ret ;
+		ret.mThis = UniqueRef<StreamProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		StreamProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -223,7 +224,7 @@ public:
 	Length size () const override {
 		if (self.mStream == NULL)
 			return 0 ;
-		return self.mStream->size () ;
+		return self.mWrite ;
 	}
 
 	Length length () const override {
@@ -391,7 +392,8 @@ public:
 		if (self.mCats.size () == 0)
 			return ;
 		read (self.mCats[self.mCatIndex]) ;
-		self.mCatIndex = (self.mCatIndex + 1) % self.mCats.size () ;
+		self.mCatIndex++ ;
+		replace (self.mCatIndex ,self.mCats.size () ,0) ;
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -443,7 +445,7 @@ public:
 	Length size () const override {
 		if (self.mStream == NULL)
 			return 0 ;
-		return self.mStream->size () ;
+		return self.mWrite ;
 	}
 
 	Length length () const override {
@@ -535,12 +537,12 @@ public:
 			rbx.mRadix = 10 ;
 			rbx.mPrecision = 0 ;
 			rbx.mSign = FALSE ;
-			rbx.mMantissa = 0 ;
-			rbx.mDownflow = 0 ;
+			rbx.mMantissa = Quad (0X00) ;
+			rbx.mDownflow = Quad (0X00) ;
 			rbx.mExponent = 0 ;
 			read_value (rbx ,rax) ;
-			assume (rbx.mMantissa >= 0) ;
-			item = rbx.mMantissa ;
+			assume (Val64 (rbx.mMantissa) >= 0) ;
+			item = Val64 (rbx.mMantissa) ;
 		}
 		if ifdo (TRUE) {
 			if (!r1x)
@@ -559,18 +561,18 @@ public:
 					break ;
 				if (fexp10.mPrecision > r1x - 1)
 					break ;
-				fexp10.mMantissa *= 10 ;
-				fexp10.mMantissa += StreamProc::hex_from_str (top) ;
+				const auto r2x = Val64 (fexp10.mMantissa) * 10 + StreamProc::hex_from_str (top) ;
+				fexp10.mMantissa = Quad (r2x) ;
 				fexp10.mPrecision++ ;
 				read (top) ;
 			}
 			if ifdo (TRUE) {
 				if (!StreamProc::is_digit (top))
 					discard ;
-				const auto r2x = fexp10.mMantissa * 10 + StreamProc::hex_from_str (top) ;
-				if (r2x < 0)
+				const auto r3x = Val64 (fexp10.mMantissa) * 10 + StreamProc::hex_from_str (top) ;
+				if (r3x < 0)
 					discard ;
-				fexp10.mMantissa = r2x ;
+				fexp10.mMantissa = Quad (r3x) ;
 				fexp10.mPrecision++ ;
 				read (top) ;
 			}
@@ -608,11 +610,11 @@ public:
 			rbx.mRadix = 10 ;
 			rbx.mPrecision = 0 ;
 			rbx.mSign = FALSE ;
-			rbx.mMantissa = 0 ;
-			rbx.mDownflow = 0 ;
+			rbx.mMantissa = Quad (0X00) ;
+			rbx.mDownflow = Quad (0X00) ;
 			rbx.mExponent = 0 ;
 			read_float (rbx ,rax) ;
-			assume (rbx.mMantissa >= 0) ;
+			assume (Val64 (rbx.mMantissa) >= 0) ;
 			rbx = FloatProc::fexp2_from_fexp10 (rbx) ;
 			item = FloatProc::encode (rbx) ;
 		}
@@ -637,8 +639,8 @@ public:
 					break ;
 				if (fexp10.mPrecision > r1x - 1)
 					break ;
-				fexp10.mMantissa *= 10 ;
-				fexp10.mMantissa += StreamProc::hex_from_str (top) ;
+				const auto r2x = Val64 (fexp10.mMantissa) * 10 + StreamProc::hex_from_str (top) ;
+				fexp10.mMantissa = Quad (r2x) ;
 				fexp10.mExponent-- ;
 				fexp10.mPrecision++ ;
 				read (top) ;
@@ -654,7 +656,7 @@ public:
 				if (top != Stru32 ('E'))
 					discard ;
 			read (top) ;
-			const auto r2x = Bool (top == Stru32 ('-')) ;
+			const auto r3x = Bool (top == Stru32 ('-')) ;
 			if ifdo (TRUE) {
 				if (top != Stru32 ('-'))
 					if (top != Stru32 ('+'))
@@ -665,15 +667,12 @@ public:
 			auto rbx = Notation () ;
 			rbx.mRadix = 10 ;
 			rbx.mPrecision = 0 ;
-			rbx.mSign = r2x ;
+			rbx.mSign = r3x ;
 			read_value (rbx ,top) ;
 			assume (rbx.mExponent == 0) ;
-			const auto r3x = invoke ([&] () {
-				if (r2x)
-					return -rbx.mMantissa ;
-				return rbx.mMantissa ;
-			}) ;
-			fexp10.mExponent += r3x ;
+			const auto r4x = Val64 (rbx.mMantissa) ;
+			const auto r5x = r3x ? -r4x : r4x ;
+			fexp10.mExponent += r5x ;
 		}
 	}
 
@@ -840,19 +839,7 @@ public:
 		if (self.mCats.size () == 0)
 			return ;
 		read (self.mCats[self.mCatIndex]) ;
-		self.mCatIndex = (self.mCatIndex + 1) % self.mCats.size () ;
-	}
-
-	void cat_prefix () {
-		if (self.mCatIndex == NONE)
-			return ;
-		read (self.mCats[self.mCatIndex]) ;
-		if ifdo (TRUE) {
-			self.mCatIndex++ ;
-			if (self.mCatIndex < self.mCats.size ())
-				discard ;
-			self.mCatIndex = 0 ;
-		}
+		replace (self.mCatIndex ,self.mCats.size () ,0) ;
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -905,7 +892,7 @@ public:
 	Length size () const override {
 		if (self.mStream == NULL)
 			return 0 ;
-		return self.mStream->size () ;
+		return self.mRead ;
 	}
 
 	Length length () const override {
@@ -979,41 +966,26 @@ public:
 	}
 
 	void write (CR<Word> item) override {
-		auto rax = item ;
-		if ifdo (TRUE) {
-			if (!self.mDiffEndian)
-				discard ;
-			rax = ByteProc::reverse (rax) ;
-		}
-		const auto r1x = Buffer<Byte ,SIZE_OF<Word>> (bitwise (rax)) ;
-		for (auto &&i : range (0 ,r1x.size ())) {
-			write (r1x[i]) ;
+		const auto r1x = self.mDiffEndian ? ByteProc::reverse (item) : item ;
+		const auto r2x = Buffer<Byte ,SIZE_OF<Word>> (bitwise (r1x)) ;
+		for (auto &&i : range (0 ,r2x.size ())) {
+			write (r2x[i]) ;
 		}
 	}
 
 	void write (CR<Char> item) override {
-		auto rax = item ;
-		if ifdo (TRUE) {
-			if (!self.mDiffEndian)
-				discard ;
-			rax = ByteProc::reverse (rax) ;
-		}
-		const auto r1x = Buffer<Byte ,SIZE_OF<Char>> (bitwise (rax)) ;
-		for (auto &&i : range (0 ,r1x.size ())) {
-			write (r1x[i]) ;
+		const auto r1x = self.mDiffEndian ? ByteProc::reverse (item) : item ;
+		const auto r2x = Buffer<Byte ,SIZE_OF<Char>> (bitwise (r1x)) ;
+		for (auto &&i : range (0 ,r2x.size ())) {
+			write (r2x[i]) ;
 		}
 	}
 
 	void write (CR<Quad> item) override {
-		auto rax = item ;
-		if ifdo (TRUE) {
-			if (!self.mDiffEndian)
-				discard ;
-			rax = ByteProc::reverse (rax) ;
-		}
-		const auto r1x = Buffer<Byte ,SIZE_OF<Quad>> (bitwise (rax)) ;
-		for (auto &&i : range (0 ,r1x.size ())) {
-			write (r1x[i]) ;
+		const auto r1x = self.mDiffEndian ? ByteProc::reverse (item) : item ;
+		const auto r2x = Buffer<Byte ,SIZE_OF<Quad>> (bitwise (r1x)) ;
+		for (auto &&i : range (0 ,r2x.size ())) {
+			write (r2x[i]) ;
 		}
 	}
 
@@ -1076,19 +1048,7 @@ public:
 		if (self.mCats.size () == 0)
 			return ;
 		write (self.mCats[self.mCatIndex]) ;
-		self.mCatIndex = (self.mCatIndex + 1) % self.mCats.size () ;
-	}
-
-	void cat_prefix () {
-		if (self.mCatIndex == NONE)
-			return ;
-		write (self.mCats[self.mCatIndex]) ;
-		if ifdo (TRUE) {
-			self.mCatIndex++ ;
-			if (self.mCatIndex < self.mCats.size ())
-				discard ;
-			self.mCatIndex = 0 ;
-		}
+		replace (self.mCatIndex ,self.mCats.size () ,0) ;
 	}
 
 	void write (CR<typeof (GAP)>) override {
@@ -1140,7 +1100,7 @@ public:
 	Length size () const override {
 		if (self.mStream == NULL)
 			return 0 ;
-		return self.mStream->size () ;
+		return self.mRead ;
 	}
 
 	Length length () const override {
@@ -1203,10 +1163,10 @@ public:
 			auto rax = Notation () ;
 			rax.mRadix = 10 ;
 			rax.mSign = FALSE ;
-			rax.mMantissa = MathProc::abs (item) ;
-			rax.mDownflow = 0 ;
+			rax.mMantissa = Quad (MathProc::abs (item)) ;
+			rax.mDownflow = Quad (0X00) ;
 			rax.mExponent = 0 ;
-			rax.mPrecision = Length (log10p_int (rax.mMantissa)) ;
+			rax.mPrecision = Length (MathProc::log10_bit (Val64 (rax.mMantissa))) ;
 			auto rbx = WriteValueBuffer () ;
 			rbx.mWrite = rbx.mBuffer.size () ;
 			write_value (rax ,rbx) ;
@@ -1221,7 +1181,7 @@ public:
 		auto act = TRUE ;
 		if ifdo (act) {
 			//@info: case '0'
-			if (fexp10.mMantissa != 0)
+			if (fexp10.mMantissa != Quad (0X00))
 				discard ;
 			wvb.mWrite-- ;
 			wvb.mBuffer[wvb.mWrite] = Stru32 ('0') ;
@@ -1231,8 +1191,9 @@ public:
 			for (auto &&i : range (0 ,r1x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r2x = Val64 (fexp10.mMantissa) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (r2x % 10)) ;
+				fexp10.mMantissa = Quad (r2x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
@@ -1265,7 +1226,7 @@ public:
 		if ifdo (act) {
 			auto rax = FloatProc::decode (MathProc::abs (item)) ;
 			rax = FloatProc::fexp10_from_fexp2 (rax) ;
-			rax.mPrecision = Length (log10p_int (rax.mMantissa)) ;
+			rax.mPrecision = Length (MathProc::log10_bit (Val64 (rax.mMantissa))) ;
 			auto rbx = WriteValueBuffer () ;
 			rbx.mWrite = rbx.mBuffer.size () ;
 			write_float (rax ,rbx) ;
@@ -1280,213 +1241,201 @@ public:
 		if ifdo (TRUE) {
 			if (fexp10.mPrecision == 0)
 				discard ;
-			while (TRUE) {
-				if (fexp10.mMantissa == 0)
-					break ;
-				if (fexp10.mMantissa % 10 != 0)
-					break ;
-				fexp10.mMantissa /= 10 ;
-				fexp10.mExponent++ ;
-				fexp10.mPrecision-- ;
-			}
+			normalize_fexp10 (fexp10) ;
 			const auto r2x = fexp10.mPrecision - r1x ;
 			for (auto &&i : range (0 ,r2x - 1)) {
 				noop (i) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r3x = Val64 (fexp10.mMantissa) ;
+				fexp10.mMantissa = Quad (r3x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
 			if (r2x <= 0)
 				discard ;
-			const auto r3x = MathProc::step (fexp10.mMantissa % 10 - 5) ;
-			fexp10.mMantissa += r3x * 5 ;
-			fexp10.mMantissa /= 10 ;
+			const auto r4x = MathProc::step (Val64 (fexp10.mMantissa) % 10 - 5) * 5 ;
+			const auto r5x = (Val64 (fexp10.mMantissa) + r4x) / 10 ;
+			fexp10.mMantissa = Quad (r5x) ;
 			fexp10.mExponent++ ;
-			fexp10.mPrecision-- ;
+			fexp10.mPrecision = Length (MathProc::log10_bit (Val64 (fexp10.mMantissa))) ;
+			normalize_fexp10 (fexp10) ;
 		}
-		const auto r4x = fexp10.mPrecision ;
-		const auto r5x = Length (fexp10.mExponent) ;
+		const auto r6x = fexp10.mPrecision ;
+		const auto r7x = Length (fexp10.mExponent) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			//@info: case '0'
-			if (fexp10.mMantissa != 0)
+			if (fexp10.mMantissa != Quad (0X00))
 				discard ;
 			wvb.mWrite-- ;
 			wvb.mBuffer[wvb.mWrite] = Stru32 ('0') ;
 		}
 		if ifdo (act) {
 			//@info: case 'x.xxxExxx'
-			const auto r6x = r4x - 1 + r5x ;
-			if (MathProc::abs (r6x) < r1x)
+			const auto r8x = r6x - 1 + r7x ;
+			if (MathProc::abs (r8x) < r1x)
 				discard ;
 			auto rax = Notation () ;
 			rax.mRadix = 10 ;
-			rax.mSign = Bool (r6x < 0) ;
-			rax.mMantissa = MathProc::abs (r6x) ;
-			rax.mDownflow = 0 ;
+			rax.mSign = Bool (r8x < 0) ;
+			rax.mMantissa = Quad (MathProc::abs (r8x)) ;
+			rax.mDownflow = Quad (0X00) ;
 			rax.mExponent = 0 ;
-			rax.mPrecision = Length (log10p_int (rax.mMantissa)) ;
+			rax.mPrecision = Length (MathProc::log10_bit (Val64 (rax.mMantissa))) ;
 			write_value (rax ,wvb) ;
+			if ifdo (TRUE) {
+				if (rax.mSign)
+					discard ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = Stru32 ('+') ;
+			}
 			wvb.mWrite-- ;
 			wvb.mBuffer[wvb.mWrite] = Stru32 ('E') ;
-			const auto r7x = inline_max (Length (r4x - 1 - r1x) ,0) ;
-			for (auto &&i : range (0 ,r7x)) {
+			const auto r9x = inline_max (Length (r6x - 1 - r1x) ,0) ;
+			for (auto &&i : range (0 ,r9x)) {
 				noop (i) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r10x = Val64 (fexp10.mMantissa) ;
+				fexp10.mMantissa = Quad (r10x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
-			Index ix = wvb.mWrite - 1 ;
-			for (auto &&i : range (r7x ,r4x - 1)) {
+			normalize_fexp10 (fexp10) ;
+			const auto r11x = fexp10.mPrecision - 1 ;
+			for (auto &&i : range (0 ,r11x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
-				wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('0')) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r12x = Val64 (fexp10.mMantissa) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (r12x % 10)) ;
+				fexp10.mMantissa = Quad (r12x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
+			if ifdo (TRUE) {
+				if (r11x <= 0)
+					discard ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = Stru32 ('.') ;
+			}
 			wvb.mWrite-- ;
-			wvb.mBuffer[wvb.mWrite] = Stru32 ('.') ;
-			wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('.')) ;
-			wvb.mWrite-- ;
-			wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
-			fexp10.mMantissa /= 10 ;
+			const auto r13x = Val64 (fexp10.mMantissa) ;
+			wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (r13x % 10)) ;
+			fexp10.mMantissa = Quad (r13x / 10) ;
 			fexp10.mExponent++ ;
 			fexp10.mPrecision-- ;
 		}
 		if ifdo (act) {
 			//@info: case 'xxx000'
-			if (r5x < 0)
+			if (r7x < 0)
 				discard ;
-			for (auto &&i : range (0 ,r5x)) {
+			for (auto &&i : range (0 ,r7x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = Stru32 ('0') ;
 			}
-			for (auto &&i : range (0 ,r4x)) {
+			for (auto &&i : range (0 ,r6x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r14x = Val64 (fexp10.mMantissa) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (r14x % 10)) ;
+				fexp10.mMantissa = Quad (r14x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
 		}
 		if ifdo (act) {
 			//@info: case 'xxx.xxx'
-			if (r5x < 1 - r4x)
+			if (r7x < 1 - r6x)
 				discard ;
-			if (r5x >= 0)
+			if (r7x >= 0)
 				discard ;
-			const auto r8x = inline_max (Length (-r5x - r1x) ,0) ;
-			for (auto &&i : range (0 ,r8x)) {
+			const auto r15x = inline_max (Length (-r7x - r1x) ,0) ;
+			for (auto &&i : range (0 ,r15x)) {
 				noop (i) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r16x = Val64 (fexp10.mMantissa) ;
+				fexp10.mMantissa = Quad (r16x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
-			Index ix = wvb.mWrite - 1 ;
-			for (auto &&i : range (r8x ,-r5x)) {
+			normalize_fexp10 (fexp10) ;
+			const auto r17x = Length (-fexp10.mExponent) ;
+			const auto r18x = fexp10.mPrecision - r17x ;
+			for (auto &&i : range (0 ,r17x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
-				wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('0')) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r19x = Val64 (fexp10.mMantissa) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (r19x % 10)) ;
+				fexp10.mMantissa = Quad (r19x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
-			wvb.mWrite-- ;
-			wvb.mBuffer[wvb.mWrite] = Stru32 ('.') ;
-			wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('.')) ;
-			for (auto &&i : range (0 ,r4x + r5x)) {
+			if ifdo (TRUE) {
+				if (r17x <= 0)
+					discard ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = Stru32 ('.') ;
+			}
+			for (auto &&i : range (0 ,r18x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r20x = Val64 (fexp10.mMantissa) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (r20x % 10)) ;
+				fexp10.mMantissa = Quad (r20x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
 		}
 		if ifdo (act) {
 			//@info: case '0.000xxx'
-			if (r5x >= 1 - r4x)
+			if (r7x >= 1 - r6x)
 				discard ;
-			if (r5x >= 0)
+			if (r7x >= 0)
 				discard ;
-			const auto r9x = inline_max (Length (-r5x - r1x) ,ZERO) ;
-			for (auto &&i : range (0 ,r9x)) {
+			const auto r21x = inline_max (Length (-r7x - r1x) ,ZERO) ;
+			for (auto &&i : range (0 ,r21x)) {
 				noop (i) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r22x = Val64 (fexp10.mMantissa) ;
+				fexp10.mMantissa = Quad (r22x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
-			Index ix = wvb.mWrite - 1 ;
-			for (auto &&i : range (r9x ,r4x)) {
+			normalize_fexp10 (fexp10) ;
+			const auto r23x = fexp10.mPrecision ;
+			const auto r24x = Length (-fexp10.mExponent) - r23x ;
+			for (auto &&i : range (0 ,r23x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
-				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
-				wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('0')) ;
-				fexp10.mMantissa /= 10 ;
+				const auto r25x = Val64 (fexp10.mMantissa) ;
+				wvb.mBuffer[wvb.mWrite] = Stru (StreamProc::str_from_hex (r25x % 10)) ;
+				fexp10.mMantissa = Quad (r25x / 10) ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
-			const auto r10x = inline_max (r9x ,r4x) ;
-			for (auto &&i : range (r10x ,-r5x)) {
+			for (auto &&i : range (0 ,r24x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = Stru32 ('0') ;
-				wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('0')) ;
 			}
-			wvb.mWrite-- ;
-			wvb.mBuffer[wvb.mWrite] = Stru32 ('.') ;
-			wvb.mWrite += Length (wvb.mBuffer[ix] == Stru32 ('.')) ;
+			if ifdo (TRUE) {
+				if (r23x <= 0)
+					discard ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = Stru32 ('.') ;
+			}
 			wvb.mWrite-- ;
 			wvb.mBuffer[wvb.mWrite] = Stru32 ('0') ;
 		}
 	}
 
-	Val64 log10p_int (CR<Val64> a) const {
-		if (a <= 0)
-			return 0 ;
-		Val64 ret = 0 ;
-		auto rax = a ;
-		if ifdo (TRUE) {
-			if (rax < Val64 (10000000000000000))
-				discard ;
-			ret += 16 ;
-			rax /= Val64 (10000000000000000) ;
+	void normalize_fexp10 (VR<Notation> fexp10) {
+		while (TRUE) {
+			if (fexp10.mMantissa == Quad (0X00))
+				break ;
+			const auto r1x = Val64 (fexp10.mMantissa) ;
+			if (r1x % 10 != 0)
+				break ;
+			fexp10.mMantissa = Quad (r1x / 10) ;
+			fexp10.mExponent++ ;
+			fexp10.mPrecision-- ;
 		}
-		if ifdo (TRUE) {
-			if (rax < Val64 (100000000))
-				discard ;
-			ret += 8 ;
-			rax /= Val64 (100000000) ;
-		}
-		if ifdo (TRUE) {
-			if (rax < Val64 (10000))
-				discard ;
-			ret += 4 ;
-			rax /= Val64 (10000) ;
-		}
-		if ifdo (TRUE) {
-			if (rax < Val64 (100))
-				discard ;
-			ret += 2 ;
-			rax /= Val64 (100) ;
-		}
-		if ifdo (TRUE) {
-			if (rax < Val64 (10))
-				discard ;
-			ret += 1 ;
-			rax /= Val64 (10) ;
-		}
-		if ifdo (TRUE) {
-			if (rax == Val64 (0))
-				discard ;
-			ret += 1 ;
-		}
-		return move (ret) ;
 	}
 
 	void write (CR<Byte> item) override {
@@ -1614,19 +1563,7 @@ public:
 		if (self.mCats.size () == 0)
 			return ;
 		write (self.mCats[self.mCatIndex]) ;
-		self.mCatIndex = (self.mCatIndex + 1) % self.mCats.size () ;
-	}
-
-	void cat_prefix () {
-		if (self.mCatIndex == NONE)
-			return ;
-		write (self.mCats[self.mCatIndex]) ;
-		if ifdo (TRUE) {
-			self.mCatIndex++ ;
-			if (self.mCatIndex < self.mCats.size ())
-				discard ;
-			self.mCatIndex = 0 ;
-		}
+		replace (self.mCatIndex ,self.mCats.size () ,0) ;
 	}
 
 	void write (CR<typeof (GAP)>) override {
@@ -2014,20 +1951,132 @@ public:
 		for (auto &&i : range (0 ,align)) {
 			noop (i) ;
 			rax.mWrite-- ;
-			rax.mBuffer[rax.mWrite] = Stru (Stru32 ('0') + rbx % 10) ;
+			rax.mBuffer[rax.mWrite] = Stru (StreamProc::str_from_hex (rbx % 10)) ;
 			rbx /= 10 ;
 		}
 		for (auto &&i : range (rax.mWrite ,rax.mBuffer.size ())) {
 			writer.write (Stru32 (rax.mBuffer[i])) ;
 		}
 	}
+
+	void read_base64u (CR<Reader> reader ,VR<RefBuffer<Byte>> item) const override {
+		static const ARR<Val32 ,ENUM<256>> mCache {
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,62 ,64 ,62 ,64 ,63 ,
+			52 ,53 ,54 ,55 ,56 ,57 ,58 ,59 ,60 ,61 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,0 ,1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10 ,11 ,12 ,13 ,14 ,
+			15 ,16 ,17 ,18 ,19 ,20 ,21 ,22 ,23 ,24 ,25 ,64 ,64 ,64 ,64 ,63 ,
+			64 ,26 ,27 ,28 ,29 ,30 ,31 ,32 ,33 ,34 ,35 ,36 ,37 ,38 ,39 ,40 ,
+			41 ,42 ,43 ,44 ,45 ,46 ,47 ,48 ,49 ,50 ,51 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
+			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64} ;
+		const auto r1x = reader.size () - reader.length () ;
+		assume (r1x % 4 == 0) ;
+		const auto r2x = r1x / 4 ;
+		item = RefBuffer<Byte> (r2x * 3) ;
+		auto rax = Buffer4<Stru32> () ;
+		for (auto &&i : range (0 ,r2x)) {
+			Index ix = i * 3 ;
+			reader >> rax[0] ;
+			reader >> rax[1] ;
+			reader >> rax[2] ;
+			reader >> rax[3] ;
+			const auto r3x = Byte (mCache[Val32 (Byte (rax[0]))]) ;
+			const auto r4x = Byte (mCache[Val32 (Byte (rax[1]))]) ;
+			const auto r5x = Byte (mCache[Val32 (Byte (rax[2]))]) ;
+			const auto r6x = Byte (mCache[Val32 (Byte (rax[3]))]) ;
+			item[ix + 0] = ByteProc::shift (r3x ,(r4x << 2) ,6) ;
+			item[ix + 1] = ByteProc::shift (r4x ,(r5x << 2) ,4) ;
+			item[ix + 2] = ByteProc::shift (r5x ,(r6x << 2) ,2) ;
+		}
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (rax[2] != Stru32 ('='))
+				discard ;
+			if (rax[3] != Stru32 ('='))
+				discard ;
+			Index ix = (r2x - 1) * 3 ;
+			const auto r7x = Byte (mCache[Val32 (Byte (rax[0]))]) ;
+			const auto r8x = Byte (mCache[Val32 (Byte (rax[1]))]) ;
+			item[ix + 0] = ByteProc::shift (r7x ,(r8x << 2) ,6) ;
+			item.resize (ix + 1) ;
+		}
+		if ifdo (act) {
+			if (rax[3] != Stru32 ('='))
+				discard ;
+			Index ix = (r2x - 1) * 3 ;
+			const auto r9x = Byte (mCache[Val32 (Byte (rax[0]))]) ;
+			const auto r10x = Byte (mCache[Val32 (Byte (rax[1]))]) ;
+			const auto r11x = Byte (mCache[Val32 (Byte (rax[2]))]) ;
+			item[ix + 0] = ByteProc::shift (r9x ,(r10x << 2) ,6) ;
+			item[ix + 1] = ByteProc::shift (r10x ,(r11x << 2) ,4) ;
+			item.resize (ix + 2) ;
+		}
+	}
+
+	void write_base64u (CR<Writer> writer ,CR<RefBuffer<Byte>> item) const override {
+		static const ARR<Stra ,ENUM<65>> mCache {
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"} ;
+		const auto r1x = item.size () / 3 ;
+		const auto r2x = item.size () - r1x * 3 ;
+		auto rax = Buffer4<Val32> () ;
+		for (auto &&i : range (0 ,r1x)) {
+			Index ix = i * 3 ;
+			const auto r3x = item[ix + 0] ;
+			const auto r4x = item[ix + 1] ;
+			const auto r5x = item[ix + 2] ;
+			rax[0] = Val32 ((r3x >> 2) & Byte (0X3F)) ;
+			rax[1] = Val32 (ByteProc::shift (r3x ,r4x ,4) & Byte (0X3F)) ;
+			rax[2] = Val32 (ByteProc::shift (r4x ,r5x ,6) & Byte (0X3F)) ;
+			rax[3] = Val32 (r5x & Byte (0X3F)) ;
+			writer.write (Stru32 (mCache[rax[0]])) ;
+			writer.write (Stru32 (mCache[rax[1]])) ;
+			writer.write (Stru32 (mCache[rax[2]])) ;
+			writer.write (Stru32 (mCache[rax[3]])) ;
+		}
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (r2x != 1)
+				discard ;
+			Index ix = item.size () - r2x ;
+			const auto r6x = item[ix + 0] ;
+			rax[0] = Val32 ((r6x >> 2) & Byte (0X3F)) ;
+			rax[1] = Val32 ((r6x << 4) & Byte (0X3F)) ;
+			writer.write (Stru32 (mCache[rax[0]])) ;
+			writer.write (Stru32 (mCache[rax[1]])) ;
+			writer.write (Stru32 ('=')) ;
+			writer.write (Stru32 ('=')) ;
+		}
+		if ifdo (act) {
+			if (r2x != 2)
+				discard ;
+			Index ix = item.size () - r2x ;
+			const auto r7x = item[ix + 0] ;
+			const auto r8x = item[ix + 1] ;
+			rax[0] = Val32 ((r7x >> 2) & Byte (0X3F)) ;
+			rax[1] = Val32 (ByteProc::shift (r7x ,r8x ,4) & Byte (0X3F)) ;
+			rax[2] = Val32 ((r8x << 2) & Byte (0X3F)) ;
+			writer.write (Stru32 (mCache[rax[0]])) ;
+			writer.write (Stru32 (mCache[rax[1]])) ;
+			writer.write (Stru32 (mCache[rax[2]])) ;
+			writer.write (Stru32 ('=')) ;
+		}
+	}
 } ;
 
-exports CR<Super<Ref<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
+exports CR<Super<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<StreamTextProcLayout>> ret ;
-		ret.mThis = Ref<StreamTextProcLayout>::make () ;
-		StreamTextProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<StreamTextProcLayout>> ret ;
+		ret.mThis = UniqueRef<StreamTextProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		StreamTextProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }

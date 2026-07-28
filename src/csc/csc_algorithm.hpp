@@ -12,10 +12,20 @@
 #include "csc_array.hpp"
 #include "csc_image.hpp"
 #include "csc_matrix.hpp"
+#include "csc_stream.hpp"
+#include "csc_string.hpp"
+#include "csc_runtime.hpp"
+#include "csc_file.hpp"
+#include "csc_thread.hpp"
 
 namespace CSC {
+struct DisjointNode {
+	Index mUp ;
+	Length mWidth ;
+} ;
+
 struct DisjointLayout {
-	Array<Index> mTable ;
+	Array<DisjointNode> mTable ;
 } ;
 
 struct DisjointHolder implement Interface {
@@ -24,12 +34,12 @@ struct DisjointHolder implement Interface {
 
 	virtual void initialize (CR<Length> size_) = 0 ;
 	virtual Length size () const = 0 ;
-	virtual Index lead (CR<Index> from_) = 0 ;
-	virtual void joint (CR<Index> from_ ,CR<Index> to_) = 0 ;
-	virtual Bool edge (CR<Index> from_ ,CR<Index> to_) = 0 ;
-	virtual Length depth (CR<Index> from_) = 0 ;
-	virtual Deque<Index> cluster (CR<Index> from_) = 0 ;
-	virtual Array<Index> jump (CR<Index> from_) = 0 ;
+	virtual Index lead (CR<Index> from) = 0 ;
+	virtual Length width (CR<Index> from) const = 0 ;
+	virtual void joint (CR<Index> from ,CR<Index> into) = 0 ;
+	virtual Bool is_edge (CR<Index> from ,CR<Index> into) = 0 ;
+	virtual Deque<Index> cluster (CR<Index> from) = 0 ;
+	virtual Array<Index> closure () = 0 ;
 } ;
 
 class Disjoint implement DisjointLayout {
@@ -47,37 +57,228 @@ public:
 		return DisjointHolder::hold (thiz)->size () ;
 	}
 
-	void joint (CR<Index> from_ ,CR<Index> to_) {
-		return DisjointHolder::hold (thiz)->joint (from_ ,to_) ;
+	Index lead (CR<Index> from) {
+		return DisjointHolder::hold (thiz)->lead (from) ;
 	}
 
-	Bool edge (CR<Index> from_ ,CR<Index> to_) {
-		return DisjointHolder::hold (thiz)->edge (from_ ,to_) ;
+	Length width (CR<Index> from) const {
+		return DisjointHolder::hold (thiz)->width (from) ;
 	}
 
-	Length depth (CR<Index> from_) {
-		return DisjointHolder::hold (thiz)->depth (from_) ;
+	void joint (CR<Index> from ,CR<Index> into) {
+		return DisjointHolder::hold (thiz)->joint (from ,into) ;
 	}
 
-	Deque<Index> cluster (CR<Index> from_) {
-		return DisjointHolder::hold (thiz)->cluster (from_) ;
+	Bool is_edge (CR<Index> from ,CR<Index> into) {
+		return DisjointHolder::hold (thiz)->is_edge (from ,into) ;
 	}
 
-	Array<Index> jump (CR<Index> from_) {
-		return DisjointHolder::hold (thiz)->jump (from_) ;
+	Deque<Index> cluster (CR<Index> from) {
+		return DisjointHolder::hold (thiz)->cluster (from) ;
+	}
+
+	Array<Index> closure () {
+		return DisjointHolder::hold (thiz)->closure () ;
+	}
+} ;
+struct RansacLayout {
+	Length mRank ;
+	Length mSize ;
+	Random mRandom ;
+	Length mIteration ;
+	Length mMaxIteration ;
+	Flt64 mProbability ;
+	Flt64 mProbFactor ;
+	Array<Index> mSample ;
+	BitSet mCurrInlier ;
+	BitSet mBestInlier ;
+	Length mCurrSize ;
+	Length mBestSize ;
+} ;
+
+struct RansacHolder implement Interface {
+	imports VFat<RansacHolder> hold (VR<RansacLayout> that) ;
+	imports CFat<RansacHolder> hold (CR<RansacLayout> that) ;
+
+	virtual void initialize (CR<Length> rank_ ,CR<Length> size_) = 0 ;
+	virtual void set_seed (CR<Flag> seed_) = 0 ;
+	virtual void set_probability (CR<Flt64> probability) = 0 ;
+	virtual void set_iteration (CR<Length> iteration) = 0 ;
+	virtual Length size () const = 0 ;
+	virtual void sample () = 0 ;
+	virtual CR<Pointer> peek () const leftvalue = 0 ;
+	virtual Bool good () const = 0 ;
+	virtual void next () = 0 ;
+	virtual void add (CR<Index> index) = 0 ;
+	virtual BitSet cluster () const = 0 ;
+	virtual Length iteration () const = 0 ;
+	virtual Flt64 percent () const = 0 ;
+} ;
+
+template <class A>
+class Ransac implement RansacLayout {
+public:
+	implicit Ransac () = default ;
+
+	explicit Ransac (CR<Length> size_) {
+		RansacHolder::hold (thiz)->initialize (A::expr ,size_) ;
+	}
+
+	void set_seed (CR<Flag> seed_) {
+		return RansacHolder::hold (thiz)->set_seed (seed_) ;
+	}
+
+	void set_probability (CR<Flt64> probability) {
+		return RansacHolder::hold (thiz)->set_probability (probability) ;
+	}
+
+	void set_iteration (CR<Length> iteration) {
+		return RansacHolder::hold (thiz)->set_iteration (iteration) ;
+	}
+
+	Length size () const {
+		return RansacHolder::hold (thiz)->size () ;
+	}
+
+	Bool good () const {
+		return RansacHolder::hold (thiz)->good () ;
+	}
+
+	forceinline Bool operator== (CR<Ransac>) const {
+		return (!good ()) ;
+	}
+
+	forceinline Bool operator!= (CR<Ransac>) const {
+		return good () ;
+	}
+
+	void sample () {
+		return RansacHolder::hold (thiz)->sample () ;
+	}
+
+	CR<Buffer<Index ,A>> peek () const leftvalue {
+		return RansacHolder::hold (thiz)->peek () ;
+	}
+
+	forceinline CR<Buffer<Index ,A>> operator* () const leftvalue {
+		return peek () ;
+	}
+
+	void next () {
+		return RansacHolder::hold (thiz)->next () ;
+	}
+
+	forceinline void operator++ () {
+		next () ;
+	}
+
+	void add (CR<Index> index) {
+		return RansacHolder::hold (thiz)->add (index) ;
+	}
+
+	BitSet cluster () const {
+		return RansacHolder::hold (thiz)->cluster () ;
+	}
+
+	Length iteration () const {
+		return RansacHolder::hold (thiz)->iteration () ;
+	}
+
+	Flt64 percent () const {
+		return RansacHolder::hold (thiz)->percent () ;
+	}
+} ;
+
+struct MinCutEdge {
+	Index mFrom ;
+	Index mInto ;
+	Index mNext ;
+	Val64 mWeight ;
+	Index mJump ;
+	Index mInv ;
+} ;
+
+struct MinCutLayout {
+	Length mSize ;
+	Index mRootS ;
+	Index mRootT ;
+	Array<Index> mFirst ;
+	Array<Index> mCurrent ;
+	Array<Length> mDepth ;
+	List<MinCutEdge> mEdge ;
+	Set<Tuple<Index ,Index>> mEdgeKey ;
+	Deque<Index> mDeque ;
+	Bool mReady ;
+} ;
+
+struct MinCutHolder implement Interface {
+	imports VFat<MinCutHolder> hold (VR<MinCutLayout> that) ;
+	imports CFat<MinCutHolder> hold (CR<MinCutLayout> that) ;
+
+	virtual void initialize (CR<Length> size_) = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Index root_s () const = 0 ;
+	virtual Index root_t () const = 0 ;
+	virtual void joint (CR<Index> from ,CR<Index> into ,CR<Val64> weight) = 0 ;
+	virtual Val64 solve () = 0 ;
+	virtual BitSet cluster () const = 0 ;
+} ;
+
+class MinCut implement MinCutLayout {
+protected:
+	using MinCutLayout::mSize ;
+	using MinCutLayout::mRootS ;
+	using MinCutLayout::mRootT ;
+	using MinCutLayout::mFirst ;
+	using MinCutLayout::mCurrent ;
+	using MinCutLayout::mDepth ;
+	using MinCutLayout::mEdge ;
+	using MinCutLayout::mEdgeKey ;
+	using MinCutLayout::mDeque ;
+	using MinCutLayout::mReady ;
+
+public:
+	implicit MinCut () = default ;
+
+	explicit MinCut (CR<Length> size_) {
+		MinCutHolder::hold (thiz)->initialize (size_) ;
+	}
+
+	Length size () const {
+		return MinCutHolder::hold (thiz)->size () ;
+	}
+
+	Index root_s () const {
+		return MinCutHolder::hold (thiz)->root_s () ;
+	}
+
+	Index root_t () const {
+		return MinCutHolder::hold (thiz)->root_t () ;
+	}
+
+	void joint (CR<Index> from ,CR<Index> into ,CR<Val64> weight) {
+		return MinCutHolder::hold (thiz)->joint (from ,into ,weight) ;
+	}
+
+	Val64 solve () {
+		return MinCutHolder::hold (thiz)->solve () ;
+	}
+
+	BitSet cluster () const {
+		return MinCutHolder::hold (thiz)->cluster () ;
 	}
 } ;
 
 struct KMMatchLayout {
 	Length mSize ;
-	Flt32 mThreshold ;
-	Ref<Image<Flt32>> mLove ;
-	Array<Flt32> mUser ;
-	Array<Flt32> mWork ;
+	Flt64 mThreshold ;
+	Ref<Image<Flt64>> mLove ;
+	Array<Flt64> mUser ;
+	Array<Flt64> mWork ;
 	BitSet mUserVisit ;
 	BitSet mWorkVisit ;
 	Array<Index> mMatch ;
-	Array<Flt32> mLack ;
+	Array<Flt64> mLack ;
 } ;
 
 struct KMMatchHolder implement Interface {
@@ -87,7 +288,7 @@ struct KMMatchHolder implement Interface {
 	virtual void initialize (CR<Length> size_) = 0 ;
 	virtual void set_threshold (CR<Flt64> threshold) = 0 ;
 	virtual Length size () const = 0 ;
-	virtual Array<Index> sort (CR<Image<Flt32>> love) = 0 ;
+	virtual Array<Index> solve (CR<Image<Flt64>> love) = 0 ;
 } ;
 
 class KMMatch implement KMMatchLayout {
@@ -117,8 +318,8 @@ public:
 		return KMMatchHolder::hold (thiz)->size () ;
 	}
 
-	Array<Index> sort (CR<Image<Flt32>> love) {
-		return KMMatchHolder::hold (thiz)->sort (love) ;
+	Array<Index> solve (CR<Image<Flt64>> love) {
+		return KMMatchHolder::hold (thiz)->solve (love) ;
 	}
 } ;
 
@@ -160,12 +361,8 @@ public:
 		return TPSFitHolder::hold (thiz)->smul (that) ;
 	}
 
-	forceinline Vector operator() (CR<Vector> that) const {
+	forceinline Vector operator* (CR<Vector> that) const {
 		return smul (that) ;
-	}
-
-	forceinline friend Vector operator* (CR<TPSFit> thiz_ ,CR<Vector> that) {
-		return thiz_.smul (that) ;
 	}
 
 	Matrix jacobian (CR<Vector> that) const {
@@ -187,7 +384,7 @@ struct BCSFitHolder implement Interface {
 	imports CFat<BCSFitHolder> hold (CR<BCSFitLayout> that) ;
 
 	virtual void initialize (CR<Array<Vector>> dst ,CR<Array<Vector>> src) = 0 ;
-	virtual CR<Array<Vector>> ref_m () const leftvalue = 0 ;
+	virtual CR<Array<Vector>> control () const leftvalue = 0 ;
 	virtual Vector smul (CR<Vector> that) const = 0 ;
 	virtual Matrix jacobian (CR<Vector> that) const = 0 ;
 } ;
@@ -208,20 +405,16 @@ public:
 		BCSFitHolder::hold (thiz)->initialize (dst ,src) ;
 	}
 
-	CR<Array<Vector>> ref_m () const leftvalue {
-		return BCSFitHolder::hold (thiz)->ref_m () ;
+	CR<Array<Vector>> control () const leftvalue {
+		return BCSFitHolder::hold (thiz)->control () ;
 	}
 
 	Vector smul (CR<Vector> that) const {
 		return BCSFitHolder::hold (thiz)->smul (that) ;
 	}
 
-	forceinline Vector operator() (CR<Vector> that) const {
+	forceinline Vector operator* (CR<Vector> that) const {
 		return smul (that) ;
-	}
-
-	forceinline friend Vector operator* (CR<BCSFit> thiz_ ,CR<Vector> that) {
-		return thiz_.smul (that) ;
 	}
 
 	Matrix jacobian (CR<Vector> that) const {
@@ -273,12 +466,8 @@ public:
 		return FFTransformHolder::hold (thiz)->smul (that) ;
 	}
 
-	forceinline Array<Vector> operator() (CR<Array<Vector>> that) const {
+	forceinline Array<Vector> operator* (CR<Array<Vector>> that) const {
 		return smul (that) ;
-	}
-
-	forceinline friend Array<Vector> operator* (CR<FFTransform> thiz_ ,CR<Array<Vector>> that) {
-		return thiz_.smul (that) ;
 	}
 
 	FFTransform inverse () const {

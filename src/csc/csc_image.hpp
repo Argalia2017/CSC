@@ -54,6 +54,7 @@ struct ImageShapeHolder implement Interface {
 	virtual Length size () const = 0 ;
 	virtual Length step () const = 0 ;
 	virtual Bool equal (CR<ImageShapeLayout> that) const = 0 ;
+	virtual Bool contain (CR<Pixel> item) const = 0 ;
 } ;
 
 class ImageShape implement ImageShapeLayout {
@@ -90,6 +91,10 @@ public:
 
 	PixelIterator iter () const {
 		return PixelIterator (0 ,mCX ,0 ,mCY) ;
+	}
+
+	Bool contain (CR<Pixel> item) const {
+		return ImageShapeHolder::hold (thiz)->contain (item) ;
 	}
 } ;
 
@@ -149,13 +154,13 @@ private:
 	require (IS_TRIVIAL<A>) ;
 
 protected:
-	using ImageImplLayout<A>::mImage ;
-	using ImageImplLayout<A>::mWidth ;
-	using ImageImplLayout<A>::mStride ;
-	using ImageImplLayout<A>::mBX ;
-	using ImageImplLayout<A>::mBY ;
-	using ImageImplLayout<A>::mCX ;
-	using ImageImplLayout<A>::mCY ;
+	using ImageLayout::mImage ;
+	using ImageLayout::mWidth ;
+	using ImageLayout::mStride ;
+	using ImageLayout::mBX ;
+	using ImageLayout::mBY ;
+	using ImageLayout::mCX ;
+	using ImageLayout::mCY ;
 
 public:
 	implicit Image () = default ;
@@ -293,49 +298,40 @@ public:
 	}
 } ;
 
-struct Color1B {
-	Byte mB ;
+template <class A>
+struct Color1 {
+	A mB ;
 } ;
 
-struct Color1F {
-	Flt32 mB ;
+template <class A>
+struct Color2 {
+	A mB ;
+	A mG ;
 } ;
 
-struct Color2B {
-	Byte mB ;
-	Byte mG ;
+template <class A>
+struct Color3 {
+	A mB ;
+	A mG ;
+	A mR ;
 } ;
 
-struct Color2F {
-	Flt32 mB ;
-	Flt32 mG ;
+template <class A>
+struct Color4 {
+	A mB ;
+	A mG ;
+	A mR ;
+	A mA ;
 } ;
 
-struct Color3B {
-	Byte mB ;
-	Byte mG ;
-	Byte mR ;
-} ;
-
-struct Color3F {
-	Flt32 mB ;
-	Flt32 mG ;
-	Flt32 mR ;
-} ;
-
-struct Color4B {
-	Byte mB ;
-	Byte mG ;
-	Byte mR ;
-	Byte mA ;
-} ;
-
-struct Color4F {
-	Flt32 mB ;
-	Flt32 mG ;
-	Flt32 mR ;
-	Flt32 mA ;
-} ;
+using Color1B = Color1<Byte> ;
+using Color2B = Color2<Byte> ;
+using Color3B = Color3<Byte> ;
+using Color4B = Color4<Byte> ;
+using Color1W = Color1<Word> ;
+using Color2W = Color2<Word> ;
+using Color3W = Color3<Word> ;
+using Color4W = Color4<Word> ;
 
 inline constexpr Color3B cvt_color3b_h32 (CR<csc_uint32_t> c) {
 	return Color3B ({
@@ -407,6 +403,7 @@ struct ColorHolder implement Interface {
 	virtual void initialize (CR<Val32> item) = 0 ;
 	virtual void initialize (CR<Flag> buffer ,CR<Length> size_ ,CR<Length> step_) = 0 ;
 	virtual void get (CR<Index> index ,VR<Val32> item) const = 0 ;
+	virtual ColorLayout stretch (CR<Val32> white) const = 0 ;
 	virtual ColorLayout sadd (CR<ColorLayout> that) const = 0 ;
 	virtual ColorLayout ssub (CR<ColorLayout> that) const = 0 ;
 	virtual ColorLayout smul (CR<Flt64> that) const = 0 ;
@@ -451,6 +448,11 @@ public:
 		Val32 ret ;
 		get (index ,ret) ;
 		return move (ret) ;
+	}
+
+	Color stretch (CR<Val32> that) const {
+		ColorLayout ret = ColorHolder::hold (thiz)->stretch (that) ;
+		return move (keep[TYPE<Color>::expr] (ret)) ;
 	}
 
 	Color sadd (CR<ColorLayout> that) const {
@@ -510,7 +512,7 @@ public:
 		return move (keep[TYPE<Color>::expr] (ret)) ;
 	}
 
-	Color operator* (CR<Color> that) const {
+	forceinline Color operator* (CR<Color> that) const {
 		return smul (that) ;
 	}
 
@@ -526,6 +528,10 @@ public:
 	Color minus () const {
 		ColorLayout ret = ColorHolder::hold (thiz)->minus () ;
 		return move (keep[TYPE<Color>::expr] (ret)) ;
+	}
+
+	forceinline Color operator+ () const {
+		return thiz ;
 	}
 
 	forceinline Color operator- () const {
@@ -561,22 +567,26 @@ public:
 struct ColorProcLayout ;
 
 struct ColorProcHolder implement Interface {
-	imports CR<Super<Ref<ColorProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<ColorProcLayout>>> expr_m () ;
 	imports VFat<ColorProcHolder> hold (VR<ColorProcLayout> that) ;
 	imports CFat<ColorProcHolder> hold (CR<ColorProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual Flt64 byte_norm (CR<Byte> a) const = 0 ;
 	virtual Byte byte_norm (CR<Flt64> a) const = 0 ;
+	virtual Flt64 word_norm (CR<Word> a) const = 0 ;
+	virtual Word word_norm (CR<Flt64> a) const = 0 ;
 	virtual Byte gray_from_bgr (CR<Color3B> a) const = 0 ;
+	virtual Word gray_from_bgr (CR<Color3W> a) const = 0 ;
 	virtual Color3B bgr_from_gray (CR<Byte> a) const = 0 ;
+	virtual Color3W bgr_from_gray (CR<Word> a) const = 0 ;
 	virtual Color3B jet_from_norm (CR<Flt64> a) const = 0 ;
 	virtual Flt64 norm_from_jet (CR<Color3B> a) const = 0 ;
-	virtual Color3F hsv_from_bgr (CR<Color3B> a) const = 0 ;
-	virtual Color3B bgr_from_hsv (CR<Color3F> a) const = 0 ;
+	virtual Color3W hsv_from_bgr (CR<Color3B> a) const = 0 ;
+	virtual Color3B bgr_from_hsv (CR<Color3W> a) const = 0 ;
 } ;
 
-class ColorProc implement Super<Ref<ColorProcLayout>> {
+class ColorProc implement Super<UniqueRef<ColorProcLayout>> {
 public:
 	static CR<ColorProc> expr_m () {
 		return keep[TYPE<ColorProc>::expr] (ColorProcHolder::expr) ;
@@ -590,11 +600,27 @@ public:
 		return ColorProcHolder::hold (expr)->byte_norm (a) ;
 	}
 
+	static Flt64 word_norm (CR<Word> a) {
+		return ColorProcHolder::hold (expr)->word_norm (a) ;
+	}
+
+	static Word word_norm (CR<Flt64> a) {
+		return ColorProcHolder::hold (expr)->word_norm (a) ;
+	}
+
 	static Byte gray_from_bgr (CR<Color3B> a) {
 		return ColorProcHolder::hold (expr)->gray_from_bgr (a) ;
 	}
 
+	static Word gray_from_bgr (CR<Color3W> a) {
+		return ColorProcHolder::hold (expr)->gray_from_bgr (a) ;
+	}
+
 	static Color3B bgr_from_gray (CR<Byte> a) {
+		return ColorProcHolder::hold (expr)->bgr_from_gray (a) ;
+	}
+
+	static Color3W bgr_from_gray (CR<Word> a) {
 		return ColorProcHolder::hold (expr)->bgr_from_gray (a) ;
 	}
 
@@ -606,11 +632,11 @@ public:
 		return ColorProcHolder::hold (expr)->norm_from_jet (a) ;
 	}
 
-	static Color3F hsv_from_bgr (CR<Color3B> a) {
+	static Color3W hsv_from_bgr (CR<Color3B> a) {
 		return ColorProcHolder::hold (expr)->hsv_from_bgr (a) ;
 	}
 
-	static Color3B bgr_from_hsv (CR<Color3F> a) {
+	static Color3B bgr_from_hsv (CR<Color3W> a) {
 		return ColorProcHolder::hold (expr)->bgr_from_hsv (a) ;
 	}
 } ;
@@ -618,7 +644,7 @@ public:
 struct ImageProcLayout ;
 
 struct ImageProcHolder implement Interface {
-	imports CR<Super<Ref<ImageProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<ImageProcLayout>>> expr_m () ;
 	imports VFat<ImageProcHolder> hold (VR<ImageProcLayout> that) ;
 	imports CFat<ImageProcHolder> hold (CR<ImageProcLayout> that) ;
 
@@ -639,7 +665,7 @@ struct ImageProcHolder implement Interface {
 	virtual Flt64 sampler (CR<Image<Flt64>> image ,CR<Flt64> x ,CR<Flt64> y) const = 0 ;
 } ;
 
-class ImageProc implement Super<Ref<ImageProcLayout>> {
+class ImageProc implement Super<UniqueRef<ImageProcLayout>> {
 public:
 	static CR<ImageProc> expr_m () {
 		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::expr) ;
@@ -685,6 +711,24 @@ public:
 	}
 } ;
 
+class TensorSlice0 implement SliceLayout {} ;
+
+class TensorSlice1 implement SliceLayout {} ;
+
+class TensorSlice2 implement SliceLayout {} ;
+
+inline CR<Slice> TensorSlice (CR<Slice> span_) {
+	return span_ ;
+}
+
+inline Slice TensorSlice (CR<typeof (NULL)>) {
+	return Slice::all () ;
+}
+
+inline Slice TensorSlice (CR<Index> span_) {
+	return Slice::one (span_) ;
+}
+
 struct TensorType {
 	enum {
 		Flt32 ,
@@ -694,11 +738,12 @@ struct TensorType {
 	} ;
 } ;
 
+struct TensorTree ;
+
 struct TensorLayout {
-	Ref<RefBuffer<Byte>> mTensor ;
-	Flag mBuffer ;
-	Length mRank ;
-	Buffer5<Length> mStride ;
+	SharedRef<TensorTree> mThis ;
+	Length mWidth ;
+	Array<Slice> mSpan ;
 } ;
 
 struct TensorHolder implement Interface {
@@ -707,32 +752,25 @@ struct TensorHolder implement Interface {
 
 	virtual void initialize (RR<RefBufferLayout> that) = 0 ;
 	virtual void initialize (CR<Length> size_ ,CR<Just<TensorType>> type_) = 0 ;
+	virtual void initialize (CR<TensorLayout> that) = 0 ;
+	virtual Length rank () const = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Just<TensorType> type () const = 0 ;
-	virtual Length rank () const = 0 ;
+	virtual Array<Slice> shape () const = 0 ;
 	virtual Length shape (CR<Index> index) const = 0 ;
-	virtual TensorLayout recast (CR<Just<TensorType>> type_) const = 0 ;
-	virtual TensorLayout reshape () const = 0 ;
-	virtual TensorLayout reshape (CR<Wrapper<Length>> shape_) const = 0 ;
 	virtual Ref<RefBuffer<Byte>> borrow () const leftvalue = 0 ;
-	virtual void get (CR<Index> i0 ,VR<Flt64> item) const = 0 ;
-	virtual void get (CR<Index> i0 ,CR<Index> i1 ,VR<Flt64> item) const = 0 ;
-	virtual void get (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,VR<Flt64> item) const = 0 ;
-	virtual void get (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,CR<Index> i3 ,VR<Flt64> item) const = 0 ;
-	virtual TensorLayout sadd (CR<TensorLayout> that) const = 0 ;
-	virtual TensorLayout ssub (CR<TensorLayout> that) const = 0 ;
-	virtual TensorLayout smul (CR<TensorLayout> that) const = 0 ;
-	virtual TensorLayout sdiv (CR<TensorLayout> that) const = 0 ;
-	virtual TensorLayout sabs () const = 0 ;
-	virtual TensorLayout minus () const = 0 ;
+	virtual void get (CR<Index> index ,VR<Flt64> item) const = 0 ;
+	virtual TensorLayout recast (CR<Just<TensorType>> type_) const = 0 ;
+	virtual TensorLayout reshape (CR<Wrapper<Length>> shape_) const = 0 ;
+	virtual TensorLayout span (CR<Wrapper<Slice>> shape_) const = 0 ;
+	virtual TensorLayout squeeze () const = 0 ;
 } ;
 
 class Tensor implement TensorLayout {
 protected:
-	using TensorLayout::mTensor ;
-	using TensorLayout::mBuffer ;
-	using TensorLayout::mRank ;
-	using TensorLayout::mStride ;
+	using TensorLayout::mThis ;
+	using TensorLayout::mWidth ;
+	using TensorLayout::mSpan ;
 
 public:
 	implicit Tensor () = default ;
@@ -746,6 +784,26 @@ public:
 		TensorHolder::hold (thiz)->initialize (size_ ,type_) ;
 	}
 
+	implicit Tensor (CR<Tensor> that) {
+		TensorHolder::hold (thiz)->initialize (that) ;
+	}
+
+	forceinline VR<Tensor> operator= (CR<Tensor> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit Tensor (RR<Tensor> that) = default ;
+
+	forceinline VR<Tensor> operator= (RR<Tensor> that) = default ;
+
+	Tensor clone () const {
+		return move (thiz) ;
+	}
+
+	Length rank () const {
+		return TensorHolder::hold (thiz)->rank () ;
+	}
+
 	Length size () const {
 		return TensorHolder::hold (thiz)->size () ;
 	}
@@ -754,21 +812,30 @@ public:
 		return TensorHolder::hold (thiz)->type () ;
 	}
 
-	Length rank () const {
-		return TensorHolder::hold (thiz)->rank () ;
+	Array<Slice> shape () const {
+		return TensorHolder::hold (thiz)->shape () ;
 	}
 
 	Length shape (CR<Index> index) const {
 		return TensorHolder::hold (thiz)->shape (index) ;
 	}
 
-	Tensor recast (CR<Just<TensorType>> type_) const {
-		TensorLayout ret = TensorHolder::hold (thiz)->recast (type_) ;
-		return move (keep[TYPE<Tensor>::expr] (ret)) ;
+	Ref<RefBuffer<Byte>> borrow () const leftvalue {
+		return TensorHolder::hold (thiz)->borrow () ;
 	}
 
-	Tensor reshape () const {
-		TensorLayout ret = TensorHolder::hold (thiz)->reshape () ;
+	void get (CR<Index> index ,VR<Flt64> item) const {
+		return TensorHolder::hold (thiz)->get (index ,item) ;
+	}
+
+	forceinline Flt64 operator[] (CR<Index> index) const {
+		Flt64 ret ;
+		get (index ,ret) ;
+		return move (ret) ;
+	}
+
+	Tensor recast (CR<Just<TensorType>> type_) const {
+		TensorLayout ret = TensorHolder::hold (thiz)->recast (type_) ;
 		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
@@ -778,98 +845,15 @@ public:
 		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
-	Ref<RefBuffer<Byte>> borrow () const leftvalue {
-		return TensorHolder::hold (thiz)->borrow () ;
-	}
-
-	void get (CR<Index> i0 ,VR<Flt64> item) const {
-		return TensorHolder::hold (thiz)->get (i0 ,item) ;
-	}
-
-	forceinline Flt64 operator() (CR<Index> i0) const {
-		Flt64 ret ;
-		get (i0 ,ret) ;
-		return move (ret) ;
-	}
-
-	void get (CR<Index> i0 ,CR<Index> i1 ,VR<Flt64> item) const {
-		return TensorHolder::hold (thiz)->get (i0 ,i1 ,item) ;
-	}
-
-	forceinline Flt64 operator() (CR<Index> i0 ,CR<Index> i1) const {
-		Flt64 ret ;
-		get (i0 ,i1 ,ret) ;
-		return move (ret) ;
-	}
-
-	void get (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,VR<Flt64> item) const {
-		return TensorHolder::hold (thiz)->get (i0 ,i1 ,i2 ,item) ;
-	}
-
-	forceinline Flt64 operator() (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2) const {
-		Flt64 ret ;
-		get (i0 ,i1 ,i2 ,ret) ;
-		return move (ret) ;
-	}
-
-	void get (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,CR<Index> i3 ,VR<Flt64> item) const {
-		return TensorHolder::hold (thiz)->get (i0 ,i1 ,i2 ,i3 ,item) ;
-	}
-
-	forceinline Flt64 operator() (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,CR<Index> i3) const {
-		Flt64 ret ;
-		get (i0 ,i1 ,i2 ,i3 ,ret) ;
-		return move (ret) ;
-	}
-
-	Tensor sadd (CR<Tensor> that) const {
-		TensorLayout ret = TensorHolder::hold (thiz)->sadd (that) ;
+	template <class...ARG1>
+	Tensor span (CR<ARG1>...span_) const {
+		TensorLayout ret = TensorHolder::hold (thiz)->span (MakeWrapper (TensorSlice (span_)...)) ;
 		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
-	forceinline Tensor operator+ (CR<Tensor> that) const {
-		return sadd (that) ;
-	}
-
-	Tensor ssub (CR<Tensor> that) const {
-		TensorLayout ret = TensorHolder::hold (thiz)->ssub (that) ;
+	Tensor squeeze () const {
+		TensorLayout ret = TensorHolder::hold (thiz)->squeeze () ;
 		return move (keep[TYPE<Tensor>::expr] (ret)) ;
-	}
-
-	forceinline Tensor operator- (CR<Tensor> that) const {
-		return ssub (that) ;
-	}
-
-	Tensor smul (CR<Tensor> that) const {
-		TensorLayout ret = TensorHolder::hold (thiz)->smul (that) ;
-		return move (keep[TYPE<Tensor>::expr] (ret)) ;
-	}
-
-	forceinline Tensor operator* (CR<Tensor> that) const {
-		return smul (that) ;
-	}
-
-	Tensor sdiv (CR<Tensor> that) const {
-		TensorLayout ret = TensorHolder::hold (thiz)->sdiv (that) ;
-		return move (keep[TYPE<Tensor>::expr] (ret)) ;
-	}
-
-	forceinline Tensor operator/ (CR<Tensor> that) const {
-		return sdiv (that) ;
-	}
-
-	Tensor sabs () const {
-		TensorLayout ret = TensorHolder::hold (thiz)->sabs () ;
-		return move (keep[TYPE<Tensor>::expr] (ret)) ;
-	}
-
-	Tensor minus () const {
-		TensorLayout ret = TensorHolder::hold (thiz)->minus () ;
-		return move (keep[TYPE<Tensor>::expr] (ret)) ;
-	}
-
-	forceinline Tensor operator- () const {
-		return minus () ;
 	}
 } ;
 } ;

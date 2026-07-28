@@ -107,6 +107,7 @@
 #pragma warning (disable :4625) //@info: warning C4625: 'xxx': copy constructor was implicitly defined as deleted
 #pragma warning (disable :4626) //@info: warning C4626: 'xxx': assignment operator was implicitly defined as deleted
 #pragma warning (disable :4643) //@info: warning C4643: Forward declaring 'initializer_list' in namespace std is not permitted by the C++ Standard.
+#pragma warning (disable :4645) //@info: warning C4645: function declared with 'noreturn' has a return statement
 #pragma warning (disable :4661) //@info: 'xxx': no suitable definition provided for explicit template instantiation request
 #pragma warning (disable :4668) //@info: warning C4668: 'xxx' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
 #pragma warning (disable :4686) //@info: warning C4686: 'xxx': possible change in behavior, change in UDT return calling convention
@@ -131,7 +132,7 @@
 #pragma warning (disable :26495) //@info: warning C26495: Variable 'xxx' is uninitialized. Always initialize a member variable (type.6).
 #pragma warning (disable :26497) //@info: warning C26497: You can attempt to make 'xxx' constexpr unless it contains any undefined behavior (f.4).
 #pragma warning (disable :26496) //@info: warning C26496: The variable 'xxx' does not change after construction, mark it as const (con.4).
-#pragma warning (disable :26814) //@info: warning C26814: The const variable 'r5x' can be computed at compile-time. Consider using constexpr (con.5).
+#pragma warning (disable :26814) //@info: warning C26814: The const variable 'xxx' can be computed at compile-time. Consider using constexpr (con.5).
 #pragma warning (disable :26820) //@info: warning C26820: This is a potentially expensive copy operation. Consider using a reference unless a copy is required (p.9).
 #endif
 
@@ -143,6 +144,8 @@
 #pragma GCC diagnostic ignored "-Wuninitialized"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #pragma GCC diagnostic warning "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wpessimizing-move"
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
@@ -152,25 +155,27 @@
 #pragma clang diagnostic ignored "-Wmicrosoft-template"
 #pragma clang diagnostic ignored "-Wdefaulted-function-deleted"
 #pragma clang diagnostic ignored "-Wabstract-final-class"
+#pragma clang diagnostic warning "-Wsuggest-override"
+#pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
 #include "csc_end.h"
-
 #ifdef __CSC_COMPILER_GNUC__
 #if __GLIBCXX__ <= 20230528L
-//@fatal: GCC is so bad
+//@fatal: GCC is so stupid
 #include <type_traits>
 #define __is_constructible(...) std::is_constructible<__VA_ARGS__>::value
 #define __is_nothrow_constructible(...) std::is_nothrow_constructible<__VA_ARGS__>::value
 #define __is_nothrow_destructible(...) std::is_nothrow_destructible<__VA_ARGS__>::value
 #define __is_assignable(...) std::is_assignable<__VA_ARGS__>::value
+#define __is_nothrow_assignable(...) std::is_assignable<__VA_ARGS__>::value
 #define __is_trivially_constructible(...) std::is_trivially_constructible<__VA_ARGS__>::value
 #define __is_trivially_destructible(...) std::is_trivially_destructible<__VA_ARGS__>::value
 #endif
 #endif
 
 namespace std {
-//@fatal: STL is so bad
+//@fatal: STL is so stupid
 template <class>
 class initializer_list ;
 } ;
@@ -232,6 +237,14 @@ class initializer_list ;
 #endif
 #endif
 
+#ifdef __CSC_CXX_LATEST__
+#define __macro_noreturn [[noreturn]]
+#endif
+
+#ifndef __CSC_CXX_LATEST__
+#define __macro_noreturn
+#endif
+
 #ifndef __macro_ex
 #define __macro_ex(a) a
 #endif
@@ -270,11 +283,11 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#define __macro_break __builtin_trap
+#define __macro_break(...) do { __asm__ __volatile__("int $3") ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_break __builtin_trap
+#define __macro_break __builtin_debugtrap
 #endif
 #endif
 
@@ -284,7 +297,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (!inline_debug ()) break ; __macro_break () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_debug ()) __macro_break () ;  inline_crash () ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -316,7 +329,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_VER_RELEASE__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_sz (__VA_ARGS__)) ,CSC::Slice (__FUNCTION__) ,CSC::Slice () ,CSC::Slice ()) ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_sz (__VA_ARGS__)) ,CSC::Slice (__FUNCTION__)) ; } while (false)
 #endif
 #endif
 
@@ -326,7 +339,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_notice(...) do { struct LINE ; if (!inline_debug ()) break ; CSC::inline_notice (TYPE<LINE>::expr ,__macro_sz (__VA_ARGS__) ,(__VA_ARGS__)) ; } while (false)
+#define __macro_notice(...) do { struct LINE ; if (inline_debug ()) CSC::inline_notice (TYPE<LINE>::expr ,__macro_sz (__VA_ARGS__) ,(__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -344,6 +357,36 @@ class initializer_list ;
 
 #ifndef __macro_nullof
 #define __macro_nullof(...) CSC::FUNCTION_nullof<__VA_ARGS__>::invoke ()
+#endif
+
+#ifndef __macro_memcpy
+#ifdef __CSC_COMPILER_MSVC__
+#define __macro_memcpy CSC::CoreProc::inline_memcpy
+#define __macro_memset CSC::CoreProc::inline_memset
+#define __macro_memcmp CSC::CoreProc::inline_memcmp
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#define __macro_memcpy(a ,b ,c) (void) __builtin_memcpy ((&a) ,(&b) ,c)
+#define __macro_memset(a ,b) (void) __builtin_memset ((&a) ,0 ,b)
+#define __macro_memcmp(a ,b ,c) CSC::Flag (__builtin_memcmp ((&a) ,(&b) ,c))
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#define __macro_memcpy(a ,b ,c) (void) __builtin_memcpy ((&a) ,(&b) ,c)
+#define __macro_memset(a ,b) (void) __builtin_memset ((&a) ,0 ,b)
+#define __macro_memcmp(a ,b ,c) CSC::Flag (__builtin_memcmp ((&a) ,(&b) ,c))
+#endif
+#endif
+
+#ifndef __macro_type_rtti
+#ifdef __CSC_CXX_RTTI__
+#define __macro_type_rtti ""
+#endif
+
+#ifndef __CSC_CXX_RTTI__
+#define __macro_type_rtti __macro_function
+#endif
 #endif
 
 struct HINSTANCE__ ;
@@ -426,12 +469,24 @@ using csc_pipe_t = int ;
 template <class A>
 using csc_initializer_list_t = std::initializer_list<A> ;
 
-template <csc_diff_t A>
+#ifdef __CSC_CONFIG_VAL32__
+template <csc_int32_t A>
 struct ENUM {
-	forceinline static consteval csc_diff_t expr_m () noexcept {
+	forceinline static consteval csc_int32_t expr_m () noexcept {
 		return A ;
 	}
 } ;
+
+#endif
+
+#ifdef __CSC_CONFIG_VAL64__
+template <csc_int64_t A>
+struct ENUM {
+	forceinline static consteval csc_int64_t expr_m () noexcept {
+		return A ;
+	}
+} ;
+#endif
 
 using ENUM_TRUE = ENUM<true> ;
 
@@ -592,36 +647,6 @@ using MACRO_IS_TRIVIAL_DESTRUCTIBLE = ENUM<(__is_trivially_destructible (A))> ;
 
 template <class A ,class B>
 using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
-
-#ifndef __macro_memcpy
-#ifdef __CSC_COMPILER_MSVC__
-#define __macro_memcpy CSC::CoreProcHolder::expr.inline_memcpy
-#define __macro_memset CSC::CoreProcHolder::expr.inline_memset
-#define __macro_memcmp CSC::CoreProcHolder::expr.inline_memcmp
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-#define __macro_memcpy(a ,b ,c) (void) __builtin_memcpy ((&a) ,(&b) ,c)
-#define __macro_memset(a ,b) (void) __builtin_memset ((&a) ,0 ,b)
-#define __macro_memcmp(a ,b ,c) CSC::Flag (__builtin_memcmp ((&a) ,(&b) ,c))
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-#define __macro_memcpy(a ,b ,c) (void) __builtin_memcpy ((&a) ,(&b) ,c)
-#define __macro_memset(a ,b) (void) __builtin_memset ((&a) ,0 ,b)
-#define __macro_memcmp(a ,b ,c) CSC::Flag (__builtin_memcmp ((&a) ,(&b) ,c))
-#endif
-#endif
-
-#ifndef __macro_type_rtti
-#ifdef __CSC_CXX_RTTI__
-#define __macro_type_rtti ""
-#endif
-
-#ifndef __CSC_CXX_RTTI__
-#define __macro_type_rtti __macro_function
-#endif
-#endif
 } ;
 
 forceinline CSC::csc_handle_t operator new (CSC::csc_size_t ,CSC::csc_device_t where_) noexcept {

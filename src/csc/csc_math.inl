@@ -20,11 +20,19 @@ public:
 	}
 
 	Bool is_inf (CR<Flt32> a) const override {
-		return std::isinf (a) ;
+		if (std::isinf (a))
+			return TRUE ;
+		if (std::isnan (a))
+			return TRUE ;
+		return FALSE ;
 	}
 
 	Bool is_inf (CR<Flt64> a) const override {
-		return std::isinf (a) ;
+		if (std::isinf (a))
+			return TRUE ;
+		if (std::isnan (a))
+			return TRUE ;
+		return FALSE ;
 	}
 
 	Bool is_low (CR<Flt32> a) const override {
@@ -180,31 +188,31 @@ public:
 	}
 
 	Val32 abs (CR<Val32> a) const override {
+		if (a > 0)
+			return a ;
 		if (a == VAL32_ABS)
-			return 0 ;
-		if (a < 0)
-			return -a ;
-		return a ;
+			return VAL32_MAX ;
+		return -a ;
 	}
 
 	Val64 abs (CR<Val64> a) const override {
+		if (a > 0)
+			return a ;
 		if (a == VAL64_ABS)
-			return 0 ;
-		if (a < 0)
-			return -a ;
-		return a ;
+			return VAL64_MAX ;
+		return -a ;
 	}
 
 	Flt32 abs (CR<Flt32> a) const override {
-		if (a < 0)
-			return -a ;
-		return a ;
+		if (a > 0)
+			return a ;
+		return -a ;
 	}
 
 	Flt64 abs (CR<Flt64> a) const override {
-		if (a < 0)
-			return -a ;
-		return a ;
+		if (a > 0)
+			return a ;
+		return -a ;
 	}
 
 	Flt32 inverse (CR<Flt32> a) const override {
@@ -395,6 +403,140 @@ public:
 		return std::log (a) ;
 	}
 
+	Val64 exp2_bit (CR<Val64> a) const override {
+		return Val64 (Quad (0X01) << a) ;
+	}
+
+	Val64 log2_bit (CR<Val64> a) const override {
+		if (a <= 0)
+			return 0 ;
+		Val64 ret = 0 ;
+		auto rax = Quad (a) ;
+		if ifdo (TRUE) {
+			if (!ByteProc::any_bit (rax ,Quad (0XFFFFFFFF00000000)))
+				discard ;
+			ret += 32 ;
+			rax = rax >> 32 ;
+		}
+		if ifdo (TRUE) {
+			if (!ByteProc::any_bit (rax ,Quad (0X00000000FFFF0000)))
+				discard ;
+			ret += 16 ;
+			rax = rax >> 16 ;
+		}
+		if ifdo (TRUE) {
+			if (!ByteProc::any_bit (rax ,Quad (0X000000000000FF00)))
+				discard ;
+			ret += 8 ;
+			rax = rax >> 8 ;
+		}
+		if ifdo (TRUE) {
+			if (!ByteProc::any_bit (rax ,Quad (0X00000000000000F0)))
+				discard ;
+			ret += 4 ;
+			rax = rax >> 4 ;
+		}
+		if ifdo (TRUE) {
+			if (!ByteProc::any_bit (rax ,Quad (0X000000000000000C)))
+				discard ;
+			ret += 2 ;
+			rax = rax >> 2 ;
+		}
+		if ifdo (TRUE) {
+			if (!ByteProc::any_bit (rax ,Quad (0X0000000000000002)))
+				discard ;
+			ret += 1 ;
+			rax = rax >> 1 ;
+		}
+		if ifdo (TRUE) {
+			if (rax == Quad (0X00))
+				discard ;
+			ret += 1 ;
+		}
+		return move (ret) ;
+	}
+
+	Val64 exp10_bit (CR<Val64> a) const override {
+		assert (a >= 0) ;
+		assert (a < 32) ;
+		Val64 ret = 1 ;
+		auto rax = a ;
+		if ifdo (TRUE) {
+			if (rax < 16)
+				discard ;
+			ret *= Val64 (10000000000000000) ;
+			rax -= 16 ;
+		}
+		if ifdo (TRUE) {
+			if (rax < 8)
+				discard ;
+			ret *= Val64 (100000000) ;
+			rax -= 8 ;
+		}
+		if ifdo (TRUE) {
+			if (rax < 4)
+				discard ;
+			ret *= Val64 (10000) ;
+			rax -= 4 ;
+		}
+		if ifdo (TRUE) {
+			if (rax < 2)
+				discard ;
+			ret *= Val64 (100) ;
+			rax -= 2 ;
+		}
+		if ifdo (TRUE) {
+			if (rax < 1)
+				discard ;
+			ret *= Val64 (10) ;
+			rax -= 1 ;
+		}
+		return move (ret) ;
+	}
+
+	Val64 log10_bit (CR<Val64> a) const override {
+		if (a <= 0)
+			return 0 ;
+		Val64 ret = 0 ;
+		auto rax = a ;
+		if ifdo (TRUE) {
+			if (rax < Val64 (10000000000000000))
+				discard ;
+			ret += 16 ;
+			rax /= Val64 (10000000000000000) ;
+		}
+		if ifdo (TRUE) {
+			if (rax < Val64 (100000000))
+				discard ;
+			ret += 8 ;
+			rax /= Val64 (100000000) ;
+		}
+		if ifdo (TRUE) {
+			if (rax < Val64 (10000))
+				discard ;
+			ret += 4 ;
+			rax /= Val64 (10000) ;
+		}
+		if ifdo (TRUE) {
+			if (rax < Val64 (100))
+				discard ;
+			ret += 2 ;
+			rax /= Val64 (100) ;
+		}
+		if ifdo (TRUE) {
+			if (rax < Val64 (10))
+				discard ;
+			ret += 1 ;
+			rax /= Val64 (10) ;
+		}
+		if ifdo (TRUE) {
+			if (rax == Val64 (0))
+				discard ;
+			ret += 1 ;
+		}
+		return move (ret) ;
+	}
+
 	Flt32 pdf (CR<Flt32> a) const override {
 		const auto r1x = -square (a) * Flt32 (0.5) ;
 		return exp (r1x) * Flt32 (MATH_PDF0) ;
@@ -488,11 +630,12 @@ public:
 	}
 } ;
 
-exports CR<Super<Ref<MathProcLayout>>> MathProcHolder::expr_m () {
+exports CR<Super<UniqueRef<MathProcLayout>>> MathProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<MathProcLayout>> ret ;
-		ret.mThis = Ref<MathProcLayout>::make () ;
-		MathProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<MathProcLayout>> ret ;
+		ret.mThis = UniqueRef<MathProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		MathProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -548,45 +691,35 @@ public:
 	Flt64 encode (CR<Notation> fexp2) const override {
 		assert (fexp2.mRadix == 2) ;
 		auto rax = fexp2 ;
+		rax = fexp2_downflow (rax ,Quad (0XFFE0000000000000)) ;
 		if ifdo (TRUE) {
-			if (rax.mMantissa == 0)
+			if (Val64 (rax.mDownflow) >= 0)
 				discard ;
-			while (TRUE) {
-				if (!ByteProc::any_bit (Quad (rax.mMantissa) ,Quad (0XFFE0000000000000)))
-					break ;
-				rax.mMantissa = Val64 (Quad (rax.mMantissa) >> 1) ;
-				rax.mDownflow = 0 ;
-				rax.mExponent++ ;
-			}
-			while (TRUE) {
-				if (ByteProc::any_bit (Quad (rax.mMantissa) ,Quad (0XFFF0000000000000)))
-					break ;
-				rax.mMantissa = Val64 (Quad (rax.mMantissa) << 1) ;
-				rax.mDownflow = 0 ;
-				rax.mExponent-- ;
-			}
+			rax.mMantissa = Quad (Val64 (rax.mMantissa) + 1) ;
+			rax.mDownflow = Quad (0X00) ;
+			if (!ByteProc::any_bit (rax.mMantissa ,Quad (0XFFE0000000000000)))
+				discard ;
+			rax.mMantissa = rax.mMantissa >> 1 ;
+			rax.mDownflow = Quad (0X00) ;
+			rax.mExponent++ ;
 		}
 		if ifdo (TRUE) {
 			const auto r1x = Length (-1074) - Length (rax.mExponent) ;
 			if (r1x <= 0)
 				discard ;
-			rax.mMantissa = Val64 (Quad (rax.mMantissa) >> r1x) ;
-			rax.mDownflow = 0 ;
+			rax.mMantissa = rax.mMantissa >> r1x ;
+			rax.mDownflow = Quad (0X00) ;
 			rax.mExponent = -1075 ;
 		}
 		rax.mExponent += 1075 ;
 		if ifdo (TRUE) {
-			if (rax.mMantissa != 0)
+			if (rax.mMantissa != Quad (0X00))
 				discard ;
 			rax.mExponent = 0 ;
 		}
-		const auto r2x = invoke ([&] () {
-			if (!fexp2.mSign)
-				return Quad (0X00) ;
-			return Quad (0X8000000000000000) ;
-		}) ;
+		const auto r2x = fexp2.mSign ? Quad (0X8000000000000000) : Quad (0X00) ;
 		const auto r3x = (Quad (rax.mExponent) << 52) & Quad (0X7FF0000000000000) ;
-		const auto r4x = Quad (rax.mMantissa) & Quad (0X000FFFFFFFFFFFFF) ;
+		const auto r4x = rax.mMantissa & Quad (0X000FFFFFFFFFFFFF) ;
 		const auto r5x = r2x | r3x | r4x ;
 		return bitwise (r5x) ;
 	}
@@ -599,79 +732,96 @@ public:
 		const auto r2x = r1x & Quad (0X7FF0000000000000) ;
 		const auto r3x = r1x & Quad (0X000FFFFFFFFFFFFF) ;
 		ret.mSign = ByteProc::any_bit (r1x ,Quad (0X8000000000000000)) ;
-		ret.mMantissa = Val64 (r3x) ;
-		ret.mDownflow = 0 ;
+		ret.mMantissa = r3x ;
+		ret.mDownflow = Quad (0X00) ;
 		if ifdo (TRUE) {
 			if (r2x == Quad (0X00))
 				discard ;
-			ret.mMantissa = Val64 (Quad (ret.mMantissa) | Quad (0X0010000000000000)) ;
+			ret.mMantissa = ret.mMantissa | Quad (0X0010000000000000) ;
 		}
 		ret.mExponent = Val64 (r2x >> 52) ;
-		ret.mExponent -= 1075 - Length (r2x == Quad (0X00)) ;
+		ret.mExponent += Length (r2x == Quad (0X00)) ;
+		ret.mExponent -= 1075 ;
 		if ifdo (TRUE) {
-			if (ret.mMantissa != 0)
+			if (ret.mMantissa != Quad (0X00))
 				discard ;
 			ret.mExponent = 0 ;
 		}
 		if ifdo (TRUE) {
-			if (ret.mMantissa == 0)
+			if (ret.mMantissa == Quad (0X00))
 				discard ;
 			while (TRUE) {
-				if (ByteProc::any_bit (Quad (ret.mMantissa) ,Quad (0X0000000000000001)))
+				if (ByteProc::any_bit (ret.mMantissa ,Quad (0X0000000000000001)))
 					break ;
-				ret.mMantissa = Val64 (Quad (ret.mMantissa) >> 1) ;
+				const auto r4x = ByteProc::shift (ret.mMantissa ,ret.mDownflow ,1) ;
+				ret.mMantissa = ret.mMantissa >> 1 ;
+				ret.mDownflow = r4x ;
 				ret.mExponent++ ;
 			}
 		}
 		return move (ret) ;
 	}
 
-	Notation fexp2_multiply (CR<Notation> obj1 ,CR<Notation> obj2) const {
-		assert (obj1.mRadix == 2) ;
-		assert (obj2.mRadix == 2) ;
+	Notation fexp2_multiply (CR<Notation> a ,CR<Notation> b) const {
+		assert (a.mRadix == 2) ;
+		assert (b.mRadix == 2) ;
 		Notation ret ;
-		ret.mRadix = 2 ;
+		ret.mRadix = a.mRadix ;
 		ret.mPrecision = 0 ;
-		ret.mSign = MathProc::any_of (obj1.mSign ,obj2.mSign) ;
+		ret.mSign = MathProc::any_of (a.mSign ,b.mSign) ;
 		const auto r1x = Length (32) ;
-		const auto r2x = Quad (ByteProc::exp2p_bit (r1x) - 1) ;
-		const auto r3x = ByteProc::exp2p_bit (r1x - 1) ;
-		const auto r4x = Val64 (Quad (obj1.mMantissa) >> r1x) ;
-		const auto r5x = Val64 (Quad (obj1.mMantissa) & r2x) ;
-		const auto r6x = Val64 (Quad (obj2.mMantissa) >> r1x) ;
-		const auto r7x = Val64 (Quad (obj2.mMantissa) & r2x) ;
-		const auto r8x = r4x * r6x ;
-		const auto r9x = r5x * r6x ;
-		const auto r10x = r4x * r7x ;
-		const auto r11x = r5x * r7x ;
-		//@error: lose a part of precision
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (r8x == 0)
+		const auto r2x = Quad (0X00000000FFFFFFFF) ;
+		const auto r3x = Quad (0X8000000000000000) ;
+		const auto r4x = fexp2_downflow (a ,r3x) ;
+		const auto r5x = fexp2_downflow (b ,r3x) ;
+		const auto r6x = Val64 (r4x.mMantissa >> r1x) ;
+		const auto r7x = Val64 (r4x.mMantissa & r2x) ;
+		const auto r8x = Val64 (r5x.mMantissa >> r1x) ;
+		const auto r9x = Val64 (r5x.mMantissa & r2x) ;
+		const auto r10x = Val64 (r4x.mDownflow >> r1x) ;
+		const auto r11x = Val64 (r5x.mDownflow >> r1x) ;
+		//@info: -1
+		const auto r12x = r7x * r11x + r9x * r10x ;
+		const auto r13x = Val64 (Quad (r12x) >> r1x) ;
+		//@info: +0
+		const auto r14x = r7x * r9x + r6x * r11x + r8x * r10x + r13x ;
+		const auto r15x = Val64 (Quad (r14x) >> r1x) ;
+		const auto r16x = Val64 (Quad (r14x) & r2x) ;
+		//@info: +1
+		const auto r17x = r7x * r8x + r6x * r9x + r15x ;
+		const auto r18x = Val64 (Quad (r17x) >> r1x) ;
+		const auto r19x = Val64 (Quad (r17x) & r2x) ;
+		//@info: +2
+		const auto r20x = r6x * r8x + r18x ;
+		const auto r21x = Val64 (Quad (r19x) << r1x) + r16x ;
+		ret.mMantissa = Quad (r20x) ;
+		ret.mDownflow = Quad (r21x) ;
+		ret.mExponent = r4x.mExponent + r5x.mExponent + r1x * 2 ;
+		return move (ret) ;
+	}
+
+	Notation fexp2_downflow (CR<Notation> fexp2 ,CR<Quad> mask) const {
+		Notation ret = fexp2 ;
+		const auto r1x = (mask & Quad (-Val64 (mask))) >> 1 ;
+		if ifdo (TRUE) {
+			if (ret.mMantissa == Quad (0X00))
 				discard ;
-			const auto r12x = Val64 (Quad (r9x) >> r1x) ;
-			const auto r13x = Val64 (Quad (r9x) & r2x) ;
-			const auto r14x = Val64 (Quad (r10x) >> r1x) ;
-			const auto r15x = Val64 (Quad (r10x) & r2x) ;
-			const auto r16x = Val64 (Quad (r11x) >> r1x) ;
-			const auto r17x = Val64 (Quad (r13x + r15x + r16x + r3x) >> r1x) ;
-			ret.mMantissa = r8x + r12x + r14x + r17x ;
-			ret.mDownflow = 0 ;
-			ret.mExponent = obj1.mExponent + obj2.mExponent + r1x * 2 ;
-		}
-		if ifdo (act) {
-			if (r9x == 0)
-				if (r10x == 0)
-					discard ;
-			const auto r18x = Val64 (Quad (r11x + r3x) >> r1x) ;
-			ret.mMantissa = r9x + r10x + r18x ;
-			ret.mDownflow = 0 ;
-			ret.mExponent = obj1.mExponent + obj2.mExponent + r1x ;
-		}
-		if ifdo (act) {
-			ret.mMantissa = r11x ;
-			ret.mDownflow = 0 ;
-			ret.mExponent = obj1.mExponent + obj2.mExponent ;
+			while (TRUE) {
+				if (!ByteProc::any_bit (ret.mMantissa ,mask))
+					break ;
+				const auto r2x = ByteProc::shift (ret.mMantissa ,ret.mDownflow ,1) ;
+				ret.mMantissa = ret.mMantissa >> 1 ;
+				ret.mDownflow = r2x ;
+				ret.mExponent++ ;
+			}
+			while (TRUE) {
+				if (ByteProc::any_bit (ret.mMantissa ,r1x))
+					break ;
+				const auto r3x = ByteProc::shift (ret.mMantissa ,ret.mDownflow ,63) ;
+				ret.mMantissa = r3x ;
+				ret.mDownflow = ret.mDownflow << 1 ;
+				ret.mExponent-- ;
+			}
 		}
 		return move (ret) ;
 	}
@@ -683,80 +833,86 @@ public:
 		ret.mPrecision = 0 ;
 		ret.mSign = fexp10.mSign ;
 		ret.mMantissa = fexp10.mMantissa ;
-		ret.mDownflow = 0 ;
+		const auto r1x = Val64 (fexp10.mDownflow << 64) / Val64 (1000000000000000000) ;
+		ret.mDownflow = Quad (r1x) ;
 		ret.mExponent = 0 ;
-		const auto r1x = FEXP2Cache::expr[fexp10.mExponent] ;
-		ret = fexp2_multiply (ret ,r1x) ;
+		const auto r2x = FEXP2Cache::expr[fexp10.mExponent] ;
+		ret = fexp2_multiply (ret ,r2x) ;
 		return move (ret) ;
 	}
 
-	Notation fexp10_downflow (CR<Notation> fexp10 ,CR<Val64> half) const {
-		Notation ret = fexp10 ;
-		if ifdo (TRUE) {
-			if (ret.mMantissa >= 0)
-				discard ;
-			ret.mMantissa = Val64 (Quad (ret.mMantissa) >> 1) ;
-			ret.mMantissa /= 5 ;
-			ret.mExponent++ ;
-		}
-		const auto r1x = MathProc::square (half) ;
-		while (TRUE) {
-			if (ret.mMantissa < r1x)
-				break ;
-			ret.mMantissa /= 10 ;
-			ret.mExponent++ ;
-		}
-		return move (ret) ;
-	}
-
-	Notation fexp10_multiply (CR<Notation> obj1 ,CR<Notation> obj2) const {
-		assert (obj1.mRadix == 10) ;
-		assert (obj2.mRadix == 10) ;
+	Notation fexp10_multiply (CR<Notation> a ,CR<Notation> b) const {
+		assert (a.mRadix == 10) ;
+		assert (b.mRadix == 10) ;
 		Notation ret ;
-		ret.mRadix = 10 ;
+		ret.mRadix = a.mRadix ;
 		ret.mPrecision = 0 ;
-		ret.mSign = MathProc::any_of (obj1.mSign ,obj2.mSign) ;
+		ret.mSign = MathProc::any_of (a.mSign ,b.mSign) ;
 		const auto r1x = Length (9) ;
 		const auto r2x = Val64 (1000000000) ;
-		const auto r3x = Val64 (500000000) ;
-		const auto r4x = fexp10_downflow (obj1 ,r2x) ;
-		const auto r5x = fexp10_downflow (obj2 ,r2x) ;
-		const auto r6x = r4x.mMantissa / r2x ;
-		const auto r7x = r4x.mMantissa % r2x ;
-		const auto r8x = r5x.mMantissa / r2x ;
-		const auto r9x = r5x.mMantissa % r2x ;
-		const auto r10x = r6x * r8x ;
-		const auto r11x = r7x * r8x ;
-		const auto r12x = r6x * r9x ;
-		const auto r13x = r7x * r9x ;
-		//@error: lose a part of precision
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (r10x == 0)
+		const auto r3x = Val64 (1000000000000000000) ;
+		const auto r4x = fexp10_downflow (a ,r3x) ;
+		const auto r5x = fexp10_downflow (b ,r3x) ;
+		const auto r6x = Val64 (r4x.mMantissa) / r2x ;
+		const auto r7x = Val64 (r5x.mMantissa) / r2x ;
+		const auto r8x = Val64 (r4x.mMantissa) % r2x ;
+		const auto r9x = Val64 (r5x.mMantissa) % r2x ;
+		const auto r10x = Val64 (r4x.mDownflow) / r2x ;
+		const auto r11x = Val64 (r5x.mDownflow) / r2x ;
+		//@info: -1
+		const auto r12x = r8x * r11x + r9x * r10x ;
+		const auto r13x = r12x / r2x ;
+		//@info: +0
+		const auto r14x = r8x * r9x + r6x * r11x + r7x * r10x + r13x ;
+		const auto r15x = r14x / r2x ;
+		const auto r16x = r14x % r2x ;
+		//@info: +1
+		const auto r17x = r8x * r7x + r6x * r9x + r15x ;
+		const auto r18x = r17x / r2x ;
+		const auto r19x = r17x % r2x ;
+		//@info: +2
+		const auto r20x = r6x * r7x + r18x ;
+		const auto r21x = r19x * r2x + r16x ;
+		ret.mMantissa = Quad (r20x) ;
+		ret.mDownflow = Quad (r21x) ;
+		ret.mExponent = r4x.mExponent + r5x.mExponent + r1x * 2 ;
+		return move (ret) ;
+	}
+
+	Notation fexp10_downflow (CR<Notation> fexp10 ,CR<Val64> high) const {
+		Notation ret = fexp10 ;
+		const auto r1x = high / 10 ;
+		if ifdo (TRUE) {
+			if (Val64 (ret.mMantissa) >= 0)
 				discard ;
-			const auto r14x = r11x / r2x ;
-			const auto r15x = r11x % r2x ;
-			const auto r16x = r12x / r2x ;
-			const auto r17x = r12x % r2x ;
-			const auto r18x = r13x / r2x ;
-			const auto r19x = (r15x + r17x + r18x + r3x) / r2x ;
-			ret.mMantissa = r10x + r14x + r16x + r19x ;
-			ret.mDownflow = 0 ;
-			ret.mExponent = r4x.mExponent + r5x.mExponent + r1x * 2 ;
+			const auto r2x = Val64 (ret.mMantissa >> 1) ;
+			const auto r3x = Val64 (ret.mMantissa & Quad (0X01)) ;
+			const auto r4x = (r2x % 5 * 2 + r3x) * r1x + Val64 (ret.mDownflow) / 10 ;
+			ret.mMantissa = Quad (r2x / 5) ;
+			ret.mDownflow = Quad (r4x) ;
+			ret.mExponent++ ;
 		}
-		if ifdo (act) {
-			if (r11x == 0)
-				if (r12x == 0)
-					discard ;
-			const auto r20x = (r13x + r3x) / r2x ;
-			ret.mMantissa = r11x + r12x + r20x ;
-			ret.mDownflow = 0 ;
-			ret.mExponent = r4x.mExponent + r5x.mExponent + r1x ;
-		}
-		if ifdo (act) {
-			ret.mMantissa = r13x ;
-			ret.mDownflow = 0 ;
-			ret.mExponent = r4x.mExponent + r5x.mExponent ;
+		if ifdo (TRUE) {
+			if (ret.mMantissa == Quad (0X00))
+				discard ;
+			while (TRUE) {
+				if (Val64 (ret.mMantissa) < high)
+					break ;
+				const auto r5x = Val64 (ret.mMantissa) / 10 ;
+				const auto r6x = Val64 (ret.mMantissa) % 10 * r1x + Val64 (ret.mDownflow) / 10 ;
+				ret.mMantissa = Quad (r5x) ;
+				ret.mDownflow = Quad (r6x) ;
+				ret.mExponent++ ;
+			}
+			while (TRUE) {
+				if (Val64 (ret.mMantissa) >= r1x)
+					break ;
+				const auto r7x = Val64 (ret.mMantissa) * 10 + Val64 (ret.mDownflow) / r1x ;
+				const auto r8x = Val64 (ret.mDownflow) % r1x * 10 ;
+				ret.mMantissa = Quad (r7x) ;
+				ret.mDownflow = Quad (r8x) ;
+				ret.mExponent-- ;
+			}
 		}
 		return move (ret) ;
 	}
@@ -768,19 +924,21 @@ public:
 		ret.mPrecision = 0 ;
 		ret.mSign = fexp2.mSign ;
 		ret.mMantissa = fexp2.mMantissa ;
-		ret.mDownflow = 0 ;
+		const auto r1x = Val64 (fexp2.mDownflow >> 32) ;
+		ret.mDownflow = Quad (r1x) >> 64 ;
 		ret.mExponent = 0 ;
-		const auto r1x = FEXP10Cache::expr[fexp2.mExponent] ;
-		ret = fexp10_multiply (ret ,r1x) ;
+		const auto r2x = FEXP10Cache::expr[fexp2.mExponent] ;
+		ret = fexp10_multiply (ret ,r2x) ;
 		return move (ret) ;
 	}
 } ;
 
-exports CR<Super<Ref<FloatProcLayout>>> FloatProcHolder::expr_m () {
+exports CR<Super<UniqueRef<FloatProcLayout>>> FloatProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<FloatProcLayout>> ret ;
-		ret.mThis = Ref<FloatProcLayout>::make () ;
-		FloatProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<FloatProcLayout>> ret ;
+		ret.mThis = UniqueRef<FloatProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		FloatProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -801,7 +959,8 @@ exports CR<Super<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
 	return memorize ([&] () {
 		Super<UniqueRef<FEXP2CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP2CacheLayout>::make () ;
-		FEXP2CacheHolder::hold (ret)->initialize () ;
+		auto rax = ret.mThis.borrow () ;
+		FEXP2CacheHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -822,7 +981,8 @@ exports CR<Super<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::expr_m () {
 	return memorize ([&] () {
 		Super<UniqueRef<FEXP10CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP10CacheLayout>::make () ;
-		FEXP10CacheHolder::hold (ret)->initialize () ;
+		auto rax = ret.mThis.borrow () ;
+		FEXP10CacheHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -877,6 +1037,30 @@ public:
 
 	Quad merge (CR<Char> high_ ,CR<Char> low_) const override {
 		return (Quad (high_) << 32) | Quad (low_) ;
+	}
+
+	Byte shift (CR<Byte> high_ ,CR<Byte> low_ ,CR<Index> high_bit) const override {
+		const auto r1x = high_bit ;
+		const auto r2x = 8 - r1x ;
+		return (high_ << r2x) | (low_ >> r1x) ;
+	}
+
+	Word shift (CR<Word> high_ ,CR<Word> low_ ,CR<Index> high_bit) const override {
+		const auto r1x = high_bit ;
+		const auto r2x = 16 - r1x ;
+		return (high_ << r2x) | (low_ >> r1x) ;
+	}
+
+	Char shift (CR<Char> high_ ,CR<Char> low_ ,CR<Index> high_bit) const override {
+		const auto r1x = high_bit ;
+		const auto r2x = 32 - r1x ;
+		return (high_ << r2x) | (low_ >> r1x) ;
+	}
+
+	Quad shift (CR<Quad> high_ ,CR<Quad> low_ ,CR<Index> high_bit) const override {
+		const auto r1x = high_bit ;
+		const auto r2x = 64 - r1x ;
+		return (high_ << r2x) | (low_ >> r1x) ;
 	}
 
 	Byte reverse (CR<Byte> a) const override {
@@ -960,25 +1144,7 @@ public:
 		return ~Quad (0X00) ;
 	}
 
-	Index exp2p_bit (CR<Length> a) const override {
-		return Index (Quad (0X01) << a) ;
-	}
-	
-	Length log2p_bit (CR<Index> a) const override {
-		if (a <= 0)
-			return 0 ;
-		Length ret = 0 ;
-		auto rax = Quad (a) ;
-		while (TRUE) {
-			if (rax == Quad (0X00))
-				break ;
-			ret++ ;
-			rax = rax >> 1 ;
-		}
-		return move (ret) ;
-	}
-
-	Length popcount (CR<Byte> a) const override {
+	Length pop_count (CR<Byte> a) const override {
 		static const ARR<Val32 ,ENUM<256>> mCache {
 			0 ,1 ,1 ,2 ,1 ,2 ,2 ,3 ,1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,
 			1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
@@ -999,7 +1165,7 @@ public:
 		return Length (mCache[Index (a)]) ;
 	}
 
-	Length lowcount (CR<Byte> a) const override {
+	Length low_count (CR<Byte> a) const override {
 		static const ARR<Val32 ,ENUM<256>> mCache {
 			8 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
 			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
@@ -1021,11 +1187,12 @@ public:
 	}
 } ;
 
-exports CR<Super<Ref<ByteProcLayout>>> ByteProcHolder::expr_m () {
+exports CR<Super<UniqueRef<ByteProcLayout>>> ByteProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<ByteProcLayout>> ret ;
-		ret.mThis = Ref<ByteProcLayout>::make () ;
-		ByteProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<ByteProcLayout>> ret ;
+		ret.mThis = UniqueRef<ByteProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		ByteProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -1040,22 +1207,36 @@ exports CFat<ByteProcHolder> ByteProcHolder::hold (CR<ByteProcLayout> that) {
 
 class IntegerImplHolder final implement Fat<IntegerHolder ,IntegerLayout> {
 private:
-	using INTEGER_MIN_SIZE = RANK8 ;
+	using INTEGER_MIN_SIZE = ENUM<8> ;
 
 public:
 	void initialize (CR<Length> size_) override {
-		const auto r1x = inline_alignas (size_ ,INTEGER_MIN_SIZE::expr) + INTEGER_MIN_SIZE::expr ;
-		self.mInteger = RefBuffer<Byte> (r1x) ;
-		self.mWidth = size_ ;
+		const auto r1x = inline_alignas (size_ ,INTEGER_MIN_SIZE::expr) ;
+		const auto r2x = MathProc::max_of (r1x ,INTEGER_MIN_SIZE::expr * 2) ;
+		self.mInteger = RefBuffer<Byte> (r2x) ;
+		inline_memset (Pointer::from (self.mInteger.ref) ,self.mInteger.size ()) ;
+		self.mWidth = r2x ;
+		self.mShift = INTEGER_MIN_SIZE::expr ;
 	}
 
 	void initialize (CR<IntegerLayout> that) override {
-		self.mInteger = RefBuffer<Byte> (that.mWidth) ;
+		const auto r1x = inline_alignas (that.mWidth ,INTEGER_MIN_SIZE::expr) ;
+		self.mInteger = RefBuffer<Byte> (r1x) ;
 		for (auto &&i : range (0 ,that.mWidth))
 			self.mInteger[i] = that.mInteger[i] ;
+		self.mWidth = that.mWidth ;
+		self.mShift = that.mShift ;
+	}
+
+	IntegerLayout share () const {
+		IntegerLayout ret ;
+		IntegerHolder::hold (ret)->initialize (self) ;
+		return move (ret) ;
 	}
 
 	static Byte get (CR<IntegerLayout> that ,CR<Index> index) {
+		if (index < 0)
+			return Byte (0X00) ;
 		Index ix = MathProc::min_of (index ,that.mWidth - 1) ;
 		return that.mInteger[ix] ;
 	}
@@ -1063,27 +1244,36 @@ public:
 	Length size () const override {
 		if (!self.mInteger.exist ())
 			return 0 ;
-		return self.mWidth ;
+		return self.mWidth - self.mShift ;
 	}
 
 	Val64 fetch () const override {
+		assert (self.mInteger.exist ()) ;
 		auto rax = Quad (0X00) ;
 		const auto r1x = SIZE_OF<Val64>::expr ;
+		const auto r2x = self.mShift ;
 		for (auto &&i : range (0 ,r1x)) {
-			const auto r2x = Quad (get (self ,i)) << (i * 8) ;
-			rax |= r2x ;
+			Index ix = r2x + i ;
+			const auto r3x = Quad (get (self ,ix)) << (i * 8) ;
+			rax |= r3x ;
 		}
 		return Val64 (rax) ;
 	}
 
 	void store (CR<Val64> item) override {
+		assert (self.mInteger.exist ()) ;
 		const auto r1x = SIZE_OF<Val64>::expr ;
-		assert (self.mInteger.size () >= r1x) ;
+		const auto r2x = self.mShift ;
+		const auto r3x = r1x + r2x ;
+		assert (self.mInteger.size () >= r3x) ;
+		for (auto &&i : range (0 ,r2x))
+			self.mInteger[i] = Byte (0X00) ;
 		for (auto &&i : range (0 ,r1x)) {
-			const auto r2x = Quad (item) >> (i * 8) ;
-			self.mInteger[i] = Byte (r2x) ;
+			Index ix = r2x + i ;
+			const auto r4x = Quad (item) >> (i * 8) ;
+			self.mInteger[ix] = Byte (r4x) ;
 		}
-		self.mWidth = r1x ;
+		self.mWidth = r3x ;
 		check_mask (self) ;
 	}
 
@@ -1123,41 +1313,45 @@ public:
 	}
 
 	IntegerLayout sadd (CR<IntegerLayout> that) const override {
+		assert (self.mShift == that.mShift) ;
 		IntegerLayout ret ;
 		const auto r1x = inline_max (self.mWidth ,that.mWidth) ;
 		IntegerHolder::hold (ret)->initialize (r1x) ;
 		auto rax = Val32 (0) ;
 		for (auto &&i : range (0 ,r1x)) {
 			const auto r2x = Val32 (get (self ,i)) + Val32 (get (that ,i)) + rax ;
-			ret.mInteger[i] = Byte (r2x) ;
 			rax = Val32 (Char (r2x) >> 8) ;
+			ret.mInteger[i] = Byte (r2x) ;
 		}
 		ret.mWidth = r1x ;
+		ret.mShift = self.mShift ;
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
 	IntegerLayout ssub (CR<IntegerLayout> that) const override {
+		assert (self.mShift == that.mShift) ;
 		IntegerLayout ret ;
 		const auto r1x = inline_max (self.mWidth ,that.mWidth) ;
 		IntegerHolder::hold (ret)->initialize (r1x) ;
 		auto rax = Val32 (0) ;
 		for (auto &&i : range (0 ,r1x)) {
 			const auto r2x = Val32 (get (self ,i)) - Val32 (get (that ,i)) - rax ;
-			rax = 1 - MathProc::step (r2x) ;
+			rax = Val32 (r2x < 0) ;
 			const auto r3x = r2x + 256 * rax ;
 			ret.mInteger[i] = Byte (r3x) ;
 		}
 		ret.mWidth = r1x ;
+		ret.mShift = self.mShift ;
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
 	IntegerLayout smul (CR<IntegerLayout> that) const override {
+		assert (self.mShift == that.mShift) ;
 		IntegerLayout ret ;
-		const auto r1x = inline_max (self.mWidth + that.mWidth - 2 ,1) ;
+		const auto r1x = self.mWidth + that.mWidth ;
 		IntegerHolder::hold (ret)->initialize (r1x) ;
-		inline_memset (Pointer::from (ret.mInteger.ref) ,r1x) ;
 		for (auto &&i : range (0 ,r1x)) {
 			auto rax = Val32 (0) ;
 			for (auto &&j : range (0 ,r1x)) {
@@ -1166,150 +1360,146 @@ public:
 					continue ;
 				const auto r2x = Val32 (get (self ,i)) * Val32 (get (that ,j)) + rax ;
 				const auto r3x = r2x + Val32 (ret.mInteger[iy]) ;
-				ret.mInteger[iy] = Byte (r3x) ;
 				rax = Val32 (Char (r3x) >> 8) ;
+				ret.mInteger[iy] = Byte (r3x) ;
 			}
 		}
-		Index ix = r1x ;
-		if ifdo (TRUE) {
-			const auto r4x = invoke ([&] () {
-				for (auto &&i : range (0 ,ix))
-					if (ret.mInteger[i] != Byte (0X00))
-						return i ;
-				return ix ;
-			}) ;
-			if (r4x == ix)
-				discard ;
-			const auto r5x = get (self ,ix) ^ get (that ,ix) ;
-			ret.mInteger[ix] = r5x ;
-			ix++ ;
-		}
-		ret.mWidth = ix ;
+		ret.mWidth = r1x ;
+		ret.mShift = self.mShift + that.mShift ;
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
 	IntegerLayout sdiv (CR<IntegerLayout> that) const override {
+		assert (self.mShift == that.mShift) ;
 		IntegerLayout ret ;
 		auto rax = IntegerLayout () ;
-		const auto r1x = IntegerHolder::hold (self)->compr (Integer::zero ()) ;
-		const auto r2x = IntegerHolder::hold (that)->compr (Integer::zero ()) ;
+		//@info: extra INTEGER_MIN_SIZE bytes for the scale window of sdiv_abs, not for alignment
+		const auto r1x = inline_max (self.mWidth ,that.mWidth) + INTEGER_MIN_SIZE::expr ;
+		IntegerHolder::hold (rax)->initialize (r1x) ;
+		IntegerHolder::hold (ret)->initialize (r1x) ;
+		const auto r2x = IntegerHolder::hold (self)->compr (Integer::zero ()) ;
+		const auto r3x = IntegerHolder::hold (that)->compr (Integer::zero ()) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (r2x != 0)
+			if (r3x != 0)
 				discard ;
 			//@info: Integer division by zero
 			assume (FALSE) ;
 		}
 		if ifdo (act) {
-			if (r1x < 0)
-				discard ;
 			if (r2x < 0)
 				discard ;
-			sdiv_abs (ret ,rax ,self ,that) ;
+			if (r3x < 0)
+				discard ;
+			sdiv_abs (ret ,rax ,self ,that ,self.mShift) ;
 		}
 		if ifdo (act) {
-			if (r1x >= 0)
+			if (r2x >= 0)
 				discard ;
-			if (r2x < 0)
+			if (r3x < 0)
 				discard ;
-			const auto r3x = IntegerHolder::hold (self)->minus () ;
-			sdiv_abs (ret ,rax ,r3x ,that) ;
+			const auto r4x = IntegerHolder::hold (self)->minus () ;
+			sdiv_abs (ret ,rax ,r4x ,that ,self.mShift) ;
 			ret = IntegerHolder::hold (ret)->minus () ;
 		}
 		if ifdo (act) {
-			if (r1x < 0)
+			if (r2x < 0)
 				discard ;
-			if (r2x >= 0)
+			if (r3x >= 0)
 				discard ;
-			const auto r4x = IntegerHolder::hold (that)->minus () ;
-			sdiv_abs (ret ,rax ,self ,r4x) ;
+			const auto r5x = IntegerHolder::hold (that)->minus () ;
+			sdiv_abs (ret ,rax ,self ,r5x ,self.mShift) ;
 			ret = IntegerHolder::hold (ret)->minus () ;
 		}
 		if ifdo (act) {
-			if (r1x >= 0)
-				discard ;
 			if (r2x >= 0)
 				discard ;
-			const auto r5x = IntegerHolder::hold (self)->minus () ;
-			const auto r6x = IntegerHolder::hold (that)->minus () ;
-			sdiv_abs (ret ,rax ,r5x ,r6x) ;
+			if (r3x >= 0)
+				discard ;
+			const auto r6x = IntegerHolder::hold (self)->minus () ;
+			const auto r7x = IntegerHolder::hold (that)->minus () ;
+			sdiv_abs (ret ,rax ,r6x ,r7x ,self.mShift) ;
 		}
+		check_mask (ret) ;
 		return move (ret) ;
 	}
 
 	IntegerLayout smod (CR<IntegerLayout> that) const override {
+		assert (self.mShift == that.mShift) ;
 		IntegerLayout ret ;
 		auto rax = IntegerLayout () ;
-		const auto r1x = IntegerHolder::hold (self)->compr (Integer::zero ()) ;
-		const auto r2x = IntegerHolder::hold (that)->compr (Integer::zero ()) ;
+		//@info: extra INTEGER_MIN_SIZE bytes for the scale window of sdiv_abs, not for alignment
+		const auto r1x = inline_max (self.mWidth ,that.mWidth) + INTEGER_MIN_SIZE::expr ;
+		IntegerHolder::hold (rax)->initialize (r1x) ;
+		IntegerHolder::hold (ret)->initialize (r1x) ;
+		const auto r2x = IntegerHolder::hold (self)->compr (Integer::zero ()) ;
+		const auto r3x = IntegerHolder::hold (that)->compr (Integer::zero ()) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (r2x != 0)
+			if (r3x != 0)
 				discard ;
 			//@info: Integer division by zero
 			assume (FALSE) ;
 		}
 		if ifdo (act) {
-			if (r1x < 0)
-				discard ;
 			if (r2x < 0)
 				discard ;
-			sdiv_abs (rax ,ret ,self ,that) ;
+			if (r3x < 0)
+				discard ;
+			sdiv_abs (rax ,ret ,self ,that ,0) ;
 		}
 		if ifdo (act) {
-			if (r1x >= 0)
+			if (r2x >= 0)
 				discard ;
-			if (r2x < 0)
+			if (r3x < 0)
 				discard ;
-			const auto r3x = IntegerHolder::hold (self)->minus () ;
-			sdiv_abs (rax ,ret ,r3x ,that) ;
+			const auto r4x = IntegerHolder::hold (self)->minus () ;
+			sdiv_abs (rax ,ret ,r4x ,that ,0) ;
 			ret = IntegerHolder::hold (ret)->minus () ;
 		}
 		if ifdo (act) {
-			if (r1x < 0)
+			if (r2x < 0)
 				discard ;
-			if (r2x >= 0)
+			if (r3x >= 0)
 				discard ;
-			const auto r4x = IntegerHolder::hold (that)->minus () ;
-			sdiv_abs (rax ,ret ,self ,r4x) ;
+			const auto r5x = IntegerHolder::hold (that)->minus () ;
+			sdiv_abs (rax ,ret ,self ,r5x ,0) ;
 		}
 		if ifdo (act) {
-			if (r1x >= 0)
-				discard ;
 			if (r2x >= 0)
 				discard ;
-			const auto r5x = IntegerHolder::hold (self)->minus () ;
-			const auto r6x = IntegerHolder::hold (that)->minus () ;
-			sdiv_abs (rax ,ret ,r5x ,r6x) ;
+			if (r3x >= 0)
+				discard ;
+			const auto r6x = IntegerHolder::hold (self)->minus () ;
+			const auto r7x = IntegerHolder::hold (that)->minus () ;
+			sdiv_abs (rax ,ret ,r6x ,r7x ,0) ;
 			ret = IntegerHolder::hold (ret)->minus () ;
 		}
+		check_mask (ret) ;
 		return move (ret) ;
 	}
 
-	void sdiv_abs (VR<IntegerLayout> quotient ,VR<IntegerLayout> remainder ,CR<IntegerLayout> dividend ,CR<IntegerLayout> divisor) const {
-		const auto r1x = inline_max (dividend.mWidth ,divisor.mWidth) ;
-		const auto r2x = r1x + 1 ;
-		IntegerHolder::hold (quotient)->initialize (r2x) ;
-		inline_memset (Pointer::from (quotient.mInteger.ref) ,r2x) ;
-		IntegerHolder::hold (remainder)->initialize (r2x) ;
-		inline_memset (Pointer::from (remainder.mInteger.ref) ,r2x) ;
-		for (auto &&i : range (0 ,r1x)) {
-			Index ix = r1x - 1 - i ;
+	void sdiv_abs (VR<IntegerLayout> quotient ,VR<IntegerLayout> remainder ,CR<IntegerLayout> dividend ,CR<IntegerLayout> divisor ,CR<Length> scale) const {
+		const auto r1x = scale ;
+		const auto r2x = quotient.mWidth ;
+		for (auto &&i : range (0 ,r2x)) {
+			Index ix = r2x - 1 - i ;
+			Index iy = ix - r1x ;
 			for (auto &&j : range (0 ,8)) {
 				Index jx = 8 - 1 - j ;
-				const auto r3x = ByteProc::exp2p_bit (jx) ;
-				for (auto &&k : range (0 ,r1x - 1)) {
-					Index kx = r1x - 1 - k ;
-					remainder.mInteger[kx] = (remainder.mInteger[kx] << 1) | (remainder.mInteger[kx - 1] >> 7) ;
+				const auto r3x = MathProc::exp2_bit (jx) ;
+				for (auto &&k : range (0 ,r2x - 1)) {
+					Index kx = r2x - 1 - k ;
+					remainder.mInteger[kx] = ByteProc::shift (remainder.mInteger[kx] ,remainder.mInteger[kx - 1] ,7) ;
 				}
 				if ifdo (TRUE) {
-					if (r1x == 0)
+					if (r2x == 0)
 						discard ;
 					Index kx = 0 ;
 					remainder.mInteger[kx] = remainder.mInteger[kx] << 1 ;
 				}
-				remainder.mInteger[0] |= (get (dividend ,ix) >> jx) & Byte (0X01) ;
+				remainder.mInteger[0] |= (get (dividend ,iy) >> jx) & Byte (0X01) ;
 				const auto r4x = IntegerHolder::hold (remainder)->compr (Integer::zero ()) ;
 				assert (r4x >= 0) ;
 				auto act = TRUE ;
@@ -1318,9 +1508,9 @@ public:
 					if (r5x < ZERO)
 						discard ;
 					auto rax = Val32 (0) ;
-					for (auto &&k : range (0 ,r1x)) {
+					for (auto &&k : range (0 ,r2x)) {
 						const auto r6x = Val32 (get (remainder ,k)) - Val32 (get (divisor ,k)) - rax ;
-						rax = 1 - MathProc::step (r6x) ;
+						rax = Val32 (r6x < 0) ;
 						const auto r7x = r6x + 256 * rax ;
 						remainder.mInteger[k] = Byte (r7x) ;
 					}
@@ -1331,154 +1521,163 @@ public:
 				}
 			}
 		}
-		check_mask (quotient) ;
-		check_mask (remainder) ;
+		quotient.mShift = r1x ;
+		remainder.mShift = dividend.mShift ;
 	}
 
 	IntegerLayout sabs () const override {
 		if (get (self ,self.mWidth - 1) == Byte (0XFF))
 			return minus () ;
-		IntegerLayout ret ;
-		IntegerHolder::hold (ret)->initialize (self) ;
-		return move (ret) ;
+		return share () ;
 	}
 
 	IntegerLayout minus () const override {
 		IntegerLayout ret ;
 		IntegerHolder::hold (ret)->initialize (self.mWidth) ;
-		for (auto &&i : range (0 ,self.mWidth))
+		for (auto &&i : range (0 ,ret.mInteger.size ()))
 			ret.mInteger[i] = ~get (self ,i) ;
-		IntegerHolder::hold (ret)->increase () ;
-		return move (ret) ;
-	}
-
-	IntegerLayout lshift (CR<Length> scale) const override {
-		assert (scale >= 0) ;
-		assert (self.mWidth > 0) ;
-		IntegerLayout ret ;
-		const auto r1x = scale / 8 ;
-		const auto r2x = scale % 8 ;
-		const auto r3x = 8 - r2x ;
-		const auto r4x = self.mWidth + r1x + 1 ;
-		IntegerHolder::hold (ret)->initialize (r4x) ;
-		for (auto &&i : range (0 ,r4x - r1x - 1)) {
-			Index ix = r4x - 1 - i ;
-			const auto r5x = get (self ,ix - r1x) ;
-			const auto r6x = get (self ,ix - r1x - 1) ;
-			ret.mInteger[ix] = (r5x << r2x) | (r6x >> r3x) ;
+		auto rax = Val32 (1) ;
+		for (auto &&i : range (0 ,ret.mWidth)) {
+			const auto r1x = Val32 (ret.mInteger[i]) + rax ;
+			rax = Val32 (Char (r1x) >> 8) ;
+			ret.mInteger[i] = Byte (r1x) ;
 		}
-		const auto r7x = Byte (0X00) ;
-		if ifdo (TRUE) {
-			if (r4x - r1x <= 0)
-				discard ;
-			Index ix = r1x ;
-			const auto r8x = get (self ,ix - r1x) ;
-			ret.mInteger[ix] = (r8x << r2x) | (r7x >> r3x) ;
-		}
-		const auto r9x = inline_max (r4x - r1x ,0) ;
-		for (auto &&i : range (r9x ,r4x)) {
-			Index ix = r4x - 1 - i ;
-			ret.mInteger[ix] = r7x ;
-		}
-		ret.mWidth = r4x ;
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
-	IntegerLayout rshift (CR<Length> scale) const override {
+	IntegerLayout shift (CR<Length> scale) const override {
+		if (scale > 0)
+			return shift_abs_l (MathProc::abs (scale)) ;
+		if (scale < 0)
+			return shift_abs_r (MathProc::abs (scale)) ;
+		return share () ;
+	}
+
+	IntegerLayout shift_abs_l (CR<Length> scale) const {
+		assert (scale >= 0) ;
+		assert (self.mWidth > 0) ;
+		IntegerLayout ret ;
+		const auto r1x = scale / 8 ;
+		const auto r2x = 8 - scale % 8  ;
+		const auto r3x = self.mWidth + r1x + 1 ;
+		IntegerHolder::hold (ret)->initialize (r3x) ;
+		for (auto &&i : range (0 ,r3x)) {
+			Index ix = i - r1x ;
+			const auto r4x = get (self ,ix) ;
+			const auto r5x = get (self ,ix - 1) ;
+			ret.mInteger[i] = ByteProc::shift (r4x ,r5x ,r2x) ;
+		}
+		ret.mWidth = r3x ;
+		ret.mShift = self.mShift ;
+		check_mask (ret) ;
+		return move (ret) ;
+	}
+
+	IntegerLayout shift_abs_r (CR<Length> scale) const {
 		assert (scale >= 0) ;
 		IntegerLayout ret ;
 		const auto r1x = scale / 8 ;
 		const auto r2x = scale % 8 ;
-		const auto r3x = 8 - r2x ;
-		const auto r4x = self.mWidth ;
-		IntegerHolder::hold (ret)->initialize (r4x) ;
-		for (auto &&i : range (0 ,r4x - r1x - 1)) {
-			const auto r5x = get (self ,i + r1x) ;
-			const auto r6x = get (self ,i + r1x + 1) ;
-			ret.mInteger[i] = (r5x >> r2x) | (r6x << r3x) ;
+		const auto r3x = self.mWidth ;
+		IntegerHolder::hold (ret)->initialize (r3x) ;
+		for (auto &&i : range (0 ,r3x)) {
+			Index ix = i + r1x ;
+			const auto r4x = get (self ,ix) ;
+			const auto r5x = get (self ,ix + 1) ;
+			ret.mInteger[i] = ByteProc::shift (r5x ,r4x ,r2x) ;
 		}
-		const auto r7x = get (self ,r4x) ;
+		ret.mWidth = r3x ;
+		ret.mShift = self.mShift ;
+		check_mask (ret) ;
+		return move (ret) ;
+	}
+
+	IntegerLayout sround () const override {
+		IntegerLayout ret = share () ;
 		if ifdo (TRUE) {
-			if (r4x - r1x <= 0)
+			Index ix = MathProc::max_of (ret.mShift - 1 ,ZERO) ;
+			if (Val32 (ret.mInteger[ix]) < 128)
 				discard ;
-			Index ix = r4x - r1x - 1 ;
-			const auto r8x = get (self ,ix + r1x) ;
-			ret.mInteger[ix] = (r8x >> r2x) | (r7x << r3x) ;
+			IntegerHolder::hold (ret)->increase () ;
 		}
-		const auto r9x = inline_max (r4x - r1x ,0) ;
-		for (auto &&i : range (r9x ,r4x)) {
-			ret.mInteger[i] = r7x ;
+		for (auto &&i : range (0 ,ret.mShift)) {
+			ret.mInteger[i] = Byte (0X00) ;
 		}
-		ret.mWidth = r4x ;
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
 	void increase () override {
-		const auto r1x = self.mWidth ;
-		Index ix = 0 ;
+		auto rax = Val32 (1) ;
+		Index ix = self.mShift ;
 		while (TRUE) {
-			if (ix >= r1x)
+			if (ix >= self.mWidth)
 				break ;
-			const auto r2x = Val32 (get (self ,ix)) + 1 ;
-			self.mInteger[ix] = Byte (r2x) ;
-			if (get (self ,ix) != Byte (0X00))
+			if (rax == 0)
 				break ;
-			ix++ ;
+			const auto r1x = Val32 (self.mInteger[ix]) + rax ;
+			rax = Val32 (Char (r1x) >> 8) ;
+			self.mInteger[ix] = Byte (r1x) ;
 		}
 		check_mask (self) ;
 	}
 
 	void decrease () override {
-		const auto r1x = self.mWidth ;
-		Index ix = 0 ;
+		auto rax = Val32 (1) ;
+		Index ix = self.mShift ;
 		while (TRUE) {
-			if (ix >= r1x)
+			if (ix >= self.mWidth)
 				break ;
-			const auto r2x = Val32 (get (self ,ix)) - 1 ;
-			self.mInteger[ix] = Byte (r2x) ;
-			if (get (self ,ix) != Byte (0XFF))
+			if (rax == 0)
 				break ;
-			ix++ ;
+			const auto r1x = Val32 (self.mInteger[ix]) - rax ;
+			rax = Val32 (r1x < 0) ;
+			const auto r2x = r1x + 256 * rax ;
+			self.mInteger[ix] = Byte (r1x) ;
 		}
 		check_mask (self) ;
 	}
 
 	static void check_mask (VR<IntegerLayout> that) {
 		if ifdo (TRUE) {
-			Index ix = that.mWidth - 1 ;
-			const auto r1x = that.mInteger[ix] ;
-			if (r1x == Byte (0X00))
+			const auto r1x = that.mShift - INTEGER_MIN_SIZE::expr ;
+			if (r1x <= 0)
 				discard ;
-			if (r1x == Byte (0XFF))
-				discard ;
-			if ifdo (TRUE) {
-				if (ix + 1 < that.mInteger.size ())
-					discard ;
-				const auto r2x = that.mInteger.size () + INTEGER_MIN_SIZE::expr ;
-				that.mInteger.resize (r2x) ;
+			for (auto &&i : range (0 ,that.mWidth - r1x)) {
+				that.mInteger[i] = that.mInteger[i + r1x] ;
 			}
-			ix++ ;
-			that.mInteger[ix] = ByteProc::binary (r1x & Byte (0X80)) ;
-			ix++ ;
-			that.mWidth = ix ;
+			that.mWidth -= r1x ;
+			that.mShift = INTEGER_MIN_SIZE::expr ;
 		}
+		assert (that.mShift == INTEGER_MIN_SIZE::expr) ;
+		Index ix = that.mWidth - 1 ;
 		if ifdo (TRUE) {
-			Index ix = that.mWidth - 1 ;
-			const auto r3x = that.mInteger[ix] ;
-			ix-- ;
-			while (TRUE) {
-				if (ix < 0)
-					break ;
-				if (that.mInteger[ix] != r3x)
-					break ;
-				ix-- ;
+			const auto r2x = that.mInteger[ix] ;
+			if (r2x == Byte (0X00))
+				discard ;
+			if (r2x == Byte (0XFF))
+				discard ;
+			const auto r3x = that.mWidth + 1 ;
+			if ifdo (TRUE) {
+				if (r3x <= that.mInteger.size ())
+					discard ;
+				const auto r4x = inline_alignas (r3x ,INTEGER_MIN_SIZE::expr) ;
+				that.mInteger.resize (r4x) ;
 			}
 			ix++ ;
-			ix++ ;
-			that.mWidth = ix ;
+			that.mInteger[ix] = ByteProc::binary (r2x & Byte (0X80)) ;
+			that.mWidth = ix + 1 ;
 		}
+		ix = that.mWidth - 1 ;
+		while (TRUE) {
+			if (ix <= that.mShift)
+				break ;
+			if (that.mInteger[ix] != that.mInteger[ix - 1])
+				break ;
+			ix-- ;
+		}
+		that.mWidth = ix + 1 ;
 	}
 } ;
 
@@ -1494,6 +1693,8 @@ struct JetNode ;
 using JetEvalFunction = Function<VR<JetNode> ,CR<Wrapper<Flt64>>> ;
 
 struct JetNode {
+	Index mCheck ;
+	Length mDepth ;
 	Flt64 mFX ;
 	Flt64 mEX ;
 	RefBuffer<Flt64> mDX ;
@@ -1501,21 +1702,23 @@ struct JetNode {
 	JetEvalFunction mEval ;
 	JetIndex mP1 ;
 	JetIndex mP2 ;
+	Deque<JetIndex> mCompress ;
 } ;
 
 struct JetTree {
 	Allocator<JetNode ,AllocatorNode> mTree ;
+	Index mCheck ;
 } ;
 
-struct JetRoot {
+struct JetImplLayout {
 	SharedRef<JetTree> mThis ;
 
 public:
-	static VR<JetRoot> expr_m () ;
+	static VR<JetImplLayout> expr_m () ;
 } ;
 
-inline VR<JetRoot> JetRoot::expr_m () {
-	static auto mInstance = JetRoot () ;
+inline VR<JetImplLayout> JetImplLayout::expr_m () {
+	static auto mInstance = JetImplLayout () ;
 	return mInstance ;
 }
 
@@ -1523,70 +1726,110 @@ class JetImplHolder final implement Fat<JetHolder ,JetLayout> {
 public:
 	void initialize (CR<Length> size_ ,CR<Flt64> item) override {
 		assert (size_ > 0) ;
-		self.mThis = JetRoot::expr.mThis ;
-		const auto r1x = address (self.mThis.ref) ;
-		self.mIndex.mTree = r1x ;
-		self.mIndex.mCurr = self.mThis->mTree.alloc (Box<JetNode>::make ()) ;
-		ptr (self.mIndex).mFX = item ;
-		ptr (self.mIndex).mEX = 0 ;
-		ptr (self.mIndex).mDX = RefBuffer<Flt64> (size_) ;
-		inline_memset (Pointer::from (ptr (self.mIndex).mDX.ref) ,ptr (self.mIndex).mDX.size () * SIZE_OF<Flt64>::expr) ;
-		ptr (self.mIndex).mSlot = NONE ;
-		ptr (self.mIndex).mP1.mTree = r1x ;
-		ptr (self.mIndex).mP1.mCurr = NONE ;
-		ptr (self.mIndex).mP2.mTree = r1x ;
-		ptr (self.mIndex).mP2.mCurr = NONE ;
+		check_recycle (JetImplLayout::expr) ;
+		self.mThis = JetImplLayout::expr.mThis ;
+		self.mIndex.m1st = self.mThis->mTree.alloc (Box<JetNode>::make ()) ;
+		self.mIndex.m2nd = address (self.mThis.ref) ;
+		ptr (self).mDepth = 1 ;
+		ptr (self).mFX = item ;
+		ptr (self).mEX = 0 ;
+		ptr (self).mDX = RefBuffer<Flt64> (size_) ;
+		const auto r1x = ptr (self).mDX.size () * SIZE_OF<Flt64>::expr ;
+		inline_memset (Pointer::from (ptr (self).mDX.ref) ,r1x) ;
+		ptr (self).mSlot = NONE ;
+		ptr (self).mP1.m1st = NONE ;
+		ptr (self).mP1.m2nd = ZERO ;
+		ptr (self).mP2.m1st = NONE ;
+		ptr (self).mP2.m2nd = ZERO ;
 	}
 
 	void initialize (CR<Length> size_ ,CR<Flt64> item ,CR<Index> slot) override {
 		assert (inline_between (slot ,0 ,size_)) ;
 		initialize (size_ ,item) ;
-		ptr (self.mIndex).mSlot = slot ;
-		ptr (self.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		ptr (self).mSlot = slot ;
+		ptr (self).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			if (node.mSlot == NONE)
 				return ;
 			assume (node.mSlot < params.rank ()) ;
 			node.mFX = params[node.mSlot] ;
 			node.mEX = 0 ;
-			inline_memset (Pointer::from (node.mDX.ref) ,node.mDX.size () * SIZE_OF<Flt64>::expr) ;
+			const auto r1x = node.mDX.size () * SIZE_OF<Flt64>::expr ;
+			inline_memset (Pointer::from (node.mDX.ref) ,r1x) ;
 			node.mDX[node.mSlot] = 1 ;
 			check_fx (node) ;
 		}) ;
 	}
 
-	static VR<JetNode> ptr (CR<JetIndex> index) {
-		return JetRoot::expr.mThis->mTree[index.mCurr] ;
+	void check_recycle (VR<JetImplLayout> root) {
+		if ifdo (TRUE) {
+			if (root.mThis.exist ())
+				discard ;
+			root.mThis = SharedRef<JetTree>::make () ;
+			root.mThis->mCheck = 0 ;
+		}
+		if (root.mThis.counter () > 1)
+			return ;
+		root.mThis->mTree.clear () ;
+		root.mThis->mCheck++ ;
+	}
+
+	static VR<JetNode> ptr (CR<JetLayout> that) {
+		return ptr (that.mIndex) ;
+	}
+
+	static VR<JetNode> ptr (CR<JetIndex> that) {
+		assert (that.m2nd != ZERO) ;
+		auto &&rax = keep[TYPE<JetTree>::expr] (Pointer::make (that.m2nd)) ;
+		return rax.mTree[that.m1st] ;
 	}
 
 	Flt64 fx () const override {
-		return ptr (self.mIndex).mFX ;
+		return ptr (self).mFX ;
 	}
 
 	Flt64 ex () const override {
-		return ptr (self.mIndex).mEX ;
+		return ptr (self).mEX ;
 	}
 
 	Flt64 dx (CR<Index> slot) const override {
-		return ptr (self.mIndex).mDX[slot] ;
+		return ptr (self).mDX[slot] ;
+	}
+
+	void compress () const {
+		if (ptr (self).mCompress.size () > 0)
+			return ;
+		ptr (self).mCompress = Deque<JetIndex> (ptr (self).mDepth) ;
+		auto rax = Deque<JetIndex> (ptr (self).mDepth) ;
+		rax.add (self.mIndex) ;
+		while (TRUE) {
+			if (rax.empty ())
+				break ;
+			const auto r1x = rax[rax.tail ()] ;
+			rax.pop () ;
+			if ifdo (TRUE) {
+				if (r1x.m1st == NONE)
+					discard ;
+				ptr (self).mCompress.push (r1x) ;
+				rax.add (ptr (r1x).mP1) ;
+				rax.add (ptr (r1x).mP2) ;
+			}
+		}
 	}
 
 	void once (CR<Wrapper<Flt64>> params) const override {
-		once (self.mIndex ,params) ;
-	}
-
-	void once (CR<JetIndex> curr ,CR<Wrapper<Flt64>> params) const {
-		if (curr.mCurr == NONE)
+		if (self.mIndex.m1st == NONE)
 			return ;
-		once (ptr (curr).mP1 ,params) ;
-		once (ptr (curr).mP2 ,params) ;
-		ptr (curr).mEval (ptr (curr) ,params) ;
+		compress () ;
+		for (auto &&i : ptr (self).mCompress) {
+			ptr (i).mEval (ptr (i) ,params) ;
+		}
 	}
 
 	JetLayout sadd (CR<JetLayout> that) const override {
-		assert (ptr (self.mIndex).mDX.size () == ptr (that.mIndex).mDX.size ()) ;
+		assert (ptr (self).mDX.size () == ptr (that).mDX.size ()) ;
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (ptr (node.mP1).mEX != ptr (node.mP2).mEX)
@@ -1606,16 +1849,18 @@ public:
 			}
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
-		ptr (ret.mIndex).mP2 = that.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mP2 = that.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
+		ptr (ret).mDepth += ptr (that).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout ssub (CR<JetLayout> that) const override {
-		assert (ptr (self.mIndex).mDX.size () == ptr (that.mIndex).mDX.size ()) ;
+		assert (ptr (self).mDX.size () == ptr (that).mDX.size ()) ;
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (ptr (node.mP1).mEX != ptr (node.mP2).mEX)
@@ -1635,16 +1880,18 @@ public:
 			}
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
-		ptr (ret.mIndex).mP2 = that.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mP2 = that.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
+		ptr (ret).mDepth += ptr (that).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout smul (CR<JetLayout> that) const override {
-		assert (ptr (self.mIndex).mDX.size () == ptr (that.mIndex).mDX.size ()) ;
+		assert (ptr (self).mDX.size () == ptr (that).mDX.size ()) ;
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			node.mFX = ptr (node.mP1).mFX * ptr (node.mP2).mFX ;
 			node.mEX = round_ex (ptr (node.mP1).mEX + ptr (node.mP2).mEX) ;
 			const auto r1x = ptr (node.mP2).mFX ;
@@ -1653,16 +1900,18 @@ public:
 				node.mDX[i] = r1x * ptr (node.mP1).mDX[i] + r2x * ptr (node.mP2).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
-		ptr (ret.mIndex).mP2 = that.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mP2 = that.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
+		ptr (ret).mDepth += ptr (that).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout sdiv (CR<JetLayout> that) const override {
-		assert (ptr (self.mIndex).mDX.size () == ptr (that.mIndex).mDX.size ()) ;
+		assert (ptr (self).mDX.size () == ptr (that).mDX.size ()) ;
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			const auto r1x = 1 / ptr (node.mP2).mFX ;
 			node.mFX = ptr (node.mP1).mFX * r1x ;
 			node.mEX = round_ex (ptr (node.mP1).mEX - ptr (node.mP2).mEX) ;
@@ -1673,15 +1922,17 @@ public:
 				node.mDX[i] = r3x * ptr (node.mP1).mDX[i] + r4x * ptr (node.mP2).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
-		ptr (ret.mIndex).mP2 = that.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mP2 = that.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
+		ptr (ret).mDepth += ptr (that).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout inverse () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			const auto r1x = 1 / ptr (node.mP1).mFX ;
 			node.mFX = r1x ;
 			node.mEX = -ptr (node.mP1).mEX ;
@@ -1690,14 +1941,15 @@ public:
 				node.mDX[i] = r2x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout ssqrt () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mFX >= 0) ;
 			node.mFX = MathProc::sqrt (ptr (node.mP1).mFX) ;
 			node.mEX = round_ex (ptr (node.mP1).mEX / 2) ;
@@ -1706,14 +1958,15 @@ public:
 				node.mDX[i] = r1x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout scbrt () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			node.mFX = MathProc::cbrt (ptr (node.mP1).mFX) ;
 			node.mEX = round_ex (ptr (node.mP1).mEX / 3) ;
 			const auto r1x = 1 / (3 * MathProc::square (node.mFX)) ;
@@ -1721,16 +1974,17 @@ public:
 				node.mDX[i] = r1x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout spow (CR<Val32> that) const override {
 		JetLayout ret ;
 		auto rax = JetLayout () ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		JetHolder::hold (rax)->initialize (ptr (self.mIndex).mDX.size () ,that) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		JetHolder::hold (rax)->initialize (ptr (self).mDX.size () ,that) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			const auto r1x = ptr (node.mP2).mFX ;
 			const auto r2x = Val32 (MathProc::round (r1x - 1)) ;
 			const auto r3x = MathProc::pow (ptr (node.mP1).mFX ,r2x) ;
@@ -1741,16 +1995,17 @@ public:
 				node.mDX[i] = r4x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
-		ptr (ret.mIndex).mP2 = rax.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mP2 = rax.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout shypot (CR<JetLayout> that) const override {
-		assert (ptr (self.mIndex).mDX.size () == ptr (that.mIndex).mDX.size ()) ;
+		assert (ptr (self).mDX.size () == ptr (that).mDX.size ()) ;
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (ptr (node.mP1).mEX != ptr (node.mP2).mEX)
@@ -1773,15 +2028,17 @@ public:
 			}
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
-		ptr (ret.mIndex).mP2 = that.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mP2 = that.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
+		ptr (ret).mDepth += ptr (that).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout sabs () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (ptr (node.mP1).mFX >= 0)
@@ -1792,24 +2049,26 @@ public:
 				copy_node (node ,ptr (node.mP1) ,-1) ;
 			}
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout minus () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			copy_node (node ,ptr (node.mP1) ,-1) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout ssin () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mEX == 0) ;
 			node.mFX = MathProc::sin (ptr (node.mP1).mFX) ;
 			node.mEX = ptr (node.mP1).mEX ;
@@ -1818,14 +2077,15 @@ public:
 				node.mDX[i] = r1x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout scos () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mEX == 0) ;
 			node.mFX = MathProc::cos (ptr (node.mP1).mFX) ;
 			node.mEX = ptr (node.mP1).mEX ;
@@ -1834,14 +2094,15 @@ public:
 				node.mDX[i] = r1x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout stan () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mEX == 0) ;
 			node.mFX = MathProc::tan (ptr (node.mP1).mFX) ;
 			node.mEX = ptr (node.mP1).mEX ;
@@ -1850,14 +2111,15 @@ public:
 				node.mDX[i] = r1x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout sasin () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mEX == 0) ;
 			node.mFX = MathProc::asin (ptr (node.mP1).mFX) ;
 			node.mEX = ptr (node.mP1).mEX ;
@@ -1867,14 +2129,15 @@ public:
 				node.mDX[i] = r2x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout sacos () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mEX == 0) ;
 			node.mFX = MathProc::acos (ptr (node.mP1).mFX) ;
 			node.mEX = ptr (node.mP1).mEX ;
@@ -1884,15 +2147,16 @@ public:
 				node.mDX[i] = r2x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout satan (CR<JetLayout> that) const override {
-		assert (ptr (self.mIndex).mDX.size () == ptr (that.mIndex).mDX.size ()) ;
+		assert (ptr (self).mDX.size () == ptr (that).mDX.size ()) ;
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mEX == 0) ;
 			assume (ptr (node.mP2).mEX == 0) ;
 			node.mFX = MathProc::atan (ptr (node.mP1).mFX ,ptr (node.mP2).mFX) ;
@@ -1905,15 +2169,17 @@ public:
 				node.mDX[i] = r3x * ptr (node.mP1).mDX[i] + r4x * ptr (node.mP2).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
-		ptr (ret.mIndex).mP2 = that.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mP2 = that.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
+		ptr (ret).mDepth += ptr (that).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout sexp () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mEX == 0) ;
 			const auto r1x = MathProc::exp (ptr (node.mP1).mFX) ;
 			node.mFX = r1x ;
@@ -1922,14 +2188,15 @@ public:
 				node.mDX[i] = r1x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout slog () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			assume (ptr (node.mP1).mFX >= 0) ;
 			node.mFX = MathProc::log (ptr (node.mP1).mFX) ;
 			const auto r1x = 1 - MathProc::delta (ptr (node.mP1).mEX) ;
@@ -1939,14 +2206,15 @@ public:
 				node.mDX[i] = r2x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
 	JetLayout relu () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (ptr (self.mIndex).mDX.size () ,0) ;
-		ptr (ret.mIndex).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
+		JetHolder::hold (ret)->initialize (ptr (self).mDX.size () ,0) ;
+		ptr (ret).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
 			const auto r1x = MathProc::step (ptr (node.mP1).mFX) ;
 			node.mFX = r1x * ptr (node.mP1).mFX ;
 			node.mEX = r1x * ptr (node.mP1).mEX ;
@@ -1954,7 +2222,8 @@ public:
 				node.mDX[i] = r1x * ptr (node.mP1).mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ptr (ret.mIndex).mP1 = self.mIndex ;
+		ptr (ret).mP1 = self.mIndex ;
+		ptr (ret).mDepth += ptr (self).mDepth ;
 		return move (ret) ;
 	}
 
@@ -1976,15 +2245,17 @@ public:
 				discard ;
 			node.mFX = 1 ;
 			node.mEX-- ;
-			inline_memset (Pointer::from (node.mDX.ref) ,node.mDX.size () * SIZE_OF<Flt64>::expr) ;
+			const auto r1x = node.mDX.size () * SIZE_OF<Flt64>::expr ;
+			inline_memset (Pointer::from (node.mDX.ref) ,r1x) ;
 		}
 		if ifdo (act) {
-			const auto r1x = 1 / node.mFX ;
-			if (!MathProc::is_low (r1x))
+			const auto r2x = 1 / node.mFX ;
+			if (!MathProc::is_low (r2x))
 				discard ;
 			node.mFX = 1 ;
 			node.mEX++ ;
-			inline_memset (Pointer::from (node.mDX.ref) ,node.mDX.size () * SIZE_OF<Flt64>::expr) ;
+			const auto r3x = node.mDX.size () * SIZE_OF<Flt64>::expr ;
+			inline_memset (Pointer::from (node.mDX.ref) ,r3x) ;
 		}
 	}
 } ;
@@ -2067,11 +2338,12 @@ public:
 	}
 } ;
 
-exports CR<Super<Ref<HashProcLayout>>> HashProcHolder::expr_m () {
+exports CR<Super<UniqueRef<HashProcLayout>>> HashProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<HashProcLayout>> ret ;
-		ret.mThis = Ref<HashProcLayout>::make () ;
-		HashProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<HashProcLayout>> ret ;
+		ret.mThis = UniqueRef<HashProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		HashProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }

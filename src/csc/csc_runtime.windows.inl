@@ -15,6 +15,12 @@
 #endif
 
 #include "csc_end.h"
+#ifdef __CSC_SYSTEM_WINDOWS__
+#include <debugapi.h>
+#include <DbgHelp.h>
+#pragma comment (lib ,"DbgHelp.lib")
+#endif
+
 #include <cstdlib>
 #include <thread>
 #include "csc_begin.h"
@@ -24,6 +30,88 @@ class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,RuntimeProcLa
 public:
 	void initialize () override {
 		noop () ;
+	}
+
+	Tuple<Flag ,Flag> stack_limit () const override {
+		Tuple<Flag ,Flag> ret ;
+		const auto r1x = invoke ([&] () {
+			Buffer2<ULONG_PTR> ret ;
+			inline_memset (ret) ;
+			GetCurrentThreadStackLimits ((&ret[0]) ,(&ret[1])) ;
+			return move (ret) ;
+		}) ;
+		ret.m1st = Flag (r1x[0]) ;
+		ret.m2nd = Flag (r1x[1]) ;
+		return move (ret) ;
+	}
+
+	String<Str> stack_trace (CR<Length> skip) const override {
+		assert (skip >= 0) ;
+		String<Str> ret = String<Str> (15 * 1024) ;
+		auto mWriter = TextWriter (ret.borrow ()) ;
+		const auto r1x = GetCurrentProcess () ;
+		const auto r2x = SymInitialize (r1x ,NULL ,TRUE) ;
+		const auto r3x = 128 * SIZE_OF<csc_handle_t>::expr ;
+		const auto r4x = r3x + SIZE_OF<SYMBOL_INFO>::expr + 1024 ;
+		const auto r5x = r4x + SIZE_OF<IMAGEHLP_MODULE64>::expr ;
+		const auto r6x = address (ret[ret.size () - r5x]) ;
+		const auto r7x = Length (CaptureStackBackTrace (csc_enum_t (skip) ,csc_enum_t (128) ,PTR<VR<csc_handle_t>> (r6x) ,NULL)) ;
+		auto &&rax = keep[TYPE<SYMBOL_INFO>::expr] (Pointer::make (r6x + r3x)) ;
+		auto &&rbx = keep[TYPE<IMAGEHLP_MODULE64>::expr] (Pointer::make (r6x + r4x)) ;
+		rax.SizeOfStruct = csc_enum_t (SIZE_OF<SYMBOL_INFO>::expr) ;
+		rax.MaxNameLen = csc_enum_t (1024) ;
+		rbx.SizeOfStruct = csc_enum_t (SIZE_OF<IMAGEHLP_MODULE64>::expr) ;
+		for (auto &&i : range (0 ,r7x)) {
+			const auto r8x = r6x + i * SIZE_OF<csc_handle_t>::expr ;
+			const auto r9x = csc_handle_t (bitwise (Pointer::make (r8x))) ;
+			mWriter << slice ("#") << WriteAligned (i ,2) ;
+			mWriter << slice (" [0X") ;
+			mWriter << Quad (Flag (r9x)) ;
+			mWriter << slice ("] : ") ;
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (!r2x)
+					discard ;
+				const auto r10x = SymGetModuleInfo64 (r1x ,csc_size_t (r9x) ,(&rbx)) ;
+				if (!r10x)
+					discard ;
+				const auto r11x = Slice (Flag (rbx.ImageName) ,SLICE_MAX_SIZE::expr ,1).eos () ;
+				if (r11x.size () == 0)
+					discard ;
+				mWriter << slice_filename (r11x) ;
+				mWriter << slice ("!") ;
+				const auto r12x = SymFromAddr (r1x ,csc_size_t (r9x) ,NULL ,(&rax)) ;
+				if (!r12x)
+					discard ;
+				const auto r13x = Slice (Flag (rax.Name) ,rax.NameLen ,1).eos () ;
+				if (r13x.size () == 0)
+					discard ;
+				mWriter << r13x ;
+			}
+			if ifdo (act) {
+				mWriter << slice ("???") ;
+			}
+			mWriter << GAP ;
+		}
+		mWriter << EOS ;
+		return move (ret) ;
+	}
+
+	Slice slice_filename (CR<Slice> s) const {
+		const auto r1x = s.size () ;
+		Index ix = r1x - 1 ;
+		while (TRUE) {
+			if (ix < 0)
+				break ;
+			const auto r2x = s[ix] ;
+			if (r2x == Stru32 ('\\'))
+				break ;
+			if (r2x == Stru32 ('/'))
+				break ;
+			ix-- ;
+		}
+		ix++ ;
+		return Slice (s.offset (ix) ,r1x - ix ,s.step ()) ;
 	}
 
 	Length thread_concurrency () const override {
@@ -48,7 +136,7 @@ public:
 	}
 
 	void process_exit () const override {
-		std::quick_exit (0) ;
+		std::exit (0) ;
 	}
 
 	String<Str> library_file (CR<csc_handle_t> addr) const override {
@@ -155,8 +243,8 @@ public:
 			rax << GAP ;
 			rax << self.mProcessTime ;
 			rax << GAP ;
-			rax << EOS ;
 		}
+		rax << EOS ;
 		return move (ret) ;
 	}
 } ;
@@ -245,8 +333,8 @@ public:
 				discard ;
 			const auto r1x = Flag (self.mLocal.mAddress1) ;
 			assume (r1x != ZERO) ;
-			auto &&rax = keep[TYPE<SingletonRoot>::expr] (Pointer::make (r1x)) ;
-			self.mRoot = Ref<SingletonRoot>::reference (rax) ;
+			auto &&rax = keep[TYPE<SingletonImplLayout>::expr] (Pointer::make (r1x)) ;
+			self.mRoot = Ref<SingletonImplLayout>::reference (rax) ;
 		}
 	}
 
@@ -262,7 +350,7 @@ public:
 		} ,[&] (VR<csc_handle_t> me) {
 			CloseHandle (me) ;
 		}) ;
-		self.mRoot = Ref<SingletonRoot>::reference (SingletonRoot::expr) ;
+		self.mRoot = Ref<SingletonImplLayout>::reference (SingletonImplLayout::expr) ;
 		self.mRoot->mMutex = NULL ;
 		self.mLocal.mReserve1 = Quad (self.mUid) ;
 		self.mLocal.mAddress1 = Quad (address (self.mRoot.ref)) ;
@@ -362,7 +450,10 @@ public:
 	}
 
 	Quad ctx_reserve () const override {
-		return QUAD_ENDIAN ;
+		const auto r1x = Process (self.mUid) ;
+		const auto r2x = r1x.snapshot () ;
+		const auto r3x = HashProc::fnvhash64 (Pointer::from (r2x) ,r2x.size ()) ;
+		return Quad (r3x) ;
 	}
 
 	Flag regi (CR<Unknown> holder) const override {

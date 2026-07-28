@@ -47,48 +47,110 @@ public:
 	}
 #endif
 
+	Bool is_encode (CR<StringLayout> a ,CR<Just<StringEncode>> encode_) const override {
+		auto &&rax = keep[TYPE<String<Byte>>::expr] (a) ;
+		const auto r1x = encode_step (encode_) ;
+		if (r1x != 0)
+			if (rax.step () != r1x)
+				return FALSE ;
+		if ifdo (TRUE) {
+			if (encode_ != StringEncode::ASCII)
+				discard ;
+			for (auto &&i : rax) {
+				const auto r2x = Stru (bitwise (i)) ;
+				if (r2x >= 128)
+					return FALSE ;
+			}
+			return TRUE ;
+		}
+		if ifdo (TRUE) {
+			if (encode_ != StringEncode::LOCAL)
+				discard ;
+			unimplemented () ;
+		}
+		return TRUE ;
+	}
+
+	Flag encode_step (CR<Just<StringEncode>> encode_) const {
+		if (encode_ == StringEncode::ASCII)
+			return 1 ;
+		if (encode_ == StringEncode::LOCAL)
+			return SIZE_OF<Str>::expr ;
+		if (encode_ == StringEncode::UTF8)
+			return 1 ;
+		if (encode_ == StringEncode::UTF16LE)
+			return 2 ;
+		if (encode_ == StringEncode::UTF16BE)
+			return 2 ;
+		if (encode_ == StringEncode::UTF32LE)
+			return 4 ;
+		if (encode_ == StringEncode::UTF32BE)
+			return 4 ;
+		return 0 ;
+	}
+
 #ifdef __CSC_SYSTEM_WINDOWS__
 	String<Stra> stra_from_strw (CR<String<Strw>> a) const override {
-		String<Stra> ret = String<Stra> (a.length () * 2 + 1) ;
-		auto rax = csc_size_t (0) ;
-		const auto r1x = _wcstombs_s_l ((&rax) ,ret ,ret.size () ,a ,_TRUNCATE ,self.mStringLocale) ;
-		assume (r1x == 0) ;
-		ret.trunc (rax) ;
+		const auto r1x = a.length () ;
+		String<Stra> ret = String<Stra> (r1x * 2 + 1) ;
+		if ifdo (TRUE) {
+			if (r1x == 0)
+				discard ;
+			auto rax = csc_size_t (0) ;
+			const auto r2x = _wcstombs_s_l ((&rax) ,ret ,ret.size () ,a ,_TRUNCATE ,self.mStringLocale) ;
+			assume (r2x == 0) ;
+			ret.trunc (rax) ;
+		}
 		return move (ret) ;
 	}
 
 	String<Strw> strw_from_stra (CR<String<Stra>> a) const override {
-		String<Strw> ret = String<Strw> (a.length () + 1) ;
-		auto rax = csc_size_t (0) ;
-		const auto r1x = _mbstowcs_s_l ((&rax) ,ret ,ret.size () ,a ,_TRUNCATE ,self.mStringLocale) ;
-		assume (r1x == 0) ;
-		ret.trunc (rax) ;
+		const auto r1x = a.length () ;
+		String<Strw> ret = String<Strw> (r1x + 1) ;
+		if ifdo (TRUE) {
+			if (r1x == 0)
+				discard ;
+			auto rax = csc_size_t (0) ;
+			const auto r2x = _mbstowcs_s_l ((&rax) ,ret ,ret.size () ,a ,_TRUNCATE ,self.mStringLocale) ;
+			assume (r2x == 0) ;
+			ret.trunc (rax) ;
+		}
 		return move (ret) ;
 	}
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
 	String<Stra> stra_from_strw (CR<String<Strw>> a) const override {
-		String<Stra> ret = String<Stra> (a.length () * 2 + 1) ;
-		auto rax = mbstate_t () ;
-		inline_memset (rax) ;
-		uselocale (self.mStringLocale) ;
-		auto rbx = a.ref ;
-		const auto r1x = Length (wcsrtombs (ret ,(&rbx) ,ret.size () ,(&rax))) ;
-		assume (r1x >= 0) ;
-		ret.trunc (r1x) ;
+		const auto r1x = a.length () ;
+		String<Stra> ret = String<Stra> (r1x * 4 + 1) ;
+		if ifdo (TRUE) {
+			if (r1x == 0)
+				discard ;
+			auto rax = mbstate_t () ;
+			inline_memset (rax) ;
+			uselocale (self.mStringLocale) ;
+			auto rbx = a.ref ;
+			const auto r2x = Length (wcsrtombs (ret ,(&rbx) ,ret.size () ,(&rax))) ;
+			assume (r2x >= 0) ;
+			ret.trunc (r2x) ;
+		}
 		return move (ret) ;
 	}
 
 	String<Strw> strw_from_stra (CR<String<Stra>> a) const override {
-		String<Strw> ret = String<Strw> (a.length () + 1) ;
-		auto rax = mbstate_t () ;
-		inline_memset (rax) ;
-		uselocale (self.mStringLocale) ;
-		auto rbx = a.ref ;
-		const auto r1x = Length (mbsrtowcs (ret ,(&rbx) ,ret.size () ,(&rax))) ;
-		assume (r1x >= 0) ;
-		ret.trunc (r1x) ;
+		const auto r1x = a.length () ;
+		String<Strw> ret = String<Strw> (r1x + 1) ;
+		if ifdo (TRUE) {
+			if (r1x == 0)
+				discard ;
+			auto rax = mbstate_t () ;
+			inline_memset (rax) ;
+			uselocale (self.mStringLocale) ;
+			auto rbx = a.ref ;
+			const auto r2x = Length (mbsrtowcs (ret ,(&rbx) ,ret.size () ,(&rax))) ;
+			assume (r2x >= 0) ;
+			ret.trunc (r2x) ;
+		}
 		return move (ret) ;
 	}
 #endif
@@ -612,30 +674,35 @@ public:
 
 	String<Str> strs_from_straw (RR<String<Stra>> a) const {
 		const auto r1x = a.step () ;
+		noop (r1x) ;
 		assert (a.step () * r1x == SIZE_OF<Str>::expr * r1x) ;
 		return move (keep[TYPE<String<Str>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Str> strs_from_straw (RR<String<Strw>> a) const {
 		const auto r1x = a.step () ;
+		noop (r1x) ;
 		assert (a.step () * r1x == SIZE_OF<Str>::expr * r1x) ;
 		return move (keep[TYPE<String<Str>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Strw> strw_from_struw (RR<String<Stru>> a) const {
 		const auto r1x = a.step () ;
+		noop (r1x) ;
 		assert (a.step () * r1x == SIZE_OF<Strw>::expr * r1x) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Strw> strw_from_struw (RR<String<Stru16>> a) const {
 		const auto r1x = a.step () ;
+		noop (r1x) ;
 		assert (a.step () * r1x == SIZE_OF<Strw>::expr * r1x) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
 
 	String<Strw> strw_from_struw (RR<String<Stru32>> a) const {
 		const auto r1x = a.step () ;
+		noop (r1x) ;
 		assert (a.step () * r1x == SIZE_OF<Strw>::expr * r1x) ;
 		return move (keep[TYPE<String<Strw>>::expr] (Pointer::from (a))) ;
 	}
@@ -720,15 +787,15 @@ public:
 	}
 
 	String<Str> strs_from (CR<String<Stru>> a) const override {
-		return strs_from_straw (strw_from (a)) ;
+		return strs_from (strw_from (a)) ;
 	}
 
 	String<Str> strs_from (CR<String<Stru16>> a) const override {
-		return strs_from_straw (strw_from (a)) ;
+		return strs_from (strw_from (a)) ;
 	}
 
 	String<Str> strs_from (CR<String<Stru32>> a) const override {
-		return strs_from_straw (strw_from (a)) ;
+		return strs_from (strw_from (a)) ;
 	}
 
 	String<Stru> stru8_from (CR<String<Stra>> a) const override {
@@ -813,11 +880,12 @@ public:
 	}
 } ;
 
-exports CR<Super<Ref<StringProcLayout>>> StringProcHolder::expr_m () {
+exports CR<Super<UniqueRef<StringProcLayout>>> StringProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<StringProcLayout>> ret ;
-		ret.mThis = Ref<StringProcLayout>::make () ;
-		StringProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<StringProcLayout>> ret ;
+		ret.mThis = UniqueRef<StringProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		StringProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -842,15 +910,19 @@ public:
 		self.mRegex = std::basic_regex<Str> (format) ;
 	}
 
-	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) override {
+	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset ,CR<Length> size_) override {
 		self.mText = move (text) ;
-		const auto r1x = (&self.mText.ref[offset]) ;
-		const auto r2x = std::regex_search (r1x ,self.mMatch ,self.mRegex) ;
-		if (!r2x)
+		const auto r1x = MathProc::min_of (self.mText->length () - offset ,size_) ;
+		if (r1x <= 0)
 			return NONE ;
-		const auto r3x = Flag (self.mMatch[0].first) ;
-		const auto r4x = (r3x - Flag (r1x)) / SIZE_OF<Str>::expr ;
-		return offset + r4x ;
+		const auto r2x = PTR<CR<Str>> (&self.mText.ref[offset]) ;
+		const auto r3x = PTR<CR<Str>> (&self.mText.ref[offset]) + r1x ;
+		const auto r4x = std::regex_search (r2x ,r3x ,self.mMatch ,self.mRegex) ;
+		if (!r4x)
+			return NONE ;
+		const auto r5x = Flag (self.mMatch[0].first) ;
+		const auto r6x = (r5x - Flag (r2x)) / SIZE_OF<Str>::expr ;
+		return offset + r6x ;
 	}
 
 	Slice match (CR<Index> index) const override {
@@ -1047,12 +1119,8 @@ public:
 			assume (ret.mTree[i].mArrayMap.length () == r2x) ;
 			ret.mTree[i].mObjectMap.remap () ;
 		}
-		ret.mRoot = NONE ;
-		if ifdo (TRUE) {
-			if (r1x.length () == 0)
-				discard ;
-			ret.mRoot = 0 ;
-		}
+		const auto r3x = r1x.length () > 0 ? ZERO : NONE ;
+		ret.mRoot = r3x ;
 		return move (ret) ;
 	}
 
@@ -1070,7 +1138,11 @@ public:
 		//@info: $10->${eps}|<?xml version = "1.0" ?>|<?xml version = "1.0" encoding = "utf-8" ?>
 		//@info: $11->${end}
 		read_shift_e0 () ;
-		assume (mLastIndex == 0) ;
+		if ifdo (TRUE) {
+			if (mLastIndex == 0)
+				discard ;
+			mTree.clear () ;
+		}
 	}
 
 	void read_shift_e0 () {
@@ -1700,12 +1772,8 @@ public:
 			ret.mTree[i].mObjectMap.remap () ;
 			assume (ret.mTree[i].mObjectMap.length () == r3x) ;
 		}
-		ret.mRoot = NONE ;
-		if ifdo (TRUE) {
-			if (r1x.length () == 0)
-				discard ;
-			ret.mRoot = 0 ;
-		}
+		const auto r4x = r1x.length () > 0 ? ZERO : NONE ;
+		ret.mRoot = r4x ;
 		return move (ret) ;
 	}
 
@@ -1724,7 +1792,11 @@ public:
 		//@info: $11->${eps}
 		//@info: $12->${end}
 		read_shift_e0 () ;
-		assert (mLastIndex == 0) ;
+		if ifdo (TRUE) {
+			if (mLastIndex == 0)
+				discard ;
+			mTree.clear () ;
+		}
 	}
 
 	//@info: $0->$11 $10 $12
@@ -2295,9 +2367,9 @@ struct PlyParserElement {
 	ArrayList<PlyParserProperty> mPropertyList ;
 	Set<String<Stru>> mPropertySet ;
 	Length mLastSize ;
-	RefBuffer<Pointer> mPlyBuffer ;
+	RefBuffer<Byte> mPlyBuffer ;
 	Index mPlyIndex ;
-	RefBuffer<Pointer> mExtBuffer ;
+	RefBuffer<Byte> mExtBuffer ;
 	Index mExtIndex ;
 } ;
 
@@ -2391,7 +2463,7 @@ public:
 	}
 
 	void read_header () {
-		mTextReader = TextReader (mStream.share ()) ;
+		mTextReader = TextReader (Ref<RefBuffer<Byte>>::reference (mStream.ref)) ;
 		mTextReader >> BOM ;
 		mTextReader >> slice ("ply") ;
 		mTextReader >> GAP ;
@@ -2520,11 +2592,9 @@ public:
 		}
 		for (auto &&i : mElementList) {
 			const auto r8x = i.mLineSize * i.mLineStep ;
-			auto &&rbx = keep[TYPE<RefBufferLayout>::expr] (i.mPlyBuffer) ;
-			rbx = RefBuffer<Byte> (r8x) ;
+			i.mPlyBuffer = RefBuffer<Byte> (r8x) ;
 			i.mPlyIndex = 0 ;
-			auto &&rcx = keep[TYPE<RefBufferLayout>::expr] (i.mExtBuffer) ;
-			rcx = RefBuffer<Byte> () ;
+			i.mExtBuffer = RefBuffer<Byte> () ;
 			i.mExtIndex = 0 ;
 		}
 	}
@@ -2552,7 +2622,7 @@ public:
 	}
 
 	void read_body_text () {
-		mTextReader = TextReader (mStream.share ()) ;
+		mTextReader = TextReader (Ref<RefBuffer<Byte>>::reference (mStream.ref)) ;
 		mTextReader.reset (mBodyBackup) ;
 		mTextReader >> GAP ;
 		for (auto &&i : mElementList) {
@@ -2716,7 +2786,7 @@ public:
 	}
 
 	void read_body_byte () {
-		mByteReader = ByteReader (mStream.share ()) ;
+		mByteReader = ByteReader (Ref<RefBuffer<Byte>>::reference (mStream.ref)) ;
 		mByteReader.reset (mBodyBackup) ;
 		if ifdo (TRUE) {
 			if (!mDiffEndianFlag)

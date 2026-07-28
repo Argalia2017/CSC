@@ -40,6 +40,7 @@ struct TimeHolder implement Interface {
 	virtual void initialize (CR<Length> milliseconds_) = 0 ;
 	virtual void initialize (CR<TimeCalendar> calendar_) = 0 ;
 	virtual void initialize (CR<TimeLayout> that) = 0 ;
+	virtual Ref<TimeLayout> borrow () leftvalue = 0 ;
 	virtual Ref<TimeLayout> borrow () const leftvalue = 0 ;
 	virtual Length megaseconds () const = 0 ;
 	virtual Length kiloseconds () const = 0 ;
@@ -80,6 +81,10 @@ public:
 	implicit Time (RR<Time> that) = default ;
 
 	forceinline VR<Time> operator= (RR<Time> that) = default ;
+
+	Ref<TimeLayout> borrow () leftvalue {
+		return TimeHolder::hold (thiz)->borrow () ;
+	}
 
 	Ref<TimeLayout> borrow () const leftvalue {
 		return TimeHolder::hold (thiz)->borrow () ;
@@ -150,11 +155,13 @@ inline Time CurrentTime () {
 struct RuntimeProcLayout ;
 
 struct RuntimeProcHolder implement Interface {
-	imports CR<Super<Ref<RuntimeProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<RuntimeProcLayout>>> expr_m () ;
 	imports VFat<RuntimeProcHolder> hold (VR<RuntimeProcLayout> that) ;
 	imports CFat<RuntimeProcHolder> hold (CR<RuntimeProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual Tuple<Flag ,Flag> stack_limit () const = 0 ;
+	virtual String<Str> stack_trace (CR<Length> skip) const = 0 ;
 	virtual Length thread_concurrency () const = 0 ;
 	virtual Flag thread_uid () const = 0 ;
 	virtual void thread_sleep (CR<Time> time) const = 0 ;
@@ -165,10 +172,18 @@ struct RuntimeProcHolder implement Interface {
 	virtual String<Str> library_main () const = 0 ;
 } ;
 
-class RuntimeProc implement Super<Ref<RuntimeProcLayout>> {
+class RuntimeProc implement Super<UniqueRef<RuntimeProcLayout>> {
 public:
 	static CR<RuntimeProc> expr_m () {
 		return keep[TYPE<RuntimeProc>::expr] (RuntimeProcHolder::expr) ;
+	}
+
+	static Tuple<Flag ,Flag> stack_limit () {
+		return RuntimeProcHolder::hold (expr)->stack_limit () ;
+	}
+
+	static String<Str> stack_trace (CR<Length> skip) {
+		return RuntimeProcHolder::hold (expr)->stack_trace (skip) ;
 	}
 
 	static Length thread_concurrency () {
@@ -284,6 +299,7 @@ struct MutexHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual Ref<MutexLayout> borrow () leftvalue = 0 ;
+	virtual Ref<MutexLayout> borrow () const leftvalue = 0 ;
 	virtual Bool done () = 0 ;
 	virtual void enter () = 0 ;
 	virtual void leave () = 0 ;
@@ -296,6 +312,10 @@ public:
 	implicit Mutex (CR<typeof (NULL)>) {
 		mThis = MutexHolder::create () ;
 		MutexHolder::hold (thiz)->initialize () ;
+	}
+
+	Ref<MutexLayout> borrow () leftvalue {
+		return MutexHolder::hold (thiz)->borrow () ;
 	}
 
 	Ref<MutexLayout> borrow () const leftvalue {
@@ -579,6 +599,7 @@ struct SystemHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void set_locale (CR<String<Str>> name) = 0 ;
+	virtual Array<String<Str>> env (CR<String<Str>> name) const = 0 ;
 	virtual void execute (CR<String<Str>> command) const = 0 ;
 } ;
 
@@ -593,6 +614,10 @@ public:
 
 	void set_locale (CR<String<Str>> name) {
 		return SystemHolder::hold (thiz)->set_locale (name) ;
+	}
+
+	Array<String<Str>> env (CR<String<Str>> name) const {
+		return SystemHolder::hold (thiz)->env (name) ;
 	}
 
 	void execute (CR<String<Str>> command) const {
@@ -610,13 +635,12 @@ struct RandomHolder implement Interface {
 	virtual void initialize () = 0 ;
 	virtual void initialize (CR<Flag> seed) = 0 ;
 	virtual Flag seed () const = 0 ;
-	virtual Val32 random_value (CR<Val32> min_ ,CR<Val32> max_) = 0 ;
 	virtual Val64 random_value (CR<Val64> min_ ,CR<Val64> max_) = 0 ;
 	virtual Array<Index> random_shuffle (CR<Length> length_ ,CR<Length> size_) = 0 ;
 	virtual void random_shuffle (CR<Length> length_ ,CR<Length> size_ ,VR<Array<Index>> result) = 0 ;
 	virtual BitSet random_pick (CR<Length> length_ ,CR<Length> size_) = 0 ;
 	virtual void random_pick (CR<Length> length_ ,CR<Length> size_ ,VR<BitSet> result) = 0 ;
-	virtual Bool random_draw (CR<Flt64> possibility) = 0 ;
+	virtual Bool random_draw (CR<Flt64> probability) = 0 ;
 	virtual Array<Flt64> random_uniform (CR<Length> count) = 0 ;
 	virtual Flt64 random_normal () = 0 ;
 } ;
@@ -636,7 +660,7 @@ public:
 
 	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
 	ARG1 random_value (CR<ARG1> min_ ,CR<ARG1> max_) const {
-		return RandomHolder::hold (thiz)->random_value (min_ ,max_) ;
+		return ARG1 (RandomHolder::hold (thiz)->random_value (min_ ,max_)) ;
 	}
 
 	Array<Index> random_shuffle (CR<Length> length_ ,CR<Length> size_) const {
@@ -655,8 +679,8 @@ public:
 		return RandomHolder::hold (thiz)->random_pick (length_ ,size_ ,result) ;
 	}
 
-	Bool random_draw (CR<Flt64> possibility) const {
-		return RandomHolder::hold (thiz)->random_draw (possibility) ;
+	Bool random_draw (CR<Flt64> probability) const {
+		return RandomHolder::hold (thiz)->random_draw (probability) ;
 	}
 
 	Array<Flt64> random_uniform (CR<Length> count) const {
@@ -678,7 +702,7 @@ inline Random CurrentRandom () {
 struct SingletonProcLayout ;
 
 struct SingletonProcHolder implement Interface {
-	imports CR<Super<Ref<SingletonProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<SingletonProcLayout>>> expr_m () ;
 	imports VFat<SingletonProcHolder> hold (VR<SingletonProcLayout> that) ;
 	imports CFat<SingletonProcHolder> hold (CR<SingletonProcLayout> that) ;
 
@@ -690,7 +714,7 @@ struct SingletonProcHolder implement Interface {
 	virtual void save (CR<Clazz> clazz ,CR<Flag> layout) const = 0 ;
 } ;
 
-class SingletonProc implement Super<Ref<SingletonProcLayout>> {
+class SingletonProc implement Super<UniqueRef<SingletonProcLayout>> {
 public:
 	static CR<SingletonProc> expr_m () {
 		return keep[TYPE<SingletonProc>::expr] (SingletonProcHolder::expr) ;

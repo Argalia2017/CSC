@@ -8,12 +8,12 @@
 #include <csc_array.hpp>
 #include <csc_image.hpp>
 #include <csc_matrix.hpp>
-#include <csc_algorithm.hpp>
 #include <csc_stream.hpp>
 #include <csc_string.hpp>
 #include <csc_runtime.hpp>
 #include <csc_file.hpp>
 #include <csc_thread.hpp>
+#include <csc_algorithm.hpp>
 
 namespace ROUTINE {
 using namespace CSC ;

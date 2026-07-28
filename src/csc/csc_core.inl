@@ -7,10 +7,6 @@
 #include "csc_core.hpp"
 
 #include "csc_end.h"
-#ifdef __CSC_SYSTEM_WINDOWS__
-#include <debugapi.h>
-#endif
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -20,43 +16,93 @@
 #include <initializer_list>
 #include <atomic>
 #include <mutex>
+#include <csignal>
+#include <exception>
+
+#ifdef __CSC_SYSTEM_LINUX__
+#include <fcntl.h>
+#endif
 #include "csc_begin.h"
 
+#ifdef __CSC_SYSTEM_LINUX__
+namespace std {
+inline namespace {
+using ::open ;
+using ::close ;
+using ::read ;
+using ::write ;
+} ;
+} ;
+#endif
+
 namespace CSC {
-class CoreProcImplHolder final implement Fat<CoreProcHolder ,Proxy> {
-public:
 #ifdef __CSC_SYSTEM_WINDOWS__
-	Bool inline_debug () const override {
-		return memorize ([&] () {
-			return IsDebuggerPresent () ;
-		}) ;
-	}
+exports Bool CoreProc::inline_debug () {
+	return memorize ([&] () {
+		return IsDebuggerPresent () ;
+	}) ;
+}
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
-	Bool inline_debug () const override {
-		return memorize ([&] () {
-			return FALSE ;
-		}) ;
-	}
+exports Bool CoreProc::inline_debug () {
+	return memorize ([&] () {
+		auto rax = Buffer<char ,ENUM<4096>> () ;
+		if ifdo (TRUE) {
+			const auto r1x = std::open ("/proc/self/status" ,O_RDONLY) ;
+			if (r1x < 0)
+				discard ;
+			const auto r2x = Length (std::read (r1x ,rax ,csc_size_t (rax.size () - 1))) ;
+			std::close (r1x) ;
+			if (r2x <= 0)
+				discard ;
+			rax[r2x] = 0 ;
+			const auto r3x = std::strstr (rax ,"TracerPid:") ;
+			if (r3x == NULL)
+				discard ;
+			const auto r4x = std::atoi (r3x + sizeof ("TracerPid:") - 1) ;
+			if (r4x == 0)
+				discard ;
+			return TRUE ;
+		}
+		return FALSE ;
+	}) ;
+}
 #endif
 
-	void inline_abort () const override {
-		std::abort () ;
-	}
+exports void CoreProc::inline_crash () {
+	std::raise (SIGABRT) ;
+	std::quick_exit (-1) ;
+}
 
-	void inline_notice (CR<Flag> name ,CR<Flag> addr) const override {
-		if ifdo (FALSE) {
-			const auto r1x = csc_string_t (name) ;
-			const auto r2x = csc_handle_t (addr) ;
-			std::printf ("%s : [0x%p] \n" ,r1x ,r2x) ;
-		}
+#ifdef __CSC_SYSTEM_WINDOWS__
+exports void CoreProc::inline_notice (CR<Flag> name ,CR<Flag> addr) {
+	if ifdo (TRUE) {
+		const auto r1x = csc_string_t (name) ;
+		const auto r2x = csc_handle_t (addr) ;
+		const auto r3x = Index (bitwise (Pointer::make (addr))) ;
+		const auto r4x = Val64 (r3x) ;
+		std::printf ("%s [0X%p] : %lld\n" ,r1x ,r2x ,r4x) ;
 	}
+}
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
+exports void CoreProc::inline_notice (CR<Flag> name ,CR<Flag> addr) {
+	if ifdo (TRUE) {
+		const auto r1x = csc_string_t (name) ;
+		const auto r2x = csc_handle_t (addr) ;
+		const auto r3x = Index (bitwise (Pointer::make (addr))) ;
+		const auto r4x = Val64 (r3x) ;
+		std::printf ("%s [%p] : %lld\n" ,r1x ,r2x ,r4x) ;
+	}
+}
+#endif
 
 #ifdef __CSC_CXX_RTTI__
-	Flag inline_type_name (CR<Interface> squalor ,CR<Flag> func_) const override {
-		return Flag (typeid (squalor).name ()) ;
-	}
+exports Flag CoreProc::inline_type_name (CR<Interface> squalor ,CR<Flag> func_) {
+	return Flag (typeid (squalor).name ()) ;
+}
 #endif
 
 #ifndef __CSC_CXX_RTTI__
@@ -64,57 +110,51 @@ public:
 #pragma message "NVCC would not generate type_name without rtti"
 #endif
 
-	Flag inline_type_name (CR<Interface> squalor ,CR<Flag> func_) const override {
-		return func_ ;
-	}
+exports Flag CoreProc::inline_type_name (CR<Interface> squalor ,CR<Flag> func_) {
+	return func_ ;
+}
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-	Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const override {
-		Tuple<Flag ,Flag> ret ;
-		auto rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-		ret.m1st = Flag (rax.begin ()) ;
-		ret.m2nd = Flag (rax.end ()) ;
-		return move (ret) ;
-	}
+exports Tuple<Flag ,Flag> CoreProc::inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) {
+	Tuple<Flag ,Flag> ret ;
+	auto rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
+	ret.m1st = Flag (rax.begin ()) ;
+	ret.m2nd = Flag (rax.end ()) ;
+	return move (ret) ;
+}
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-	Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const override {
-		Tuple<Flag ,Flag> ret ;
-		auto rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-		ret.m1st = Flag (rax.begin ()) ;
-		ret.m2nd = Flag (rax.begin ()) + Length (rax.size ()) * step_ ;
-		return move (ret) ;
-	}
+exports Tuple<Flag ,Flag> CoreProc::inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) {
+	Tuple<Flag ,Flag> ret ;
+	auto rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
+	ret.m1st = Flag (rax.begin ()) ;
+	ret.m2nd = Flag (rax.begin ()) + Length (rax.size ()) * step_ ;
+	return move (ret) ;
+}
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-	Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const override {
-		Tuple<Flag ,Flag> ret ;
-		auto rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-		ret.m1st = Flag (rax.begin ()) ;
-		ret.m2nd = Flag (rax.end ()) ;
-		return move (ret) ;
-	}
+exports Tuple<Flag ,Flag> CoreProc::inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) {
+	Tuple<Flag ,Flag> ret ;
+	auto rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
+	ret.m1st = Flag (rax.begin ()) ;
+	ret.m2nd = Flag (rax.end ()) ;
+	return move (ret) ;
+}
 #endif
 
-	void inline_memset (VR<Pointer> dst ,CR<Length> size_) const override {
-		std::memset ((&dst) ,0 ,size_) ;
-	}
+exports void CoreProc::inline_memset (VR<Pointer> dst ,CR<Length> size_) {
+	std::memset ((&dst) ,0 ,size_) ;
+}
 
-	void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const override {
-		std::memcpy ((&dst) ,(&src) ,size_) ;
-	}
+exports void CoreProc::inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) {
+	std::memcpy ((&dst) ,(&src) ,size_) ;
+}
 
-	Flag inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const override {
-		return Flag (std::memcmp ((&dst) ,(&src) ,size_)) ;
-	}
-} ;
-
-exports CR<CoreProcHolder> CoreProcHolder::expr_m () {
-	static CoreProcImplHolder mInstance ;
-	return mInstance ;
+exports Flag CoreProc::inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) {
+	return Flag (std::memcmp ((&dst) ,(&src) ,size_)) ;
 }
 
 class BoxImplHolder final implement Fat<BoxHolder ,BoxLayout> {
@@ -164,7 +204,7 @@ public:
 
 	void acquire (CR<BoxLayout> that) override {
 		assert (!exist ()) ;
-		if (that.mHolder == ZERO)
+		if (!BoxHolder::hold (that)->exist ())
 			return ;
 		self.mHolder = that.mHolder ;
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
@@ -186,8 +226,7 @@ exports CFat<BoxHolder> BoxHolder::hold (CR<BoxLayout> that) {
 
 struct RefTree {
 	Heap mHeap ;
-	Flag mMemPtr ;
-	Flag mMemSize ;
+	Flag mMemPin ;
 	std::atomic<Val> mCounter ;
 	BoxLayout mValue ;
 } ;
@@ -196,6 +235,11 @@ class RefImplHolder final implement Fat<RefHolder ,RefLayout> {
 public:
 	void initialize (RR<BoxLayout> item) override {
 		assert (!exist ()) ;
+		if ifdo (TRUE) {
+			if (ownership ())
+				discard ;
+			self.mExtend = ORDINARY::expr ;
+		}
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
 		const auto r2x = RFat<ReflectSize> (r1x) ;
 		const auto r3x = inline_max (r2x->type_align () - ALIGN_OF<RefTree>::expr ,0) ;
@@ -203,12 +247,9 @@ public:
 		const auto r5x = Heap::expr ;
 		const auto r6x = r5x.alloc (r4x) ;
 		self.mLayout = inline_alignas (r6x + SIZE_OF<RefTree>::expr ,r2x->type_align ()) ;
-		const auto r7x = inline_vptr (r1x) ;
-		replace (self.mExtend ,ZERO ,r7x) ;
 		inline_memset (Pointer::make (r6x) ,self.mLayout - r6x) ;
 		ptr (self).mHeap = r5x ;
-		ptr (self).mMemPtr = r6x ;
-		ptr (self).mMemSize = r4x ;
+		ptr (self).mMemPin = r4x * 1024 + (address (ptr (self)) - r6x) ;
 		BoxHolder::hold (ptr (self).mValue)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 		ptr (self).mCounter = 1 ;
@@ -216,6 +257,11 @@ public:
 
 	void initialize (CR<Unknown> holder ,CR<Unknown> extend ,CR<Length> size_) override {
 		assert (!exist ()) ;
+		if ifdo (TRUE) {
+			if (ownership ())
+				discard ;
+			self.mExtend = ORDINARY::expr ;
+		}
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = RFat<ReflectSize> (extend) ;
 		const auto r3x = inline_max (r1x->type_align () - ALIGN_OF<RefTree>::expr ,0) ;
@@ -224,38 +270,19 @@ public:
 		const auto r6x = Heap::expr ;
 		const auto r7x = r6x.alloc (r5x) ;
 		self.mLayout = inline_alignas (r7x + SIZE_OF<RefTree>::expr ,r1x->type_align ()) ;
-		const auto r8x = inline_vptr (holder) ;
-		replace (self.mExtend ,ZERO ,r8x) ;
 		inline_memset (Pointer::make (r7x) ,self.mLayout - r7x) ;
 		ptr (self).mHeap = r6x ;
-		ptr (self).mMemPtr = r7x ;
-		ptr (self).mMemSize = r5x ;
+		ptr (self).mMemPin = r5x * 1024 + (address (ptr (self)) - r7x) ;
 		BoxHolder::hold (ptr (self).mValue)->initialize (holder) ;
-		const auto r9x = RFat<ReflectCreate> (holder) ;
-		r9x->create (ref ,1) ;
+		const auto r8x = RFat<ReflectCreate> (holder) ;
+		r8x->create (ref ,1) ;
 		ptr (self).mCounter = 1 ;
 	}
 
-	void initialize (CR<Flag> holder ,CR<Flag> layout) override {
+	void initialize (CR<Flag> extend ,CR<Flag> layout) override {
 		assert (!exist ()) ;
 		self.mLayout = layout ;
-		self.mExtend = holder ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (ownership ())
-				discard ;
-			noop () ;
-		}
-		if ifdo (act) {
-			if (ptr (self).mCounter <= 0)
-				discard ;
-			const auto r1x = ++ptr (self).mCounter ;
-			assert (r1x >= 1) ;
-		}
-		if ifdo (act) {
-			self.mLayout = ZERO ;
-			self.mExtend = ZERO ;
-		}
+		self.mExtend = extend ;
 	}
 
 	void destroy () override {
@@ -269,24 +296,18 @@ public:
 				discard ;
 			BoxHolder::hold (ptr (self).mValue)->destroy () ;
 			const auto r2x = ptr (self).mHeap ;
-			const auto r3x = ptr (self).mMemPtr ;
-			const auto r4x = ptr (self).mMemSize ;
-			r2x.free (r3x ,r4x) ;
+			const auto r3x = ptr (self).mMemPin ;
+			const auto r4x = address (ptr (self)) - r3x % 1024 ;
+			const auto r5x = r3x / 1024 ;
+			r2x.free (r4x ,r5x) ;
 		}
 		self.mLayout = ZERO ;
 		self.mExtend = ZERO ;
 	}
 
 	static VR<RefTree> ptr (CR<RefLayout> that) {
-		assert (that.mLayout != ZERO) ;
 		const auto r1x = that.mLayout - SIZE_OF<RefTree>::expr ;
 		return Pointer::make (r1x) ;
-	}
-
-	RefLayout share () const override {
-		RefLayout ret ;
-		RefHolder::hold (ret)->initialize (self.mExtend ,self.mLayout) ;
-		return move (ret) ;
 	}
 
 	Bool exist () const override {
@@ -295,7 +316,10 @@ public:
 
 	Unknown unknown () const override {
 		assert (ownership ()) ;
-		return Unknown (self.mExtend) ;
+		if (self.mExtend != ORDINARY::expr)
+			return Unknown (self.mExtend) ;
+		assert (exist ()) ;
+		return BoxHolder::hold (ptr (self).mValue)->unknown () ;
 	}
 
 	VR<Pointer> ref_m () leftvalue override {
@@ -308,13 +332,16 @@ public:
 		return Pointer::make (self.mLayout) ;
 	}
 
-	void prepare (CR<Unknown> extend) override {
-		if ifdo (TRUE) {
-			if (self.mExtend == ZERO)
-				discard ;
-			assert (ownership ()) ;
-		}
-		self.mExtend = inline_vptr (extend) ;
+	Bool ownership () const override {
+		if (self.mExtend == ORDINARY::expr)
+			return TRUE ;
+		if (self.mExtend == VARIABLE::expr)
+			return FALSE ;
+		if (self.mExtend == CONSTANT::expr)
+			return FALSE ;
+		if (self.mExtend == REGISTER::expr)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	Bool exclusive () const override {
@@ -328,16 +355,36 @@ public:
 		return TRUE ;
 	}
 
-	Bool ownership () const override {
-		if (self.mExtend == ZERO)
-			return FALSE ;
-		if (self.mExtend == VARIABLE::expr)
-			return FALSE ;
-		if (self.mExtend == CONSTANT::expr)
-			return FALSE ;
-		if (self.mExtend == REGISTER::expr)
-			return FALSE ;
-		return TRUE ;
+	void intrusive (CR<Unknown> extend) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (!ownership ())
+				discard ;
+			self.mExtend = inline_vptr (extend) ;
+		}
+		if ifdo (act) {
+			if (!exist ())
+				discard ;
+			if (ptr (self).mCounter <= 0)
+				discard ;
+			const auto r1x = ++ptr (self).mCounter ;
+			noop (r1x) ;
+			assert (r1x >= 1) ;
+			self.mExtend = inline_vptr (extend) ;
+		}
+		if ifdo (act) {
+			self.mLayout = ZERO ;
+			self.mExtend = ZERO ;
+		}
+	}
+
+	void reveal () override {
+		if ifdo (TRUE) {
+			if (exist ())
+				if (!ownership ())
+					discard ;
+			self.mExtend = ORDINARY::expr ;
+		}
 	}
 } ;
 
@@ -349,28 +396,45 @@ exports CFat<RefHolder> RefHolder::hold (CR<RefLayout> that) {
 	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
-struct HeapRoot {
-	Box<std::recursive_mutex> mMutex ;
-	Box<std::atomic<Val>> mStack ;
-	Box<std::atomic<Val>> mWidth ;
-	Box<std::atomic<Val>> mLength ;
+struct HeapNode ;
+using HeapNodePtr = DEF<HeapNode *> ;
 
-public:
-	static VR<HeapRoot> expr_m () ;
+struct HeapNode {
+	Flag mHeader ;
+	Flag mStackPtr ;
+	HeapNodePtr mPrev ;
+	HeapNodePtr mNext ;
 } ;
 
-inline VR<HeapRoot> HeapRoot::expr_m () {
-	static auto mInstance = HeapRoot () ;
+struct HeapImplLayout {
+	Pin<HeapImplLayout> mPin ;
+	Box<std::recursive_mutex> mMutex ;
+	Box<std::atomic<Val>> mWidth ;
+	Box<std::atomic<Val>> mLength ;
+	Flag mStackRoot ;
+	Flag mStackRest ;
+	HeapNodePtr mStackTop ;
+
+public:
+	static VR<HeapImplLayout> expr_m () ;
+} ;
+
+inline VR<HeapImplLayout> HeapImplLayout::expr_m () {
+	static auto mInstance = HeapImplLayout () ;
 	return mInstance ;
 }
 
-class HeapImplHolder final implement Fat<HeapHolder ,HeapLayout> {
+static constexpr auto HEAP_HEADER = Flag (0XF0F0F0F0CCCCCCCC) ;
+
+class HeapImplHolder final implement Fat<HeapHolder ,HeapImplLayout> {
 public:
 	void initialize () override {
-		HeapRoot::expr.mMutex.remake () ;
-		HeapRoot::expr.mStack.remake () ;
-		HeapRoot::expr.mWidth.remake () ;
-		HeapRoot::expr.mLength.remake () ;
+		self.mMutex.remake () ;
+		self.mWidth.remake () ;
+		self.mLength.remake () ;
+		self.mStackRoot = 0 ;
+		self.mStackRest = 0 ;
+		self.mStackTop = NULL ;
 		dump_memory_leaks () ;
 	}
 
@@ -393,45 +457,84 @@ public:
 #endif
 
 	void enter () const override {
-		return HeapRoot::expr.mMutex->lock () ;
+		return self.mPin->mMutex->lock () ;
 	}
 
 	void leave () const override {
-		return HeapRoot::expr.mMutex->unlock () ;
+		return self.mPin->mMutex->unlock () ;
 	}
 
 	Length size () const override {
-		return HeapRoot::expr.mWidth.ref ;
+		return self.mWidth.ref ;
 	}
 
 	Length length () const override {
-		return HeapRoot::expr.mLength.ref ;
+		return self.mLength.ref ;
 	}
 
 	Flag stack (CR<Length> size_) const override {
-		unimplemented () ;
-		return ZERO ;
+		assert (size_ > 0) ;
+		Scope anonymous (thiz) ;
+		auto rax = HeapNodePtr (NULL) ;
+		const auto r1x = address (rax) ;
+		if ifdo (TRUE) {
+			if (self.mStackRoot != ZERO)
+				discard ;
+			self.mPin->mStackRest = 4 * 1024 * 1024 ;
+			self.mPin->mStackRoot = alloc (self.mStackRest) ;
+			self.mPin->mStackTop = NULL ;
+		}
+		const auto r3x = SIZE_OF<HeapNode>::expr + size_ ;
+		assume (self.mStackRest >= r3x) ;
+		rax = self.mStackTop ;
+		while (TRUE) {
+			if (rax == NULL)
+				break ;
+			if (r1x <= rax->mStackPtr)
+				break ;
+			assert (rax->mHeader == HEAP_HEADER) ;
+			self.mPin->mStackRest += Flag (rax->mNext) - Flag (rax) ;
+			rax = rax->mPrev ;
+		}
+		self.mPin->mStackTop = rax ;
+		if ifdo (TRUE) {
+			if (rax != NULL)
+				discard ;
+			rax = HeapNodePtr (self.mStackRoot)  ;
+			rax->mPrev = NULL ;
+			rax->mNext = rax ;
+		}
+		rax = rax->mNext ;
+		rax->mHeader = HEAP_HEADER ;
+		rax->mStackPtr = r1x ;
+		rax->mPrev = self.mStackTop ;
+		rax->mNext = HeapNodePtr (Flag (rax) + r3x) ;
+		self.mPin->mStackTop = rax ;
+		self.mPin->mStackRest -= r3x ;
+		return Flag (rax) + SIZE_OF<HeapNode>::expr ;
 	}
 
 	Flag alloc (CR<Length> size_) const override {
+		assert (size_ > 0) ;
 		Flag ret = Flag (operator new (size_ ,std::nothrow)) ;
 		assume (ret != ZERO) ;
-		HeapRoot::expr.mLength.ref += size_ ;
-		HeapRoot::expr.mWidth.ref = inline_max (HeapRoot::expr.mWidth.ref ,HeapRoot::expr.mLength.ref) ;
+		self.mPin->mLength.ref += size_ ;
+		self.mPin->mWidth.ref = inline_max (self.mWidth.ref ,self.mLength.ref) ;
 		return move (ret) ;
 	}
 
-#ifdef __cpp_aligned_new
+#ifdef __CSC_CXX_LATEST__
 	Flag alloc (CR<Length> size_ ,CR<Length> align_) const override {
+		assert (size_ > 0) ;
 		Flag ret = Flag (operator new (size_ ,std::align_val_t (align_) ,std::nothrow)) ;
 		assume (ret != ZERO) ;
-		HeapRoot::expr.mLength.ref += size_ ;
-		HeapRoot::expr.mWidth.ref = inline_max (HeapRoot::expr.mWidth.ref ,HeapRoot::expr.mLength.ref) ;
+		self.mPin->mLength.ref += size_ ;
+		self.mPin->mWidth.ref = inline_max (self.mWidth.ref ,self.mLength.ref) ;
 		return move (ret) ;
 	}
 #endif
 
-#ifndef __cpp_aligned_new
+#ifndef __CSC_CXX_LATEST__
 	Flag alloc (CR<Length> size_ ,CR<Length> align_) const override {
 		assume (FALSE) ;
 		return ZERO ;
@@ -439,8 +542,9 @@ public:
 #endif
 
 	void free (CR<Flag> layout ,CR<Length> size_) const override {
+		assert (size_ > 0) ;
 		const auto r1x = csc_handle_t (layout) ;
-		HeapRoot::expr.mLength.ref -= size_ ;
+		self.mPin->mLength.ref -= size_ ;
 		operator delete (r1x ,std::nothrow) ;
 	}
 } ;
@@ -457,13 +561,13 @@ exports CR<HeapLayout> HeapHolder::expr_m () {
 exports VFat<HeapHolder> HeapHolder::hold (VR<HeapLayout> that) {
 	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return VFat<HeapHolder> (rax ,that) ;
+	return VFat<HeapHolder> (rax ,HeapImplLayout::expr) ;
 }
 
 exports CFat<HeapHolder> HeapHolder::hold (CR<HeapLayout> that) {
 	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return CFat<HeapHolder> (rax ,that) ;
+	return CFat<HeapHolder> (rax ,HeapImplLayout::expr) ;
 }
 
 class SliceImplHolder final implement Fat<SliceHolder ,SliceLayout> {
@@ -472,6 +576,10 @@ public:
 		self.mBuffer = buffer ;
 		self.mSize = size_ ;
 		self.mStep = step_ ;
+	}
+
+	Flag offset (CR<Index> index) const override {
+		return self.mBuffer + index * self.mStep ;
 	}
 
 	Length size () const override {
@@ -505,6 +613,7 @@ public:
 	}
 
 	CR<Pointer> at (CR<Index> index) const leftvalue {
+		assert (self.mBuffer != ZERO) ;
 		assert (inline_between (index ,0 ,size ())) ;
 		const auto r1x = self.mBuffer + index * self.mStep ;
 		return Pointer::make (r1x) ;
@@ -558,8 +667,9 @@ public:
 		SliceLayout ret = self ;
 		Index ix = 0 ;
 		auto rax = Stru32 () ;
+		const auto r1x = self.mBuffer != ZERO ? self.mSize : ZERO ;
 		while (TRUE) {
-			if (ix >= self.mSize)
+			if (ix >= r1x)
 				break ;
 			get (ix ,rax) ;
 			if (rax == Stru32 (0X00))
@@ -581,6 +691,13 @@ exports CFat<SliceHolder> SliceHolder::hold (CR<SliceLayout> that) {
 
 class ExceptionImplHolder final implement Fat<ExceptionHolder ,ExceptionLayout> {
 public:
+	void initialize (CR<Slice> what_ ,CR<Slice> func_) override {
+		self.mWhat = what_ ;
+		self.mFunc = func_ ;
+		self.mFile = slice ("???") ;
+		self.mLine = slice ("0") ;
+	}
+
 	void initialize (CR<Slice> what_ ,CR<Slice> func_ ,CR<Slice> file_ ,CR<Slice> line_) override {
 		self.mWhat = what_ ;
 		self.mFunc = func_ ;
@@ -605,10 +722,16 @@ public:
 	}
 
 	void event () const override {
-		unimplemented () ;
+		std::terminate () ;
 	}
 
 	void raise () const override {
+		if ifdo (TRUE) {
+			const auto r1x = std::current_exception () ;
+			if (!Bool (r1x))
+				discard ;
+			std::rethrow_exception (r1x) ;
+		}
 		auto &&rax = keep[TYPE<Exception>::expr] (self) ;
 		throw rax ;
 	}
@@ -643,7 +766,10 @@ public:
 	}
 
 	void initialize (CR<ClazzLayout> that) override {
-		self.mThis = that.mThis.share () ;
+		if (that.mThis == NULL)
+			return ;
+		self.mThis = Ref<ClazzTree>::reference (that.mThis.ref) ;
+		self.mThis.intrusive (that.mThis.unknown ()) ;
 	}
 
 	Length type_size () const override {

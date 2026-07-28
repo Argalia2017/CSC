@@ -21,7 +21,7 @@ static constexpr auto MATH_LN10 = Flt64 (2.30258509299404568402) ;
 struct MathProcLayout ;
 
 struct MathProcHolder implement Interface {
-	imports CR<Super<Ref<MathProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<MathProcLayout>>> expr_m () ;
 	imports VFat<MathProcHolder> hold (VR<MathProcLayout> that) ;
 	imports CFat<MathProcHolder> hold (CR<MathProcLayout> that) ;
 
@@ -98,6 +98,10 @@ struct MathProcHolder implement Interface {
 	virtual Flt64 exp (CR<Flt64> a) const = 0 ;
 	virtual Flt32 log (CR<Flt32> a) const = 0 ;
 	virtual Flt64 log (CR<Flt64> a) const = 0 ;
+	virtual Val64 exp2_bit (CR<Val64> a) const = 0 ;
+	virtual Val64 log2_bit (CR<Val64> a) const = 0 ;
+	virtual Val64 exp10_bit (CR<Val64> a) const = 0 ;
+	virtual Val64 log10_bit (CR<Val64> a) const = 0 ;
 	virtual Flt32 pdf (CR<Flt32> a) const = 0 ;
 	virtual Flt64 pdf (CR<Flt64> a) const = 0 ;
 	virtual Flt32 cbf (CR<Flt32> a) const = 0 ;
@@ -114,7 +118,7 @@ struct MathProcHolder implement Interface {
 	virtual Flt64 min_of (CR<Wrapper<Flt64>> b) const = 0 ;
 } ;
 
-class MathProc implement Super<Ref<MathProcLayout>> {
+class MathProc implement Super<UniqueRef<MathProcLayout>> {
 public:
 	static CR<MathProc> expr_m () {
 		return keep[TYPE<MathProc>::expr] (MathProcHolder::expr) ;
@@ -260,6 +264,26 @@ public:
 		return MathProcHolder::hold (expr)->log (a) ;
 	}
 
+	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
+	static ARG1 exp2_bit (CR<ARG1> a) {
+		return ARG1 (MathProcHolder::hold (expr)->exp2_bit (Val64 (a))) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
+	static ARG1 log2_bit (CR<ARG1> a) {
+		return ARG1 (MathProcHolder::hold (expr)->log2_bit (Val64 (a))) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
+	static ARG1 exp10_bit (CR<ARG1> a) {
+		return ARG1 (MathProcHolder::hold (expr)->exp10_bit (Val64 (a))) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
+	static ARG1 log10_bit (CR<ARG1> a) {
+		return ARG1 (MathProcHolder::hold (expr)->log10_bit (Val64 (a))) ;
+	}
+
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	static ARG1 pdf (CR<ARG1> a) {
 		return MathProcHolder::hold (expr)->pdf (a) ;
@@ -270,22 +294,22 @@ public:
 		return MathProcHolder::hold (expr)->cbf (a) ;
 	}
 
-	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_BOOL<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>>>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<ENUM_ALL<IS_BOOL<ARG1> ,IS_SAME<ARG1 ,ARG2>...>>>
 	static Bool all_of (CR<ARG1> a ,CR<ARG2>...b) {
 		return MathProcHolder::hold (expr)->all_of (MakeWrapper (a ,b...)) ;
 	}
 
-	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_BOOL<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>>>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<ENUM_ALL<IS_BOOL<ARG1> ,IS_SAME<ARG1 ,ARG2>...>>>
 	static Bool any_of (CR<ARG1> a ,CR<ARG2>...b) {
 		return MathProcHolder::hold (expr)->any_of (MakeWrapper (a ,b...)) ;
 	}
 
-	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_SCALAR<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>>>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<ENUM_ALL<IS_SCALAR<ARG1> ,IS_SAME<ARG1 ,ARG2>...>>>
 	static ARG1 max_of (CR<ARG1> a ,CR<ARG2>...b) {
 		return MathProcHolder::hold (expr)->max_of (MakeWrapper (a ,b...)) ;
 	}
 
-	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_SCALAR<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>>>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<ENUM_ALL<IS_SCALAR<ARG1> ,IS_SAME<ARG1 ,ARG2>...>>>
 	static ARG1 min_of (CR<ARG1> a ,CR<ARG2>...b) {
 		return MathProcHolder::hold (expr)->min_of (MakeWrapper (a ,b...)) ;
 	}
@@ -332,9 +356,9 @@ struct Notation {
 	Flag mRadix ;
 	Length mPrecision ;
 	Bool mSign ;
-	Val64 mMantissa ;
-	Val64 mDownflow ;
-	Val64 mExponent ;
+	Quad mMantissa ;
+	Quad mDownflow ;
+	Length mExponent ;
 } ;
 
 struct FEXP2CacheLayout ;
@@ -388,7 +412,7 @@ public:
 struct FloatProcLayout ;
 
 struct FloatProcHolder implement Interface {
-	imports CR<Super<Ref<FloatProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<FloatProcLayout>>> expr_m () ;
 	imports VFat<FloatProcHolder> hold (VR<FloatProcLayout> that) ;
 	imports CFat<FloatProcHolder> hold (CR<FloatProcLayout> that) ;
 
@@ -401,7 +425,7 @@ struct FloatProcHolder implement Interface {
 	virtual Notation fexp10_from_fexp2 (CR<Notation> fexp2) const = 0 ;
 } ;
 
-class FloatProc implement Super<Ref<FloatProcLayout>> {
+class FloatProc implement Super<UniqueRef<FloatProcLayout>> {
 public:
 	static CR<FloatProc> expr_m () {
 		return keep[TYPE<FloatProc>::expr] (FloatProcHolder::expr) ;
@@ -435,7 +459,7 @@ public:
 struct ByteProcLayout ;
 
 struct ByteProcHolder implement Interface {
-	imports CR<Super<Ref<ByteProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<ByteProcLayout>>> expr_m () ;
 	imports VFat<ByteProcHolder> hold (VR<ByteProcLayout> that) ;
 	imports CFat<ByteProcHolder> hold (CR<ByteProcLayout> that) ;
 
@@ -449,6 +473,10 @@ struct ByteProcHolder implement Interface {
 	virtual Word merge (CR<Byte> high_ ,CR<Byte> low_) const = 0 ;
 	virtual Char merge (CR<Word> high_ ,CR<Word> low_) const = 0 ;
 	virtual Quad merge (CR<Char> high_ ,CR<Char> low_) const = 0 ;
+	virtual Byte shift (CR<Byte> high_ ,CR<Byte> low_ ,CR<Index> high_bit) const = 0 ;
+	virtual Word shift (CR<Word> high_ ,CR<Word> low_ ,CR<Index> high_bit) const = 0 ;
+	virtual Char shift (CR<Char> high_ ,CR<Char> low_ ,CR<Index> high_bit) const = 0 ;
+	virtual Quad shift (CR<Quad> high_ ,CR<Quad> low_ ,CR<Index> high_bit) const = 0 ;
 	virtual Byte reverse (CR<Byte> a) const = 0 ;
 	virtual Word reverse (CR<Word> a) const = 0 ;
 	virtual Char reverse (CR<Char> a) const = 0 ;
@@ -465,13 +493,11 @@ struct ByteProcHolder implement Interface {
 	virtual Word binary (CR<Word> a) const = 0 ;
 	virtual Char binary (CR<Char> a) const = 0 ;
 	virtual Quad binary (CR<Quad> a) const = 0 ;
-	virtual Index exp2p_bit (CR<Length> a) const = 0 ;
-	virtual Length log2p_bit (CR<Index> a) const = 0 ;
-	virtual Length popcount (CR<Byte> a) const = 0 ;
-	virtual Length lowcount (CR<Byte> a) const = 0 ;
+	virtual Length pop_count (CR<Byte> a) const = 0 ;
+	virtual Length low_count (CR<Byte> a) const = 0 ;
 } ;
 
-class ByteProc implement Super<Ref<ByteProcLayout>> {
+class ByteProc implement Super<UniqueRef<ByteProcLayout>> {
 public:
 	static CR<ByteProc> expr_m () {
 		return keep[TYPE<ByteProc>::expr] (ByteProcHolder::expr) ;
@@ -514,6 +540,11 @@ public:
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_BYTE<ARG1>>>
+	static ARG1 shift (CR<ARG1> high_ ,CR<ARG1> low_ ,CR<Index> high_bit) {
+		return ByteProcHolder::hold (expr)->shift (high_ ,low_ ,high_bit) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_BYTE<ARG1>>>
 	static ARG1 reverse (CR<ARG1> a) {
 		return ByteProcHolder::hold (expr)->reverse (a) ;
 	}
@@ -533,30 +564,24 @@ public:
 		return ByteProcHolder::hold (expr)->binary (a) ;
 	}
 
-	static Index exp2p_bit (CR<Length> a) {
-		return ByteProcHolder::hold (expr)->exp2p_bit (a) ;
+	static Length pop_count (CR<Byte> a) {
+		return ByteProcHolder::hold (expr)->pop_count (a) ;
 	}
 
-	static Length log2p_bit (CR<Index> a) {
-		return ByteProcHolder::hold (expr)->log2p_bit (a) ;
-	}
-
-	static Length popcount (CR<Byte> a) {
-		return ByteProcHolder::hold (expr)->popcount (a) ;
-	}
-
-	static Length lowcount (CR<Byte> a) {
-		return ByteProcHolder::hold (expr)->lowcount (a) ;
+	static Length low_count (CR<Byte> a) {
+		return ByteProcHolder::hold (expr)->low_count (a) ;
 	}
 } ;
 
 struct IntegerLayout {
 	RefBuffer<Byte> mInteger ;
 	Length mWidth ;
+	Length mShift ;
 
 public:
 	implicit IntegerLayout () noexcept {
 		mWidth = 0 ;
+		mShift = 0 ;
 	}
 } ;
 
@@ -579,8 +604,8 @@ struct IntegerHolder implement Interface {
 	virtual IntegerLayout smod (CR<IntegerLayout> that) const = 0 ;
 	virtual IntegerLayout sabs () const = 0 ;
 	virtual IntegerLayout minus () const = 0 ;
-	virtual IntegerLayout lshift (CR<Length> scale) const = 0 ;
-	virtual IntegerLayout rshift (CR<Length> scale) const = 0 ;
+	virtual IntegerLayout shift (CR<Length> scale) const = 0 ;
+	virtual IntegerLayout sround () const = 0 ;
 	virtual void increase () = 0 ;
 	virtual void decrease () = 0 ;
 } ;
@@ -588,6 +613,8 @@ struct IntegerHolder implement Interface {
 class Integer implement IntegerLayout {
 protected:
 	using IntegerLayout::mInteger ;
+	using IntegerLayout::mWidth ;
+	using IntegerLayout::mShift ;
 
 public:
 	implicit Integer () = default ;
@@ -600,6 +627,12 @@ public:
 	static CR<Integer> zero () {
 		return memorize ([&] () {
 			return Integer (0) ;
+		}) ;
+	}
+
+	static CR<Integer> iden () {
+		return memorize ([&] () {
+			return Integer (1) ;
 		}) ;
 	}
 
@@ -627,7 +660,7 @@ public:
 		return IntegerHolder::hold (thiz)->fetch () ;
 	}
 
-	forceinline operator Val64 () const {
+	forceinline explicit operator Val64 () const {
 		return fetch () ;
 	}
 
@@ -676,6 +709,8 @@ public:
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
+	forceinline Integer operator+ (CR<Val64> that) const = delete ;
+
 	forceinline Integer operator+ (CR<Integer> that) const {
 		return sadd (that) ;
 	}
@@ -688,6 +723,8 @@ public:
 		IntegerLayout ret = IntegerHolder::hold (thiz)->ssub (that) ;
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
+
+	forceinline Integer operator- (CR<Val64> that) const = delete ;
 
 	forceinline Integer operator- (CR<Integer> that) const {
 		return ssub (that) ;
@@ -702,6 +739,8 @@ public:
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
+	forceinline Integer operator* (CR<Val64> that) const = delete ;
+
 	forceinline Integer operator* (CR<Integer> that) const {
 		return smul (that) ;
 	}
@@ -715,6 +754,8 @@ public:
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
+	forceinline Integer operator/ (CR<Val64> that) const = delete ;
+
 	forceinline Integer operator/ (CR<Integer> that) const {
 		return sdiv (that) ;
 	}
@@ -727,6 +768,8 @@ public:
 		IntegerLayout ret = IntegerHolder::hold (thiz)->smod (that) ;
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
+
+	forceinline Integer operator% (CR<Val64> that) const = delete ;
 
 	forceinline Integer operator% (CR<Integer> that) const {
 		return smod (that) ;
@@ -746,26 +789,30 @@ public:
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
+	forceinline Integer operator+ () const {
+		return thiz ;
+	}
+
 	forceinline Integer operator- () const {
 		return minus () ;
 	}
 
-	Integer lshift (CR<Length> scale) const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->lshift (scale) ;
+	Integer shift (CR<Length> scale) const {
+		IntegerLayout ret = IntegerHolder::hold (thiz)->shift (scale) ;
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
 	forceinline Integer operator<< (CR<Length> scale) const {
-		return lshift (scale) ;
-	}
-
-	Integer rshift (CR<Length> scale) const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->rshift (scale) ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+		return shift (+scale) ;
 	}
 
 	forceinline Integer operator>> (CR<Length> scale) const {
-		return rshift (scale) ;
+		return shift (-scale) ;
+	}
+
+	Integer sround () const {
+		IntegerLayout ret = IntegerHolder::hold (thiz)->sround () ;
+		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
 	void increase () {
@@ -785,12 +832,10 @@ public:
 	}
 } ;
 
+struct JetNode ;
 struct JetTree ;
 
-struct JetIndex {
-	Flag mTree ;
-	Flag mCurr ;
-} ;
+using JetIndex = Tuple<Index ,Index> ;
 
 struct JetLayout {
 	SharedRef<JetTree> mThis ;
@@ -858,15 +903,15 @@ public:
 		return JetHolder::hold (thiz)->dx (slot) ;
 	}
 
-	template <class...ARG1 ,class = REQUIRE<ENUM_ALL<IS_SAME<Flt64 ,ARG1>...>>>
+	template <class...ARG1>
 	void once (CR<ARG1>...params) const {
-		require (ENUM_EQUAL<RANK_OF<TYPE<ARG1...>> ,A>) ;
-		return JetHolder::hold (thiz)->once (MakeWrapper (params...)) ;
+		return JetHolder::hold (thiz)->once (MakeWrapper (Flt64 (params)...)) ;
 	}
 
-	template <class...ARG1 ,class = REQUIRE<ENUM_ALL<IS_SAME<Flt64 ,ARG1>...>>>
-	forceinline void operator() (CR<ARG1>...params) const {
-		return once (params...) ;
+	template <class...ARG1>
+	forceinline CR<Jet> operator() (CR<ARG1>...params) const {
+		once (params...) ;
+		return thiz ;
 	}
 
 	Jet sadd (CR<Jet> that) const {
@@ -878,7 +923,7 @@ public:
 		return sadd (that) ;
 	}
 
-	forceinline VR<Jet> operator+= (CR<Jet> that) {
+	forceinline void operator+= (CR<Jet> that) {
 		thiz = sadd (that) ;
 	}
 
@@ -891,7 +936,7 @@ public:
 		return ssub (that) ;
 	}
 
-	forceinline VR<Jet> operator-= (CR<Jet> that) {
+	forceinline void operator-= (CR<Jet> that) {
 		thiz = ssub (that) ;
 	}
 
@@ -904,7 +949,7 @@ public:
 		return smul (that) ;
 	}
 
-	forceinline VR<Jet> operator*= (CR<Jet> that) {
+	forceinline void operator*= (CR<Jet> that) {
 		thiz = smul (that) ;
 	}
 
@@ -917,7 +962,7 @@ public:
 		return sdiv (that) ;
 	}
 
-	forceinline VR<Jet> operator/= (CR<Jet> that) {
+	forceinline void operator/= (CR<Jet> that) {
 		thiz = sdiv (that) ;
 	}
 
@@ -954,6 +999,10 @@ public:
 	Jet minus () const {
 		JetLayout ret = JetHolder::hold (thiz)->minus () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
+	}
+
+	forceinline Jet operator+ () const {
+		return thiz ;
 	}
 
 	forceinline Jet operator- () const {
@@ -1009,7 +1058,7 @@ public:
 struct HashProcLayout ;
 
 struct HashProcHolder implement Interface {
-	imports CR<Super<Ref<HashProcLayout>>> expr_m () ;
+	imports CR<Super<UniqueRef<HashProcLayout>>> expr_m () ;
 	imports VFat<HashProcHolder> hold (VR<HashProcLayout> that) ;
 	imports CFat<HashProcHolder> hold (CR<HashProcLayout> that) ;
 
@@ -1024,7 +1073,7 @@ struct HashProcHolder implement Interface {
 	virtual Word crchash16 (CR<Pointer> src ,CR<Length> size_ ,CR<Word> val) const = 0 ;
 } ;
 
-class HashProc implement Super<Ref<HashProcLayout>> {
+class HashProc implement Super<UniqueRef<HashProcLayout>> {
 public:
 	static CR<HashProc> expr_m () {
 		return keep[TYPE<HashProc>::expr] (HashProcHolder::expr) ;

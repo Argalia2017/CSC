@@ -63,21 +63,50 @@ public:
 		self.mThis->mPathName = move (pathname) ;
 		self.mThis->mSeparator.add (NONE) ;
 		const auto r1x = self.mThis->mPathName.length () ;
-		for (auto &&i : range (0 ,r1x)) {
-			if (!is_separator (self.mThis->mPathName[i]))
-				continue ;
-			self.mThis->mSeparator.add (i) ;
-			self.mThis->mPathName[i] = Str ('/') ;
-		}
-		self.mThis->mSeparator.add (r1x) ;
 		if ifdo (TRUE) {
-			if (r1x == 0)
-				discard ;
-			Index ix = self.mThis->mSeparator[self.mThis->mSeparator.length () - 2] ;
-			if (ix != r1x - 1)
-				discard ;
-			self.mThis->mPathName.trunc (ix) ;
-			self.mThis->mSeparator.pop () ;
+			auto rax = ZERO ;
+			Index ix = 0 ;
+			for (auto &&i : range (0 ,r1x)) {
+				auto act = TRUE ;
+				if ifdo (act) {
+					if (rax != Flag (0))
+						discard ;
+					if (!is_separator (self.mThis->mPathName[i]))
+						discard ;
+					self.mThis->mSeparator.add (i) ;
+					self.mThis->mPathName[ix] = Str ('/') ;
+					ix++ ;
+					rax = Flag (1) ;
+				}
+				if ifdo (act) {
+					if (rax != Flag (0))
+						discard ;
+					self.mThis->mPathName[ix] = self.mThis->mPathName[i] ;
+					ix++ ;
+				}
+				if ifdo (act) {
+					if (rax != Flag (1))
+						discard ;
+					if (is_separator (self.mThis->mPathName[i]))
+						discard ;
+					self.mThis->mPathName[ix] = self.mThis->mPathName[i] ;
+					ix++ ;
+					rax = Flag (0) ;
+				}
+			}
+			if ifdo (TRUE) {
+				auto act = TRUE ;
+				if ifdo (act) {
+					if (rax != Flag (0))
+						discard ;
+					self.mThis->mSeparator.add (ix) ;
+					self.mThis->mPathName.trunc (ix) ;
+				}
+				if ifdo (act) {
+					ix = self.mThis->mSeparator[self.mThis->mSeparator.tail ()] ;
+					self.mThis->mPathName.trunc (ix) ;
+				}
+			}
 		}
 		if ifdo (TRUE) {
 			if (self.mThis->mSeparator.length () != 2)
@@ -110,7 +139,10 @@ public:
 	}
 
 	void initialize (CR<PathLayout> that) override {
-		self.mThis = that.mThis.share () ;
+		if (that.mThis == NULL)
+			return ;
+		self.mThis = Ref<PathTree>::reference (that.mThis.ref) ;
+		self.mThis.intrusive (that.mThis.unknown ()) ;
 	}
 
 	Bool is_separator (CR<Stru32> str) const {
@@ -277,7 +309,7 @@ public:
 			ret = Path (rax) ;
 		}
 		if ifdo (act) {
-			ret.mThis = self.mThis.share () ;
+			PathHolder::hold (ret)->initialize (self) ;
 		}
 		return move (ret) ;
 	}
@@ -314,8 +346,8 @@ public:
 						discard ;
 					auto rcx = String<Str>::make () ;
 					if ifdo (TRUE) {
-						const auto r1x = getcwd (rcx ,csc_size_t (rcx.size ())) ;
-						if (r1x != NULL)
+						const auto r2x = getcwd (rcx ,csc_size_t (rcx.size ())) ;
+						if (r2x != NULL)
 							discard ;
 						rcx.clear () ;
 					}
@@ -413,6 +445,7 @@ private:
 public:
 	void initialize () override {
 		self.mMutex = NULL ;
+		noop (ByteProc::expr) ;
 	}
 
 	RefBuffer<Byte> load_file (CR<String<Str>> file) const override {
@@ -429,12 +462,15 @@ public:
 		auto rax = r3x ;
 		for (auto &&i : range (0 ,FILEPROC_RETRY_TIME::expr)) {
 			noop (i) ;
-			auto rbx = csc_size_t (rax) ;
+			if (rax == 0)
+				break ;
+			auto rbx = csc_diff_t (rax) ;
 			rbx = std::read (r1x ,(&ret[r3x - rax]) ,rbx) ;
 			assume (rbx >= 0) ;
 			rax -= Length (rbx) ;
 			if (rax == 0)
 				break ;
+			RuntimeProc::thread_yield () ;
 		}
 		assume (rax == 0) ;
 		return move (ret) ;
@@ -467,12 +503,15 @@ public:
 		auto rax = r4x ;
 		for (auto &&i : range (0 ,FILEPROC_RETRY_TIME::expr)) {
 			noop (i) ;
-			auto rbx = csc_size_t (rax) ;
+			if (rax == 0)
+				break ;
+			auto rbx = csc_diff_t (rax) ;
 			rbx = std::write (r1x ,(&item[r4x - rax]) ,rbx) ;
 			assume (rbx >= 0) ;
 			rax -= Length (rbx) ;
 			if (rax == 0)
 				break ;
+			RuntimeProc::thread_yield () ;
 		}
 		assume (rax == 0) ;
 	}
@@ -488,7 +527,8 @@ public:
 		assume (r5x != ZERO) ;
 		const auto r6x = r5x - r4x ;
 		assume (r6x >= 0) ;
-		return RefBuffer<Byte>::reference (r4x ,r6x) ;
+		const auto r7x = Slice (r4x ,r6x ,1) ;
+		return RefBuffer<Byte>::reference (r7x) ;
 	}
 
 	void copy_file (CR<String<Str>> dst ,CR<String<Str>> src) const override {
@@ -741,10 +781,14 @@ public:
 		const auto r1x = item.size () ;
 		auto rax = r1x ;
 		if ifdo (TRUE) {
-			auto rbx = csc_size_t (rax) ;
+			if (rax == 0)
+				discard ;
+			auto rbx = csc_diff_t (rax) ;
 			rbx = std::read (self.mReadPipe ,(&item[r1x - rax]) ,rbx) ;
 			assume (rbx >= 0) ;
 			rax -= Length (rbx) ;
+		}
+		if ifdo (TRUE) {
 			if (rax == 0)
 				discard ;
 			assume (self.mShortRead) ;
@@ -759,10 +803,14 @@ public:
 		const auto r1x = item.size () ;
 		auto rax = r1x ;
 		if ifdo (TRUE) {
-			auto rbx = csc_size_t (rax) ;
+			if (rax == 0)
+				discard ;
+			auto rbx = csc_diff_t (rax) ;
 			rbx = std::write (self.mWritePipe ,(&item[r1x - rax]) ,rbx) ;
 			assume (rbx >= 0) ;
 			rax -= Length (rbx) ;
+		}
+		if ifdo (TRUE) {
 			if (rax == 0)
 				discard ;
 			assume (self.mShortRead) ;
@@ -782,8 +830,6 @@ static const auto mStreamFileExternal = External<StreamFileHolder ,StreamFileLay
 
 class BufferFileImplHolder final implement Fat<BufferFileHolder ,BufferFileLayout> {
 private:
-	using BUFFERFILE_BLOCK_STEP = ENUM<1024> ;
-	using BUFFERFILE_CHUNK_STEP = ENUM<4194304> ;
 	using BUFFERFILE_HEADER_STEP = ENUM<65536> ;
 
 public:
@@ -791,17 +837,24 @@ public:
 		self.mFile = move (file) ;
 		self.mFileSize = 0 ;
 		self.mFileMapFlag = 0 ;
-		set_block_step (BUFFERFILE_BLOCK_STEP::expr) ;
+		set_block_step (1024) ;
+		set_chunk_step (4194304) ;
 		set_cache_size (1) ;
 	}
 
 	void set_block_step (CR<Length> step_) override {
+		assert (!self.mPipe.exist ()) ;
 		self.mBlockStep = step_ ;
-		self.mChunkStep = BUFFERFILE_CHUNK_STEP::expr ;
+	}
+
+	void set_chunk_step (CR<Length> step_) override {
+		assert (!self.mPipe.exist ()) ;
+		self.mChunkStep = step_ ;
 	}
 
 	void set_cache_size (CR<Length> size_) override {
 		assert (size_ > 0) ;
+		assert (!self.mPipe.exist ()) ;
 		self.mCacheSet = Set<Val64> (size_) ;
 		self.mCacheList = List<BufferFileChunk> (size_) ;
 		self.mCacheTimer = 0 ;
@@ -866,8 +919,8 @@ public:
 		}) ;
 		self.mFileSize = self.mHeader->mFileSize ;
 		self.mMapping = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
-			const auto r3x = ftruncate64 (self.mPipe ,self.mFileSize) ;
-			assume (r3x == 0) ;
+			const auto r1x = ftruncate64 (self.mPipe ,self.mFileSize) ;
+			assume (r1x == 0) ;
 			me = csc_handle_t (self.mFile.ref) ;
 		} ,[&] (VR<csc_handle_t> me) {
 			noop () ;
@@ -947,7 +1000,8 @@ public:
 		Index ix = mmap_cache (0 ,BUFFERFILE_HEADER_STEP::expr) ;
 		const auto r1x = self.mCacheList[ix].mBlock->m1st ;
 		const auto r2x = BUFFERFILE_HEADER_STEP::expr ;
-		return Ref<RefBuffer<Byte>>::make (RefBuffer<Byte>::reference (r1x ,r2x)) ;
+		const auto r3x = Slice (r1x ,r2x ,1) ;
+		return Ref<RefBuffer<Byte>>::make (RefBuffer<Byte>::reference (r3x)) ;
 	}
 
 	Length file_size () const override {
@@ -1072,11 +1126,13 @@ public:
 	}
 
 	void set_port_rate (CR<Length> rate) override {
+		assert (!self.mPipe.exist ()) ;
 		self.mPortRate = rate ;
 	}
 
-	void set_ring_size (CR<Length> size_) override {
-		self.mRingBuffer = RefBuffer<Byte> (size_) ;
+	void set_ring_step (CR<Length> step_) override {
+		assert (!self.mPipe.exist ()) ;
+		self.mRingBuffer = RefBuffer<Byte> (step_) ;
 		self.mRingRead = 0 ;
 	}
 
@@ -1110,7 +1166,8 @@ public:
 	}
 
 	void read (VR<RefBuffer<Byte>> buffer ,CR<Index> offset ,CR<Length> size_) override {
-		for (auto &&i : range (0 ,size_)) {
+		const auto r1x = MathProc::min_of (buffer.size () - offset ,size_) ;
+		for (auto &&i : range (0 ,r1x)) {
 			buffer[offset + i] = self.mRingBuffer[self.mRingRead] ;
 			self.mRingRead++ ;
 			if ifdo (TRUE) {
@@ -1118,10 +1175,12 @@ public:
 					discard ;
 				auto rax = self.mRingBuffer.size () ;
 				while (TRUE) {
-					auto rbx = csc_size_t (rax) ;
+					if (rax == 0)
+						break ;
+					auto rbx = csc_diff_t (rax) ;
 					rbx = std::read (self.mPipe ,self.mRingBuffer ,rbx) ;
 					assume (rbx >= 0) ;
-					rax -= rbx ;
+					rax -= Length (rbx) ;
 					if (rax == 0)
 						break ;
 					RuntimeProc::thread_yield () ;
@@ -1139,7 +1198,7 @@ public:
 	void initialize () override {
 		self.mMutex = NULL ;
 		self.mOption = BitSet (ConsoleOption::ETC) ;
-		self.mLogBuffer = String<Str> (STREAMFILE_CHUNK_STEP::expr) ;
+		self.mLogBuffer = String<Str> (65536) ;
 		self.mLogWriter = TextWriter (self.mLogBuffer.borrow ()) ;
 		self.mDebugMode = inline_debug () ;
 		self.mCommand = NULL ;
@@ -1182,7 +1241,6 @@ public:
 			return ;
 		self.mLogWriter.reset () ;
 		self.mLogWriter << msg ;
-		self.mLogWriter << GAP ;
 		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
 			if (!self.mConsole.exist ())
@@ -1284,10 +1342,110 @@ public:
 		FileProc::move_file (self.mOldLogFile ,self.mLogFile) ;
 		self.mLogStreamFile = StreamFile (self.mLogFile) ;
 		self.mLogStreamFile.open_w (0) ;
-		self.mLogWriter.reset () ;
-		self.mLogWriter << BOM ;
-		self.mLogWriter << EOS ;
+		log_open () ;
 		log_file () ;
+	}
+
+	void log_open () {
+		self.mLogWriter.reset () ;
+		self.mLogWriter << slice ("----------------------------------------------------------------") ;
+		self.mLogWriter << GAP ;
+		if ifdo (TRUE) {
+			const auto r1x = CurrentTime ().calendar () ;
+			self.mLogWriter << slice ("Start-Time : ") ;
+			self.mLogWriter << WriteAligned (r1x.mYear ,4) ;
+			self.mLogWriter << slice ("-") ;
+			self.mLogWriter << WriteAligned (r1x.mMonth ,2) ;
+			self.mLogWriter << slice ("-") ;
+			self.mLogWriter << WriteAligned (r1x.mDay ,2) ;
+			self.mLogWriter << slice (" ") ;
+			self.mLogWriter << WriteAligned (r1x.mHour ,2) ;
+			self.mLogWriter << slice (":") ;
+			self.mLogWriter << WriteAligned (r1x.mMinute ,2) ;
+			self.mLogWriter << slice (":") ;
+			self.mLogWriter << WriteAligned (r1x.mSecond ,2) ;
+			self.mLogWriter << GAP ;
+		}
+		if ifdo (TRUE) {
+			const auto r2x = parse_build_time (cxx_build_time ()) ;
+			self.mLogWriter << slice ("Build-Time : ") ;
+			self.mLogWriter << WriteAligned (r2x.mYear ,4) ;
+			self.mLogWriter << slice ("-") ;
+			self.mLogWriter << WriteAligned (r2x.mMonth ,2) ;
+			self.mLogWriter << slice ("-") ;
+			self.mLogWriter << WriteAligned (r2x.mDay ,2) ;
+			self.mLogWriter << slice (" ") ;
+			self.mLogWriter << WriteAligned (r2x.mHour ,2) ;
+			self.mLogWriter << slice (":") ;
+			self.mLogWriter << WriteAligned (r2x.mMinute ,2) ;
+			self.mLogWriter << slice (":") ;
+			self.mLogWriter << WriteAligned (r2x.mSecond ,2) ;
+			self.mLogWriter << GAP ;
+		}
+		self.mLogWriter << slice ("----------------------------------------------------------------") ;
+		self.mLogWriter << GAP ;
+		self.mLogWriter << EOS ;
+	}
+
+	Slice cxx_build_time () const {
+		return slice (__DATE__ " " __TIME__) ;
+	}
+
+	TimeCalendar parse_build_time (CR<String<Str>> item) {
+		TimeCalendar ret ;
+		inline_memset (ret) ;
+		try {
+			auto rax = TextReader (item.borrow ()) ;
+			auto rbx = String<Stru> () ;
+			rax >> GAP ;
+			rax >> ReadKeyword (rbx) ;
+			const auto r1x = invoke ([&] () {
+				if (rbx == slice ("Jan"))
+					return Flag (1) ;
+				if (rbx == slice ("Fen"))
+					return Flag (2) ;
+				if (rbx == slice ("Mar"))
+					return Flag (3) ;
+				if (rbx == slice ("Apr"))
+					return Flag (4) ;
+				if (rbx == slice ("May"))
+					return Flag (5) ;
+				if (rbx == slice ("Jun"))
+					return Flag (6) ;
+				if (rbx == slice ("Jul"))
+					return Flag (7) ;
+				if (rbx == slice ("Aug"))
+					return Flag (8) ;
+				if (rbx == slice ("Sep"))
+					return Flag (9) ;
+				if (rbx == slice ("Oct"))
+					return Flag (10) ;
+				if (rbx == slice ("Nov"))
+					return Flag (11) ;
+				if (rbx == slice ("Dec"))
+					return Flag (12) ;
+				return ZERO ;
+			}) ;
+			ret.mMonth = r1x ;
+			rax >> GAP ;
+			rax >> ReadScalar (rbx) ;
+			ret.mDay = StringParse<Val32>::make (rbx) ;
+			rax >> GAP ;
+			rax >> ReadScalar (rbx) ;
+			ret.mYear = StringParse<Val32>::make (rbx) ;
+			rax >> GAP ;
+			rax >> ReadScalar (rbx) ;
+			ret.mHour = StringParse<Val32>::make (rbx) ;
+			rax >> slice (":") ;
+			rax >> ReadScalar (rbx) ;
+			ret.mMinute = StringParse<Val32>::make (rbx) ;
+			rax >> slice (":") ;
+			rax >> ReadScalar (rbx) ;
+			ret.mSecond = StringParse<Val32>::make (rbx) ;
+		} catch (CR<Exception> e) {
+			noop (e) ;
+		}
+		return move (ret) ;
 	}
 
 	void log_file () {
@@ -1296,7 +1454,8 @@ public:
 				discard ;
 			const auto r1x = Flag (self.mLogBuffer.ref) ;
 			const auto r2x = (self.mLogWriter.length () - 1) * SIZE_OF<Str>::expr ;
-			self.mLogStreamFile.write (RefBuffer<Byte>::reference (r1x ,r2x)) ;
+			const auto r3x = Slice (r1x ,r2x ,1) ;
+			self.mLogStreamFile.write (RefBuffer<Byte>::reference (r3x)) ;
 		}
 	}
 

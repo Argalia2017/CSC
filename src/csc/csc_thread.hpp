@@ -263,12 +263,12 @@ public:
 	}
 } ;
 
-struct SyntaxLayout ;
+struct ExecutionLayout ;
 
-struct SyntaxHolder implement Interface {
-	imports Ref<SyntaxLayout> create () ;
-	imports VFat<SyntaxHolder> hold (VR<SyntaxLayout> that) ;
-	imports CFat<SyntaxHolder> hold (CR<SyntaxLayout> that) ;
+struct ExecutionHolder implement Interface {
+	imports Ref<ExecutionLayout> create () ;
+	imports VFat<ExecutionHolder> hold (VR<ExecutionLayout> that) ;
+	imports CFat<ExecutionHolder> hold (CR<ExecutionLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual CR<Pointer> stack (CR<Clazz> name) const leftvalue = 0 ;
@@ -280,44 +280,44 @@ struct SyntaxHolder implement Interface {
 	virtual void execute () = 0 ;
 } ;
 
-class Syntax implement Super<Ref<SyntaxLayout>> {
+class Execution implement Super<Ref<ExecutionLayout>> {
 public:
-	implicit Syntax () = default ;
+	implicit Execution () = default ;
 
-	implicit Syntax (CR<typeof (NULL)>) {
-		mThis = SyntaxHolder::create () ;
-		SyntaxHolder::hold (thiz)->initialize () ;
+	implicit Execution (CR<typeof (NULL)>) {
+		mThis = ExecutionHolder::create () ;
+		ExecutionHolder::hold (thiz)->initialize () ;
 	}
 
 	template <class ARG1>
 	CR<ARG1> stack (TYPE<ARG1>) const leftvalue {
-		return SyntaxHolder::hold (thiz)->stack (Clazz (TYPE<ARG1>::expr)) ;
+		return ExecutionHolder::hold (thiz)->stack (Clazz (TYPE<ARG1>::expr)) ;
 	}
 
 	template <class ARG1>
 	CR<ARG1> maybe (TYPE<ARG1>) const leftvalue {
-		return SyntaxHolder::hold (thiz)->maybe (Clazz (TYPE<ARG1>::expr)) ;
+		return ExecutionHolder::hold (thiz)->maybe (Clazz (TYPE<ARG1>::expr)) ;
 	}
 
 	void once (CR<Function<>> func) const {
-		return SyntaxHolder::hold (thiz)->once (func) ;
+		return ExecutionHolder::hold (thiz)->once (func) ;
 	}
 
 	void then (CR<Function<>> func) const {
-		return SyntaxHolder::hold (thiz)->then (func) ;
+		return ExecutionHolder::hold (thiz)->then (func) ;
 	}
 
 	template <class ARG1>
 	void monad (TYPE<ARG1>) const {
-		return SyntaxHolder::hold (thiz)->monad (Clazz (TYPE<ARG1>::expr)) ;
+		return ExecutionHolder::hold (thiz)->monad (Clazz (TYPE<ARG1>::expr)) ;
 	}
 
 	Scope until () const {
-		return SyntaxHolder::hold (thiz)->until () ;
+		return ExecutionHolder::hold (thiz)->until () ;
 	}
 
 	void execute () const {
-		return SyntaxHolder::hold (thiz)->execute () ;
+		return ExecutionHolder::hold (thiz)->execute () ;
 	}
 } ;
 } ;

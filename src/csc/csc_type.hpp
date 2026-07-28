@@ -723,20 +723,20 @@ class Unknown ;
 template <class...>
 trait PLACEHOLDER_HELP ;
 
-struct PlaceHolderWrap0 {} ;
+struct PlaceHolderT0 {} ;
 
 template <class RANK>
 trait PLACEHOLDER_HELP<RANK ,REQUIRE<ENUM_EQ_ZERO<RANK>>> {
-	using RET = PlaceHolderWrap0 ;
+	using RET = PlaceHolderT0 ;
 } ;
 
 template <class A>
-struct PlaceHolderWrap1 implement A {} ;
+struct PlaceHolderT1 implement A {} ;
 
 template <class RANK>
 trait PLACEHOLDER_HELP<RANK ,REQUIRE<ENUM_GT_ZERO<RANK>>> {
 	using R1X = typename PLACEHOLDER_HELP<ENUM_DEC<RANK> ,ALWAYS>::RET ;
-	using RET = PlaceHolderWrap1<R1X> ;
+	using RET = PlaceHolderT1<R1X> ;
 } ;
 
 template <class RANK>
@@ -1335,26 +1335,26 @@ struct Union implement Storage<SIZE_OF<A> ,ALIGN_OF<A>> {} ;
 template <class...>
 trait TUPLE_HELP ;
 
-struct TupleWrap0 {} ;
+struct TupleT0 {} ;
 
 template <class PARAMS>
 trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<PARAMS>>>> {
-	using RET = TupleWrap0 ;
+	using RET = TupleT0 ;
 } ;
 
 template <class A>
-struct TupleWrap1 {
+struct TupleT1 {
 	A m1st ;
 } ;
 
 template <class PARAMS>
 trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<RANK_OF<PARAMS> ,RANK1>>> {
 	using R1X = TYPE_M1ST_ITEM<PARAMS> ;
-	using RET = TupleWrap1<R1X> ;
+	using RET = TupleT1<R1X> ;
 } ;
 
 template <class A ,class B>
-struct TupleWrap2 {
+struct TupleT2 {
 	A m1st ;
 	B m2nd ;
 } ;
@@ -1363,11 +1363,11 @@ template <class PARAMS>
 trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<RANK_OF<PARAMS> ,RANK2>>> {
 	using R1X = TYPE_M1ST_ITEM<PARAMS> ;
 	using R2X = TYPE_M2ND_ITEM<PARAMS> ;
-	using RET = TupleWrap2<R1X ,R2X> ;
+	using RET = TupleT2<R1X ,R2X> ;
 } ;
 
 template <class A ,class B ,class C>
-struct TupleWrap3 {
+struct TupleT3 {
 	A m1st ;
 	B m2nd ;
 	C m3rd ;
@@ -1378,7 +1378,7 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<RANK_OF<PARAMS> ,RANK3>>> {
 	using R1X = TYPE_M1ST_ITEM<PARAMS> ;
 	using R2X = TYPE_M2ND_ITEM<PARAMS> ;
 	using R3X = TYPE_M3RD_ITEM<PARAMS> ;
-	using RET = TupleWrap3<R1X ,R2X ,R3X> ;
+	using RET = TupleT3<R1X ,R2X ,R3X> ;
 } ;
 
 template <class...A>

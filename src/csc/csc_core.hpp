@@ -43,39 +43,38 @@ struct FUNCTION_inline_ifdo {
 
 static constexpr auto inline_ifdo = FUNCTION_inline_ifdo () ;
 
-struct CoreProcHolder implement Interface {
-	imports CR<CoreProcHolder> expr_m () ;
-
-	virtual Bool inline_debug () const = 0 ;
-	virtual void inline_abort () const = 0 ;
-	virtual void inline_notice (CR<Flag> name ,CR<Flag> addr) const = 0 ;
-	virtual Flag inline_type_name (CR<Interface> squalor ,CR<Flag> func_) const = 0 ;
-	virtual Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const = 0 ;
-	virtual void inline_memset (VR<Pointer> dst ,CR<Length> size_) const = 0 ;
-	virtual void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const = 0 ;
-	virtual Flag inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const = 0 ;
+class CoreProc {
+public:
+	imports Bool inline_debug () ;
+	imports void inline_crash __macro_noreturn () ;
+	imports void inline_notice (CR<Flag> name ,CR<Flag> addr) ;
+	imports Flag inline_type_name (CR<Interface> squalor ,CR<Flag> func_) ;
+	imports Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) ;
+	imports void inline_memset (VR<Pointer> dst ,CR<Length> size_) ;
+	imports void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) ;
+	imports Flag inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) ;
 } ;
 
 struct FUNCTION_inline_debug {
 	forceinline Bool operator() () const noexcept {
-		return CoreProcHolder::expr.inline_debug () ;
+		return CoreProc::inline_debug () ;
 	}
 } ;
 
 static constexpr auto inline_debug = FUNCTION_inline_debug () ;
 
-struct FUNCTION_inline_abort {
+struct FUNCTION_inline_crash {
 	forceinline void operator() () const noexcept {
-		return CoreProcHolder::expr.inline_abort () ;
+		return CoreProc::inline_crash () ;
 	}
 } ;
 
-static constexpr auto inline_abort = FUNCTION_inline_abort () ;
+static constexpr auto inline_crash = FUNCTION_inline_crash () ;
 
 struct FUNCTION_inline_notice {
 	template <class ARG1 ,class ARG2 ,class ARG3>
 	forceinline void operator() (TYPE<ARG1> ,CR<ARG2> name ,XR<ARG3> item) const noexcept {
-		return CoreProcHolder::expr.inline_notice (address (name) ,address (item)) ;
+		return CoreProc::inline_notice (address (name) ,address (item)) ;
 	}
 } ;
 
@@ -83,7 +82,7 @@ static constexpr auto inline_notice = FUNCTION_inline_notice () ;
 
 struct FUNCTION_inline_type_name {
 	forceinline Flag operator() (CR<Interface> squalor ,CR<Flag> func_) const noexcept {
-		return CoreProcHolder::expr.inline_type_name (squalor ,func_) ;
+		return CoreProc::inline_type_name (squalor ,func_) ;
 	}
 } ;
 
@@ -91,7 +90,7 @@ static constexpr auto inline_type_name = FUNCTION_inline_type_name () ;
 
 struct FUNCTION_inline_list_pair {
 	forceinline Tuple<Flag ,Flag> operator() (CR<Pointer> squalor ,CR<Length> step_) const noexcept {
-		return CoreProcHolder::expr.inline_list_pair (squalor ,step_) ;
+		return CoreProc::inline_list_pair (squalor ,step_) ;
 	}
 } ;
 
@@ -851,6 +850,7 @@ public:
 } ;
 
 struct ReflectCreate implement Interface {
+	virtual Bool is_trivial () const = 0 ;
 	virtual void create (VR<Pointer> a ,CR<Length> size_) const noexcept = 0 ;
 
 	forceinline static consteval Flag expr_m () noexcept {
@@ -861,9 +861,13 @@ struct ReflectCreate implement Interface {
 template <class A>
 class ReflectCreateBinder final implement Fat<ReflectCreate ,void> {
 public:
+	Bool is_trivial () const override {
+		return MACRO_IS_TRIVIAL_CONSTRUCTIBLE<A>::expr ;
+	}
+
 	void create (VR<Pointer> a ,CR<Length> size_) const noexcept override {
 		require (MACRO_IS_CONSTRUCTIBLE<A>) ;
-		if (MACRO_IS_TRIVIAL_CONSTRUCTIBLE<A>::expr)
+		if (is_trivial ())
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
 		for (auto &&i : range (0 ,size_)) {
@@ -873,6 +877,7 @@ public:
 } ;
 
 struct ReflectDestroy implement Interface {
+	virtual Bool is_trivial () const = 0 ;
 	virtual void destroy (VR<Pointer> a ,CR<Length> size_) const noexcept = 0 ;
 
 	forceinline static consteval Flag expr_m () noexcept {
@@ -883,9 +888,13 @@ struct ReflectDestroy implement Interface {
 template <class A>
 class ReflectDestroyBinder final implement Fat<ReflectDestroy ,void> {
 public:
+	Bool is_trivial () const override {
+		return MACRO_IS_TRIVIAL_DESTRUCTIBLE<A>::expr ;
+	}
+
 	void destroy (VR<Pointer> a ,CR<Length> size_) const noexcept override {
 		require (MACRO_IS_DESTRUCTIBLE<A>) ;
-		if (MACRO_IS_TRIVIAL_DESTRUCTIBLE<A>::expr)
+		if (is_trivial ())
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
 		for (auto &&i : range (0 ,size_)) {
@@ -895,6 +904,7 @@ public:
 } ;
 
 struct ReflectAssign implement Interface {
+	virtual void drop (VR<Pointer> a) const noexcept = 0 ;
 	virtual void swap (VR<Pointer> a ,VR<Pointer> b) const noexcept = 0 ;
 
 	forceinline static consteval Flag expr_m () noexcept {
@@ -905,6 +915,10 @@ struct ReflectAssign implement Interface {
 template <class A>
 class ReflectAssignBinder final implement Fat<ReflectAssign ,void> {
 public:
+	void drop (VR<Pointer> a) const noexcept override {
+		inline_memset (a ,SIZE_OF<A>::expr) ;
+	}
+
 	void swap (VR<Pointer> a ,VR<Pointer> b) const noexcept override {
 		CSC::swap (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
 	}
@@ -1110,6 +1124,7 @@ public:
 	}
 
 	VR<A> ref_m () leftvalue {
+		assert (exist ()) ;
 		return Pointer::from (mStorage) ;
 	}
 
@@ -1118,6 +1133,7 @@ public:
 	}
 
 	CR<A> ref_m () const leftvalue {
+		assert (exist ()) ;
 		return Pointer::from (mStorage) ;
 	}
 
@@ -1131,7 +1147,7 @@ public:
 		require (ENUM_COMPR_GTEQ<ALIGN_OF<B> ,ALIGN_OF<A>>) ;
 		if (exist ())
 			return ;
-		const auto r1x = address (ref) ;
+		const auto r1x = address (mStorage) ;
 		new (csc_device_t (r1x)) A (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
 		BoxHolder::hold (thiz)->remake (BoxUnknownBinder<A> () ,r1x) ;
 	}
@@ -1162,8 +1178,8 @@ protected:
 public:
 	implicit Pin () = default ;
 
-	void pinned (VR<A> addr) {
-		mOffset = address (addr) - address (thiz) ;
+	void pinned (VR<A> that) {
+		mOffset = address (that) - address (thiz) ;
 		assert (mOffset >= ZERO) ;
 	}
 
@@ -1208,16 +1224,16 @@ struct RefHolder implement Interface {
 
 	virtual void initialize (RR<BoxLayout> item) = 0 ;
 	virtual void initialize (CR<Unknown> holder ,CR<Unknown> extend ,CR<Length> size_) = 0 ;
-	virtual void initialize (CR<Flag> holder ,CR<Flag> layout) = 0 ;
+	virtual void initialize (CR<Flag> extend ,CR<Flag> layout) = 0 ;
 	virtual void destroy () = 0 ;
-	virtual RefLayout share () const = 0 ;
 	virtual Bool exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
 	virtual VR<Pointer> ref_m () leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
-	virtual void prepare (CR<Unknown> extend) = 0 ;
-	virtual Bool exclusive () const = 0 ;
 	virtual Bool ownership () const = 0 ;
+	virtual Bool exclusive () const = 0 ;
+	virtual void intrusive (CR<Unknown> extend) = 0 ;
+	virtual void reveal () = 0 ;
 } ;
 
 inline RefLayout::~RefLayout () noexcept {
@@ -1257,6 +1273,13 @@ public:
 		return move (ret) ;
 	}
 
+	static Ref zeroize () {
+		Ref ret ;
+		auto rax = Box<A>::zeroize () ;
+		RefHolder::hold (ret)->initialize (move (rax)) ;
+		return move (ret) ;
+	}
+
 	static Ref reference (VR<A> that) {
 		Ref ret ;
 		RefHolder::hold (ret)->initialize (VARIABLE::expr ,address (that)) ;
@@ -1270,11 +1293,6 @@ public:
 	}
 
 	static Ref reference (RR<A> that) = delete ;
-
-	Ref share () const {
-		RefLayout ret = RefHolder::hold (thiz)->share () ;
-		return move (keep[TYPE<Ref>::expr] (ret)) ;
-	}
 
 	Bool exist () const {
 		return RefHolder::hold (thiz)->exist () ;
@@ -1308,16 +1326,20 @@ public:
 		return (&ref) ;
 	}
 
-	void prepare (CR<Unknown> extend) {
-		return RefHolder::hold (thiz)->prepare (extend) ;
+	Bool ownership () const {
+		return RefHolder::hold (thiz)->ownership () ;
 	}
 
 	Bool exclusive () const {
 		return RefHolder::hold (thiz)->exclusive () ;
 	}
 
-	Bool ownership () const {
-		return RefHolder::hold (thiz)->ownership () ;
+	void intrusive (CR<Unknown> extend) {
+		return RefHolder::hold (thiz)->intrusive (extend) ;
+	}
+
+	void reveal () {
+		return RefHolder::hold (thiz)->reveal () ;
 	}
 } ;
 
@@ -1406,6 +1428,7 @@ struct SliceHolder implement Interface {
 	imports CFat<SliceHolder> hold (CR<SliceLayout> that) ;
 
 	virtual void initialize (CR<Flag> buffer ,CR<Length> size_ ,CR<Length> step_) = 0 ;
+	virtual Flag offset (CR<Index> index) const = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Length step () const = 0 ;
 	virtual void get (CR<Index> index ,VR<Stru32> item) const = 0 ;
@@ -1436,6 +1459,18 @@ public:
 
 	explicit Slice (CR<Flag> buffer ,CR<Length> size_ ,CR<Length> step_) {
 		SliceHolder::hold (thiz)->initialize (buffer ,size_ ,step_) ;
+	}
+
+	static Slice all () {
+		return Slice (0 ,-1 ,0) ;
+	}
+
+	static Slice one (CR<Index> pos) {
+		return Slice (pos ,1 ,1) ;
+	}
+
+	Flag offset (CR<Index> index) const {
+		return SliceHolder::hold (thiz)->offset (index) ;
 	}
 
 	Length size () const {
@@ -1509,12 +1544,13 @@ struct ExceptionHolder implement Interface {
 	imports VFat<ExceptionHolder> hold (VR<ExceptionLayout> that) ;
 	imports CFat<ExceptionHolder> hold (CR<ExceptionLayout> that) ;
 
+	virtual void initialize (CR<Slice> what_ ,CR<Slice> func_) = 0 ;
 	virtual void initialize (CR<Slice> what_ ,CR<Slice> func_ ,CR<Slice> file_ ,CR<Slice> line_) = 0 ;
 	virtual Slice what () const = 0 ;
 	virtual Slice func () const = 0 ;
 	virtual Slice file () const = 0 ;
 	virtual Slice line () const = 0 ;
-	virtual void event () const = 0 ;
+	virtual void event __macro_noreturn () const = 0 ;
 	virtual void raise () const = 0 ;
 } ;
 
@@ -1528,8 +1564,8 @@ protected:
 public:
 	implicit Exception () = default ;
 
-	explicit Exception (CR<Slice> what_) {
-		ExceptionHolder::hold (thiz)->initialize (what_ ,Slice () ,Slice () ,Slice ()) ;
+	explicit Exception (CR<Slice> what_ ,CR<Slice> func_) {
+		ExceptionHolder::hold (thiz)->initialize (what_ ,func_) ;
 	}
 
 	explicit Exception (CR<Slice> what_ ,CR<Slice> func_ ,CR<Slice> file_ ,CR<Slice> line_) {
@@ -1576,28 +1612,28 @@ struct Super {
 public:
 	implicit Super () = default ;
 
-	using ITEM = typeof (nullof (A).ref) ;
+	using ITEM = decltype (nullof (A).ref) ;
 
-	VR<ITEM> ref_m () const leftvalue {
-		return const_cast<VR<ITEM>> (mThis.ref) ;
+	XR<ITEM> ref_m () const leftvalue {
+		return const_cast<XR<ITEM>> (mThis.ref) ;
 	}
 
-	forceinline operator VR<ITEM> () const leftvalue {
+	forceinline operator XR<ITEM> () const leftvalue {
 		return ref ;
 	}
 } ;
 
 template <class A>
-struct ExternalRoot {
+struct ExternalImplLayout {
 	FatLayout mImpl ;
 
 public:
-	static VR<ExternalRoot> expr_m () ;
+	static VR<ExternalImplLayout> expr_m () ;
 } ;
 
 template <class A>
-inline VR<ExternalRoot<A>> ExternalRoot<A>::expr_m () {
-	static auto mInstance = ExternalRoot<A> () ;
+inline VR<ExternalImplLayout<A>> ExternalImplLayout<A>::expr_m () {
+	static auto mInstance = ExternalImplLayout<A> () ;
 	return mInstance ;
 }
 
@@ -1614,11 +1650,12 @@ public:
 		using R1X = typeof (nullof (ARG1).self) ;
 		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<B>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<R1X> ,ALIGN_OF<B>>) ;
-		ExternalRoot<External>::expr = bitwise (holder) ;
+		ExternalImplLayout<External>::expr = bitwise (holder) ;
 	}
 
 	static CR<Fat<A ,B>> expr_m () {
-		return Pointer::from (ExternalRoot<External>::expr) ;
+		assume (ExternalImplLayout<External>::expr.mImpl.mHolder != ZERO) ;
+		return Pointer::from (ExternalImplLayout<External>::expr) ;
 	}
 } ;
 

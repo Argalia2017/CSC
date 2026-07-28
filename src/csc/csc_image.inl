@@ -37,6 +37,14 @@ public:
 					return FALSE ;
 		return TRUE ;
 	}
+
+	Bool contain (CR<Pixel> item) const override {
+		if (!inline_between (item.mX ,0 ,self.mCX))
+			return FALSE ;
+		if (!inline_between (item.mY ,0 ,self.mCY))
+			return FALSE ;
+		return TRUE ;
+	}
 } ;
 
 exports VFat<ImageShapeHolder> ImageShapeHolder::hold (VR<ImageShapeLayout> that) {
@@ -72,10 +80,12 @@ public:
 		const auto r3x = r1x->type_align () ;
 		const auto r4x = cx_ * cy_ * step_ ;
 		const auto r5x = inline_alignas (r4x ,r2x) / r2x ;
-		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mImage) ;
-		RefBufferHolder::hold (rax)->initialize (holder ,r5x) ;
-		rax.mSize = cx_ * cy_ ;
-		rax.mStep = step_ ;
+		if ifdo (TRUE) {
+			auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mImage) ;
+			RefBufferHolder::hold (rax)->initialize (holder ,r5x) ;
+			rax.mSize = cx_ * cy_ ;
+			rax.mStep = step_ ;
+		}
 		self.mWidth = cx_ * 1024 + r3x ;
 		self.mStride = cx_ ;
 		reset () ;
@@ -247,13 +257,14 @@ exports CFat<ImageHolder> ImageHolder::hold (CR<ImageLayout> that) {
 	return CFat<ImageHolder> (ImageImplHolder () ,that) ;
 }
 
-using COLOR_SCALE = ENUM<1024> ;
-
 class ColorImplHolder final implement Fat<ColorHolder ,ColorLayout> {
+private:
+	using COLOR_SHIFT = ENUM<1024> ;
+
 public:
 	void initialize (CR<Val32> item) override {
-		self.mWhite = Val32 (255) * Val32 (COLOR_SCALE::expr)  ;
-		const auto r1x = item * Val32 (COLOR_SCALE::expr) ;
+		self.mWhite = Val32 (255) * Val32 (COLOR_SHIFT::expr) ;
+		const auto r1x = item * Val32 (COLOR_SHIFT::expr) ;
 		self.mColor[0] = r1x ;
 		self.mColor[1] = r1x ;
 		self.mColor[2] = r1x ;
@@ -292,8 +303,8 @@ public:
 			self.mWhite = Val32 (r6x) ;
 			for (auto &&i : range (0 ,r1x)) {
 				const auto r7x = buffer + i * step_ ;
-				const auto r8x = Flt32 (bitwise (Pointer::make (r7x))) * r6x ;
-				self.mColor[i] = Val32 (r8x) ;
+				const auto r8x = Flt32 (bitwise (Pointer::make (r7x))) ;
+				self.mColor[i] = Val32 (r8x * r6x) ;
 			}
 		}
 		if ifdo (act) {
@@ -302,14 +313,22 @@ public:
 		for (auto &&i : range (r1x ,4)) {
 			self.mColor[i] = 0 ;
 		}
-		self.mWhite *= Val32 (COLOR_SCALE::expr) ;
+		self.mWhite *= Val32 (COLOR_SHIFT::expr) ;
 		for (auto &&i : range (0 ,4)) {
-			self.mColor[i] *= Val32 (COLOR_SCALE::expr) ;
+			self.mColor[i] *= Val32 (COLOR_SHIFT::expr) ;
 		}
 	}
 
 	void get (CR<Index> index ,VR<Val32> item) const override {
-		item = self.mColor[index] / Val32 (COLOR_SCALE::expr) ;
+		item = self.mColor[index] / Val32 (COLOR_SHIFT::expr) ;
+	}
+
+	ColorLayout stretch (CR<Val32> white) const override {
+		ColorLayout ret ;
+		const auto r1x = Flt64 (white) * MathProc::inverse (Flt64 (self.mWhite)) ;
+		ret = smul (r1x) ;
+		ret.mWhite = white ;
+		return move (ret) ;
 	}
 
 	ColorLayout sadd (CR<ColorLayout> that) const override {
@@ -440,6 +459,15 @@ public:
 		return Byte (MathProc::clamp (r1x ,Val32 (0) ,Val32 (255))) ;
 	}
 
+	Flt64 word_norm (CR<Word> a) const override {
+		return Flt64 (a) * MathProc::inverse (Flt32 (65535)) ;
+	}
+
+	Word word_norm (CR<Flt64> a) const override {
+		const auto r1x = Val32 (MathProc::round (a * 65535)) ;
+		return Word (MathProc::clamp (r1x ,Val32 (0) ,Val32 (65535))) ;
+	}
+
 	Byte gray_from_bgr (CR<Color3B> a) const override {
 		const auto r1x = byte_norm (a.mR) ;
 		const auto r2x = byte_norm (a.mG) ;
@@ -448,8 +476,24 @@ public:
 		return byte_norm (r4x) ;
 	}
 
+	Word gray_from_bgr (CR<Color3W> a) const override {
+		const auto r1x = word_norm (a.mR) ;
+		const auto r2x = word_norm (a.mG) ;
+		const auto r3x = word_norm (a.mB) ;
+		const auto r4x = 0.299 * r1x + 0.587 * r2x + 0.114 * r3x ;
+		return word_norm (r4x) ;
+	}
+
 	Color3B bgr_from_gray (CR<Byte> a) const override {
 		Color3B ret ;
+		ret.mB = a ;
+		ret.mG = a ;
+		ret.mR = a ;
+		return move (ret) ;
+	}
+
+	Color3W bgr_from_gray (CR<Word> a) const override {
+		Color3W ret ;
 		ret.mB = a ;
 		ret.mG = a ;
 		ret.mR = a ;
@@ -548,8 +592,8 @@ public:
 		return Flt64 (1) ;
 	}
 
-	Color3F hsv_from_bgr (CR<Color3B> a) const override {
-		Color3F ret ;
+	Color3W hsv_from_bgr (CR<Color3B> a) const override {
+		Color3W ret ;
 		const auto r1x = byte_norm (a.mR) ;
 		const auto r2x = byte_norm (a.mG) ;
 		const auto r3x = byte_norm (a.mB) ;
@@ -584,17 +628,17 @@ public:
 		rax -= MathProc::floor (rax ,Flt64 (360)) ;
 		rax /= 360 ;
 		const auto r8x = r6x * MathProc::inverse (r5x) ;
-		ret.mB = Flt32 (rax) ;
-		ret.mG = Flt32 (r8x) ;
-		ret.mR = Flt32 (r5x) ;
+		ret.mB = word_norm (rax) ;
+		ret.mG = word_norm (r8x) ;
+		ret.mR = word_norm (r5x) ;
 		return move (ret) ;
 	}
 
-	Color3B bgr_from_hsv (CR<Color3F> a) const override {
+	Color3B bgr_from_hsv (CR<Color3W> a) const override {
 		Color3B ret ;
-		const auto r1x = Flt64 (a.mB) * 360 ;
-		const auto r2x = Flt64 (a.mG) ;
-		const auto r3x = Flt64 (a.mR) ;
+		const auto r1x = word_norm (a.mB) * 360 ;
+		const auto r2x = word_norm (a.mG) ;
+		const auto r3x = word_norm (a.mR) ;
 		const auto r4x = r3x * r2x ;
 		const auto r5x = (r1x - MathProc::floor (r1x ,Flt64 (120))) / 60 ;
 		const auto r6x = r4x * (1 - MathProc::abs (r5x - 1)) ;
@@ -651,11 +695,12 @@ public:
 	}
 } ;
 
-exports CR<Super<Ref<ColorProcLayout>>> ColorProcHolder::expr_m () {
+exports CR<Super<UniqueRef<ColorProcLayout>>> ColorProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<ColorProcLayout>> ret ;
-		ret.mThis = Ref<ColorProcLayout>::make () ;
-		ColorProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<ColorProcLayout>> ret ;
+		ret.mThis = UniqueRef<ColorProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		ColorProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -674,11 +719,12 @@ struct ImageProcLayout {
 	UniqueRef<Bool> mContext ;
 } ;
 
-exports CR<Super<Ref<ImageProcLayout>>> ImageProcHolder::expr_m () {
+exports CR<Super<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
 	return memorize ([&] () {
-		Super<Ref<ImageProcLayout>> ret ;
-		ret.mThis = Ref<ImageProcLayout>::make () ;
-		ImageProcHolder::hold (ret)->initialize () ;
+		Super<UniqueRef<ImageProcLayout>> ret ;
+		ret.mThis = UniqueRef<ImageProcLayout>::make () ;
+		auto rax = ret.mThis.borrow () ;
+		ImageProcHolder::hold (rax.ref)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
@@ -781,26 +827,52 @@ public:
 	}
 } ;
 
+struct TensorTree {
+	RefBuffer<Byte> mTensor ;
+	Index mCheck ;
+} ;
+
 class TensorImplHolder final implement Fat<TensorHolder ,TensorLayout> {
 public:
 	void initialize (RR<RefBufferLayout> that) override {
-		unimplemented () ;
+		self.mThis = SharedRef<TensorTree>::make () ;
+		auto &&rax = keep[TYPE<RefBuffer<Byte>>::expr] (that) ;
+		const auto r1x = rax.size () ;
+		assert (address (rax.ref) % 16 == 0) ;
+		self.mThis->mTensor = move (rax) ;
+		self.mThis->mCheck = 0 ;
+		self.mWidth = r1x ;
+		self.mSpan = Array<Slice> (2) ;
+		self.mSpan[0] = Slice (0 ,r1x ,1) ;
+		self.mSpan[1] = Slice::one (0) ;
 	}
 
 	void initialize (CR<Length> size_ ,CR<Just<TensorType>> type_) override {
+		noop (Array<TensorSlice0> ()) ;
+		noop (Array<TensorSlice1> ()) ;
+		noop (Array<TensorSlice2> ()) ;
+		self.mThis = SharedRef<TensorTree>::make () ;
 		const auto r1x = step_from_tensor_type (type_) ;
 		const auto r2x = size_ * r1x + 16 ;
-		self.mTensor = Ref<RefBuffer<Byte>>::make (r2x) ;
-		inline_memset (Pointer::from (self.mTensor->ref) ,r2x) ;
-		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mTensor.ref) ;
-		rax.mBuffer = inline_alignas (rax.mBuffer ,16) ;
-		rax.mSize = size_ ;
-		rax.mStep = r1x ;
-		self.mBuffer = rax.mBuffer ;
-		self.mRank = 1 ;
-		self.mStride[0] = r1x ;
-		for (auto &&i : range (1 ,self.mStride.size ()))
-			self.mStride[i] = size_ * r1x ;
+		self.mThis->mTensor = RefBuffer<Byte> (r2x) ;
+		inline_memset (Pointer::from (self.mThis->mTensor.ref) ,r2x) ;
+		if ifdo (TRUE) {
+			auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mThis->mTensor) ;
+			rax.mBuffer = inline_alignas (rax.mBuffer ,16) ;
+			rax.mSize = size_ ;
+			rax.mStep = r1x ;
+		}
+		self.mThis->mCheck = 0 ;
+		self.mWidth = size_ ;
+		self.mSpan = Array<Slice> (2) ;
+		self.mSpan[0] = Slice (0 ,size_ ,1) ;
+		self.mSpan[1] = Slice::one (0) ;
+	}
+
+	void initialize (CR<TensorLayout> that) override {
+		self.mThis = that.mThis ;
+		self.mWidth = that.mWidth ;
+		self.mSpan = that.mSpan ;
 	}
 
 	Unknown choose_unknown (CR<Just<TensorType>> dst ,CR<Just<TensorType>> src) const {
@@ -827,6 +899,7 @@ public:
 			return 8 ;
 		if (type_ == TensorType::Flt128)
 			return 16 ;
+		assume (FALSE) ;
 		return 0 ;
 	}
 
@@ -837,43 +910,78 @@ public:
 			return TensorType::Flt64 ;
 		if (step_ == 16)
 			return TensorType::Flt128 ;
+		assume (FALSE) ;
 		return 0 ;
 	}
 
-	Length size () const override {
-		if (self.mTensor == NULL)
+	Length rank () const override {
+		if (!self.mThis.exist ())
 			return 0 ;
-		return self.mStride[self.mRank] / self.mStride[0] ;
+		return self.mSpan.length () - 1 ;
+	}
+
+	Length size () const override {
+		if (!self.mThis.exist ())
+			return 0 ;
+		return self.mWidth ;
 	}
 
 	Just<TensorType> type () const override {
-		if (self.mTensor == NULL)
+		if (!self.mThis.exist ())
 			return TensorType::ETC ;
-		return tensor_type_from_step (self.mStride[0]) ;
+		return tensor_type_from_step (self.mThis->mTensor.step ()) ;
 	}
 
-	Length rank () const override {
-		if (self.mTensor == NULL)
-			return 0 ;
-		return self.mRank ;
+	Array<Slice> shape () const override {
+		return self.mSpan ;
 	}
 
 	Length shape (CR<Index> index) const override {
 		assert (index >= 0) ;
-		if (self.mTensor == NULL)
+		if (!self.mThis.exist ())
 			return 0 ;
-		const auto r1x = self.mRank ;
-		Index ix = inline_min (index ,r1x) ;
-		Index iy = inline_min (index + 1 ,r1x) ;
-		return self.mStride[iy] / self.mStride[ix] ;
+		Index ix = MathProc::min_of (index ,self.mSpan.length () - 1) ;
+		return self.mSpan[ix].size () ;
+	}
+
+	Ref<RefBuffer<Byte>> borrow () const leftvalue override {
+		assert (self.mThis.exist ()) ;
+		assert (self.mThis->mTensor.exist ()) ;
+		return Ref<RefBuffer<Byte>>::reference (self.mThis->mTensor) ;
+	}
+
+	void get (CR<Index> index ,VR<Flt64> item) const override {
+		assert (self.mThis.exist ()) ;
+		const auto r1x = MathProc::wrap (index ,self.mSpan[0].size ()) ;
+		Index ix = self.mSpan[0].offset (r1x) ;
+		for (auto &&i : range (1 ,self.mSpan.length ())) {
+			ix += self.mSpan[i].offset (0) ;
+		}
+		const auto r2x = self.mThis->mTensor.step () ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (r2x != 4)
+				discard ;
+			item = Flt32 (bitwise (self.mThis->mTensor[ix])) ;
+		}
+		if ifdo (act) {
+			if (r2x != 8)
+				discard ;
+			item = Flt64 (bitwise (self.mThis->mTensor[ix])) ;
+		}
+		if ifdo (act) {
+			if (r2x != 16)
+				discard ;
+			unimplemented () ;
+		}
+		if ifdo (act) {
+			assert (FALSE) ;
+		}
 	}
 
 	TensorLayout share () const {
 		TensorLayout ret ;
-		ret.mTensor = self.mTensor.share () ;
-		ret.mBuffer = self.mBuffer ;
-		ret.mRank = self.mRank ;
-		ret.mStride = self.mStride ;
+		TensorHolder::hold (ret)->initialize (self) ;
 		return move (ret) ;
 	}
 
@@ -881,203 +989,158 @@ public:
 		if (type () == type_)
 			return share () ;
 		TensorLayout ret ;
-		TensorHolder::hold (ret)->initialize (size () ,type_) ;
-		const auto r1x = choose_unknown (type_ ,type ()) ;
-		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
-		const auto r3x = self.mStride[0] ;
-		for (auto &&i : range (0 ,size ())) {
-			const auto r4x = ret.mBuffer + i * r3x ;
-			const auto r5x = self.mBuffer + i * r3x ;
-			r2x->clone (Pointer::make (r4x) ,Pointer::make (r5x)) ;
+		const auto r1x = self.mThis->mTensor.size () ;
+		TensorHolder::hold (ret)->initialize (r1x ,type_) ;
+		const auto r2x = choose_unknown (type_ ,type ()) ;
+		const auto r3x = RFat<ReflectTensorPair> (r2x) ;
+		auto &&rax = ret.mThis->mTensor.ref ;
+		auto &&rbx = self.mThis->mTensor.ref ;
+		for (auto &&i : range (0 ,r1x)) {
+			const auto r4x = address (rax[i]) ;
+			const auto r5x = address (rbx[i]) ;
+			r3x->clone (Pointer::make (r4x) ,Pointer::make (r5x)) ;
 		}
-		ret.mRank = self.mRank ;
-		ret.mStride = self.mStride ;
+		ret.mWidth = self.mWidth ;
+		ret.mSpan = self.mSpan ;
 		return move (ret) ;
-	}
-
-
-	TensorLayout reshape () const override {
-		if (self.mTensor == NULL)
-			return share () ;
-		return reshape (MakeWrapper (size ())) ;
 	}
 
 	TensorLayout reshape (CR<Wrapper<Length>> shape_) const override {
-		assert (self.mTensor != NULL) ;
-		assert (shape_.rank () > 0) ;
-		const auto r1x = self.mStride.size () - 1 ;
-		assert (shape_.rank () <= r1x) ;
-		TensorLayout ret = share () ;
-		const auto r2x = inline_min (shape_.rank () ,r1x) ;
-		ret.mRank = r2x ;
-		for (auto &&i : range (1 ,r2x + 1)) {
-			Index ix = i - 1 ;
-			Index iy = r2x - i ;
-			ret.mStride[i] = ret.mStride[ix] * shape_[iy] ;
-		}
-		for (auto &&i : range (r2x + 1 ,r1x + 1)) {
-			Index ix = i - 1 ;
-			ret.mStride[i] = ret.mStride[ix] ;
-		}
-		assume (TensorHolder::hold (ret)->size () == size ()) ;
-		return move (ret) ;
-	}
-
-	Ref<RefBuffer<Byte>> borrow () const leftvalue override {
-		return self.mTensor.share () ;
-	}
-
-	Flt64 get_float (CR<Flag> addr) const {
-		if (self.mStride[0] == 4)
-			return Flt32 (bitwise (Pointer::make (addr))) ;
-		if (self.mStride[0] == 8)
-			return Flt64 (bitwise (Pointer::make (addr))) ;
-		assert (FALSE) ;
-		return 0 ;
-	}
-
-	void get (CR<Index> i0 ,VR<Flt64> item) const override {
-		const auto r1x = i0 * self.mStride[0] ;
-		assert (inline_between (r1x ,0 ,self.mStride[4])) ;
-		const auto r2x = self.mBuffer + r1x ;
-		item = get_float (r2x) ;
-	}
-
-	void get (CR<Index> i0 ,CR<Index> i1 ,VR<Flt64> item) const override {
-		const auto r1x = i1 * self.mStride[0] ;
-		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
-		const auto r2x = i0 * self.mStride[1] ;
-		assert (inline_between (r1x ,0 ,self.mStride[4])) ;
-		const auto r3x = self.mBuffer + r1x + r2x ;
-		item = get_float (r3x) ;
-	}
-
-	void get (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,VR<Flt64> item) const override {
-		const auto r1x = i2 * self.mStride[0] ;
-		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
-		const auto r2x = i1 * self.mStride[1] ;
-		assert (inline_between (r1x ,0 ,self.mStride[2])) ;
-		const auto r3x = i0 * self.mStride[2] ;
-		assert (inline_between (r1x ,0 ,self.mStride[4])) ;
-		const auto r4x = self.mBuffer + r1x + r2x + r3x ;
-		item = get_float (r4x) ;
-	}
-
-	void get (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,CR<Index> i3 ,VR<Flt64> item) const override {
-		const auto r1x = i3 * self.mStride[0] ;
-		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
-		const auto r2x = i2 * self.mStride[1] ;
-		assert (inline_between (r1x ,0 ,self.mStride[2])) ;
-		const auto r3x = i1 * self.mStride[2] ;
-		assert (inline_between (r1x ,0 ,self.mStride[3])) ;
-		const auto r4x = i0 * self.mStride[3] ;
-		assert (inline_between (r1x ,0 ,self.mStride[4])) ;
-		const auto r5x = self.mBuffer + r1x + r2x + r3x + r4x ;
-		item = get_float (r5x) ;
-	}
-
-	TensorLayout sadd (CR<TensorLayout> that) const override {
+		const auto r1x = shape_.rank () ;
+		assert (r1x > 0) ;
 		TensorLayout ret ;
-		const auto r1x = size () ;
-		const auto r2x = TensorHolder::hold (that)->size () ;
-		assume (r1x == r2x) ;
-		const auto r3x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
-		const auto r4x = RFat<ReflectTensorPair> (r3x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r4x->type ()) ;
-		const auto r5x = self.mStride[0] ;
-		const auto r6x = that.mStride[0] ;
-		for (auto &&i : range (0 ,size ())) {
-			const auto r7x = self.mBuffer + i * r5x ;
-			const auto r8x = that.mBuffer + i * r6x ;
-			const auto r9x = ret.mBuffer + i * r5x ;
-			r4x->sadd (Pointer::make (r7x) ,Pointer::make (r8x) ,Pointer::make (r9x)) ;
+		ret.mThis = self.mThis ;
+		ret.mWidth = self.mWidth ;
+		const auto r2x = r1x + 1 ;
+		ret.mSpan = Array<Slice> (r2x) ;
+		auto rax = IDEN ;
+		auto rbx = ZERO ;
+		for (auto &&i : range (0 ,r1x))
+			rax *= shape_[i] ;
+		assume (TensorHolder::hold (self)->size () == rax) ;
+		if ifdo (TRUE) {
+			Index ix = self.mSpan.length () - 2 ;
+			rax = self.mSpan[ix].step () ;
+		}
+		for (auto &&i : range (0 ,r1x)) {
+			Index ix = r1x - 1 - i ;
+			ret.mSpan[ix] = Slice (0 ,shape_[ix] ,rax) ;
+			rax *= shape_[ix] ;
+		}
+		for (auto &&i : self.mSpan.iter ())
+			rbx += self.mSpan[i].offset (0) ;
+		if ifdo (TRUE) {
+			Index ix = r2x - 1 ;
+			ret.mSpan[ix] = Slice::one (0) ;
+			ret.mSpan[0] = slice_add (ret.mSpan[0] ,rbx) ;
 		}
 		return move (ret) ;
 	}
 
-	TensorLayout ssub (CR<TensorLayout> that) const override {
+	TensorLayout span (CR<Wrapper<Slice>> shape_) const override {
+		const auto r1x = shape_.rank () ;
+		assert (r1x > 0) ;
 		TensorLayout ret ;
-		const auto r1x = size () ;
-		const auto r2x = TensorHolder::hold (that)->size () ;
-		assume (r1x == r2x) ;
-		const auto r3x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
-		const auto r4x = RFat<ReflectTensorPair> (r3x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r4x->type ()) ;
-		const auto r5x = self.mStride[0] ;
-		const auto r6x = that.mStride[0] ;
-		for (auto &&i : range (0 ,size ())) {
-			const auto r7x = self.mBuffer + i * r5x ;
-			const auto r8x = that.mBuffer + i * r6x ;
-			const auto r9x = ret.mBuffer + i * r5x ;
-			r4x->ssub (Pointer::make (r7x) ,Pointer::make (r8x) ,Pointer::make (r9x)) ;
+		ret.mThis = self.mThis ;
+		ret.mWidth = self.mWidth ;
+		const auto r2x = rank () ;
+		assert (r1x <= r2x) ;
+		const auto r3x = invoke ([&] () {
+			Length ret = 0 ;
+			for (auto &&i : range (0 ,r1x)) {
+				if (shape_[i].size () != 1)
+					continue ;
+				ret++ ;
+			}
+			return move (ret) ;
+		}) ;
+		const auto r4x = self.mSpan.length () - r3x ;
+		ret.mSpan = Array<Slice> (r4x) ;
+		auto rax = IDEN ;
+		auto rbx = ZERO ;
+		Index jx = 0 ;
+		for (auto &&i : self.mSpan.iter ()) {
+			const auto r5x = i < r1x ? shape_[i] : Slice::all () ;
+			if ifdo (TRUE) {
+				if (r5x.size () != 1)
+					discard ;
+				const auto r6x = MathProc::wrap (r5x.offset (0) ,self.mSpan[i].size ()) ;
+				rbx += self.mSpan[i].offset (r6x) ;
+			}
+			if ifdo (TRUE) {
+				if (r5x.size () == 1)
+					discard ;
+				assume (r5x.size () <= self.mSpan[i].size ()) ;
+				const auto r7x = r5x.size () < 0 ? self.mSpan[i].size () : r5x.size () ;
+				const auto r8x = self.mSpan[i].offset (0) + rbx ;
+				const auto r9x = self.mSpan[i].step () ;
+				ret.mSpan[jx] = Slice (r8x ,r7x ,r9x) ;
+				jx++ ;
+				rax *= r7x ;
+				rbx = 0 ;
+			}
+		}
+		assume (TensorHolder::hold (ret)->size () >= rax) ;
+		if ifdo (TRUE) {
+			if ifdo (TRUE) {
+				if (jx >= r4x)
+					discard ;
+				ret.mSpan[jx] = Slice::one (0) ;
+				jx++ ;
+			}
+			ret.mSpan[0] = slice_add (ret.mSpan[0] ,rbx) ;
+		}
+		ret.mWidth = rax ;
+		return move (ret) ;
+	}
+
+	TensorLayout squeeze () const override {
+		TensorLayout ret ;
+		ret.mThis = self.mThis ;
+		ret.mWidth = self.mWidth ;
+		const auto r1x = rank () ;
+		const auto r2x = invoke ([&] () {
+			Length ret = 0 ;
+			for (auto &&i : range (0 ,r1x)) {
+				if (self.mSpan[i].size () != 1)
+					continue ;
+				ret++ ;
+			}
+			return move (ret) ;
+		}) ;
+		const auto r3x = self.mSpan.length () - r2x ;
+		ret.mSpan = Array<Slice> (r3x) ;
+		auto rbx = ZERO ;
+		Index jx = 0 ;
+		for (auto &&i : self.mSpan.iter ()) {
+			const auto r5x = self.mSpan[i] ;
+			if ifdo (TRUE) {
+				if (r5x.size () != 1)
+					discard ;
+				rbx += r5x.offset (0) ;
+			}
+			if ifdo (TRUE) {
+				if (r5x.size () == 1)
+					discard ;
+				ret.mSpan[jx] = slice_add (r5x ,rbx) ;
+				jx++ ;
+				rbx = 0 ;
+			}
+		}
+		if ifdo (TRUE) {
+			if ifdo (TRUE) {
+				if (jx >= r3x)
+					discard ;
+				ret.mSpan[jx] = Slice::one (0) ;
+				jx++ ;
+			}
+			ret.mSpan[0] = slice_add (ret.mSpan[0] ,rbx) ;
 		}
 		return move (ret) ;
 	}
 
-	TensorLayout smul (CR<TensorLayout> that) const override {
-		TensorLayout ret ;
-		const auto r1x = size () ;
-		const auto r2x = TensorHolder::hold (that)->size () ;
-		assume (r1x == r2x) ;
-		const auto r3x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
-		const auto r4x = RFat<ReflectTensorPair> (r3x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r4x->type ()) ;
-		const auto r5x = self.mStride[0] ;
-		const auto r6x = that.mStride[0] ;
-		for (auto &&i : range (0 ,size ())) {
-			const auto r7x = self.mBuffer + i * r5x ;
-			const auto r8x = that.mBuffer + i * r6x ;
-			const auto r9x = ret.mBuffer + i * r5x ;
-			r4x->smul (Pointer::make (r7x) ,Pointer::make (r8x) ,Pointer::make (r9x)) ;
-		}
-		return move (ret) ;
-	}
-
-	TensorLayout sdiv (CR<TensorLayout> that) const override {
-		TensorLayout ret ;
-		const auto r1x = size () ;
-		const auto r2x = TensorHolder::hold (that)->size () ;
-		assume (r1x == r2x) ;
-		const auto r3x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
-		const auto r4x = RFat<ReflectTensorPair> (r3x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r4x->type ()) ;
-		const auto r5x = self.mStride[0] ;
-		const auto r6x = that.mStride[0] ;
-		for (auto &&i : range (0 ,size ())) {
-			const auto r7x = self.mBuffer + i * r5x ;
-			const auto r8x = that.mBuffer + i * r6x ;
-			const auto r9x = ret.mBuffer + i * r5x ;
-			r4x->sdiv (Pointer::make (r7x) ,Pointer::make (r8x) ,Pointer::make (r9x)) ;
-		}
-		return move (ret) ;
-	}
-
-	TensorLayout sabs () const override {
-		TensorLayout ret ;
-		const auto r1x = choose_unknown (type () ,type ()) ;
-		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r2x->type ()) ;
-		const auto r3x = self.mStride[0] ;
-		for (auto &&i : range (0 ,size ())) {
-			const auto r4x = self.mBuffer + i * r3x ;
-			const auto r5x = ret.mBuffer + i * r3x ;
-			r2x->sabs (Pointer::make (r4x) ,Pointer::make (r5x)) ;
-		}
-		return move (ret) ;
-	}
-
-	TensorLayout minus () const override {
-		TensorLayout ret ;
-		const auto r1x = choose_unknown (type () ,type ()) ;
-		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r2x->type ()) ;
-		const auto r3x = self.mStride[0] ;
-		for (auto &&i : range (0 ,size ())) {
-			const auto r4x = self.mBuffer + i * r3x ;
-			const auto r5x = ret.mBuffer + i * r3x ;
-			r2x->minus (Pointer::make (r4x) ,Pointer::make (r5x)) ;
-		}
-		return move (ret) ;
+	Slice slice_add (CR<Slice> a ,CR<Index> b) const {
+		return Slice (a.offset (0) + b ,a.size () ,a.step ()) ;
 	}
 } ;
 

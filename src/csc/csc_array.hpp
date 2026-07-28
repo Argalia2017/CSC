@@ -18,8 +18,8 @@ protected:
 public:
 	implicit SizeProxy () = delete ;
 
-	implicit SizeProxy (CR<Length> size_) {
-		mSize = size_ ;
+	implicit SizeProxy (CR<Length> that) {
+		mSize = that ;
 	}
 
 	forceinline operator Length () const {
@@ -144,6 +144,8 @@ struct ArrayHolder implement Interface {
 	virtual Length length () const = 0 ;
 	virtual VR<Pointer> ref_m () leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
+	virtual Ref<RefBuffer<Byte>> borrow () leftvalue = 0 ;
+	virtual Ref<RefBuffer<Byte>> borrow () const leftvalue = 0 ;
 	virtual VR<Pointer> at (CR<Index> index) leftvalue = 0 ;
 	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
 	virtual Index ibegin () const = 0 ;
@@ -197,7 +199,7 @@ struct ArrayImplLayout<Pointer> implement ArrayLayout {} ;
 template <class A>
 class Array implement ArrayImplLayout<A> {
 protected:
-	using ArrayImplLayout<A>::mArray ;
+	using ArrayLayout::mArray ;
 
 public:
 	implicit Array () = default ;
@@ -264,6 +266,16 @@ public:
 
 	forceinline operator CR<ARR<A>> () const leftvalue {
 		return ref ;
+	}
+
+	Ref<RefBuffer<Byte>> borrow () leftvalue {
+		require (IS_TRIVIAL<A>) ;
+		return ArrayHolder::hold (thiz)->borrow () ;
+	}
+
+	Ref<RefBuffer<Byte>> borrow () const leftvalue {
+		require (IS_TRIVIAL<A>) ;
+		return ArrayHolder::hold (thiz)->borrow () ;
 	}
 
 	VR<A> at (CR<Index> index) leftvalue {
@@ -367,7 +379,8 @@ class StringBuild ;
 
 struct StringEncode {
 	enum {
-		ANSI ,
+		ASCII ,
+		LOCAL ,
 		UTF8 ,
 		UTF16LE ,
 		UTF16BE ,
@@ -453,8 +466,8 @@ private:
 	require (IS_TRIVIAL<A>) ;
 
 protected:
-	using StringImplLayout<A>::mString ;
-	using StringImplLayout<A>::mEncode ;
+	using StringLayout::mString ;
+	using StringLayout::mEncode ;
 
 public:
 	implicit String () = default ;
@@ -532,10 +545,12 @@ public:
 	}
 
 	Ref<RefBuffer<Byte>> borrow () leftvalue {
+		require (IS_TRIVIAL<A>) ;
 		return StringHolder::hold (thiz)->borrow () ;
 	}
 
 	Ref<RefBuffer<Byte>> borrow () const leftvalue {
+		require (IS_TRIVIAL<A>) ;
 		return StringHolder::hold (thiz)->borrow () ;
 	}
 
@@ -746,9 +761,9 @@ struct DequeImplLayout<Pointer> implement DequeLayout {} ;
 template <class A>
 class Deque implement DequeImplLayout<A> {
 protected:
-	using DequeImplLayout<A>::mDeque ;
-	using DequeImplLayout<A>::mRead ;
-	using DequeImplLayout<A>::mWrite ;
+	using DequeLayout::mDeque ;
+	using DequeLayout::mRead ;
+	using DequeLayout::mWrite ;
 
 public:
 	implicit Deque () = default ;
@@ -861,7 +876,7 @@ public:
 	}
 
 	void push (CR<A> item) {
-		move (move (item)) ;
+		push (move (item)) ;
 	}
 
 	void push (RR<A> item) {
@@ -875,7 +890,7 @@ public:
 
 	void pop (VR<A> item) {
 		item = move (thiz[tail ()]) ;
-		take () ;
+		pop () ;
 	}
 
 	void ring (CR<Length> count) {
@@ -992,9 +1007,9 @@ struct PriorityImplLayout<Pointer> implement PriorityLayout {} ;
 template <class A>
 class Priority implement PriorityImplLayout<A> {
 protected:
-	using PriorityImplLayout<A>::mPriority ;
-	using PriorityImplLayout<A>::mRead ;
-	using PriorityImplLayout<A>::mWrite ;
+	using PriorityLayout::mPriority ;
+	using PriorityLayout::mRead ;
+	using PriorityLayout::mWrite ;
 
 public:
 	implicit Priority () = default ;
@@ -1044,12 +1059,8 @@ public:
 		return PriorityHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CR<Priority>> beign () const leftvalue {
+	ArrayIterator<CR<Priority>> begin () const leftvalue {
 		return ArrayIterator<CR<Priority>> (thiz) ;
-	}
-
-	ArrayIterator<VR<Priority>> end () leftvalue {
-		return ArrayIterator<VR<Priority>> (thiz) ;
 	}
 
 	ArrayIterator<CR<Priority>> end () const leftvalue {
@@ -1129,7 +1140,7 @@ struct ListHolder implement Interface {
 	virtual Index insert (RR<BoxLayout> item) = 0 ;
 	virtual Index insert (CR<Index> index ,RR<BoxLayout> item) = 0 ;
 	virtual void remove (CR<Index> index) = 0 ;
-	virtual void order (CR<Array<Index>> range_) = 0 ;
+	virtual void arrange (CR<Array<Index>> range_) = 0 ;
 } ;
 
 template <class A>
@@ -1166,9 +1177,9 @@ struct ListImplLayout<Pointer> implement ListLayout {} ;
 template <class A>
 class List implement ListImplLayout<A> {
 protected:
-	using ListImplLayout<A>::mList ;
-	using ListImplLayout<A>::mFirst ;
-	using ListImplLayout<A>::mLast ;
+	using ListLayout::mList ;
+	using ListLayout::mFirst ;
+	using ListLayout::mLast ;
 
 public:
 	implicit List () = default ;
@@ -1312,8 +1323,8 @@ public:
 		return ListHolder::hold (thiz)->remove (index) ;
 	}
 
-	void order (CR<Array<Index>> range_) {
-		return ListHolder::hold (thiz)->order (range_) ;
+	void arrange (CR<Array<Index>> range_) {
+		return ListHolder::hold (thiz)->arrange (range_) ;
 	}
 } ;
 
@@ -1346,7 +1357,7 @@ struct ArrayListHolder implement Interface {
 	virtual Index insert (RR<BoxLayout> item) = 0 ;
 	virtual Index insert (CR<Index> index ,RR<BoxLayout> item) = 0 ;
 	virtual void remove (CR<Index> index) = 0 ;
-	virtual void order (CR<Array<Index>> range_) = 0 ;
+	virtual void arrange (CR<Array<Index>> range_) = 0 ;
 	virtual void remap () = 0 ;
 } ;
 
@@ -1384,10 +1395,10 @@ struct ArrayListImplLayout<Pointer> implement ArrayListLayout {} ;
 template <class A>
 class ArrayList implement ArrayListImplLayout<A> {
 protected:
-	using ArrayListImplLayout<A>::mList ;
-	using ArrayListImplLayout<A>::mRange ;
-	using ArrayListImplLayout<A>::mTop ;
-	using ArrayListImplLayout<A>::mRemap ;
+	using ArrayListLayout::mList ;
+	using ArrayListLayout::mRange ;
+	using ArrayListLayout::mTop ;
+	using ArrayListLayout::mRemap ;
 
 public:
 	implicit ArrayList () = default ;
@@ -1488,8 +1499,8 @@ public:
 		return ArrayListHolder::hold (thiz)->remove (index) ;
 	}
 
-	void order (CR<Array<Index>> range_) {
-		return ArrayListHolder::hold (thiz)->order (range_) ;
+	void arrange (CR<Array<Index>> range_) {
+		return ArrayListHolder::hold (thiz)->arrange (range_) ;
 	}
 
 	void remap () {
@@ -1580,11 +1591,11 @@ struct SortedMapImplLayout<Pointer> implement SortedMapLayout {} ;
 template <class A>
 class SortedMap implement SortedMapImplLayout<A> {
 protected:
-	using SortedMapImplLayout<A>::mThis ;
-	using SortedMapImplLayout<A>::mRoot ;
-	using SortedMapImplLayout<A>::mRange ;
-	using SortedMapImplLayout<A>::mWrite ;
-	using SortedMapImplLayout<A>::mRemap ;
+	using SortedMapLayout::mThis ;
+	using SortedMapLayout::mRoot ;
+	using SortedMapLayout::mRange ;
+	using SortedMapLayout::mWrite ;
+	using SortedMapLayout::mRemap ;
 
 public:
 	implicit SortedMap () = default ;
@@ -1785,9 +1796,9 @@ struct SetImplLayout<Pointer> implement SetLayout {} ;
 template <class A>
 class Set implement SetImplLayout<A> {
 protected:
-	using SetImplLayout<A>::mSet ;
-	using SetImplLayout<A>::mRoot ;
-	using SetImplLayout<A>::mTop ;
+	using SetLayout::mSet ;
+	using SetLayout::mRoot ;
+	using SetLayout::mTop ;
 
 public:
 	implicit Set () = default ;
@@ -1925,12 +1936,12 @@ public:
 struct HashSetNode implement AllocatorNode {
 	Index mMap ;
 	Flag mHash ;
-	Index mDown ;
 } ;
 
 struct HashSetLayout {
 	Allocator<Pointer ,HashSetNode> mSet ;
 	RefBuffer<Index> mRange ;
+	Index mWrite ;
 	SharedRef<HashcodeVisitor> mVisitor ;
 } ;
 
@@ -1997,9 +2008,10 @@ struct HashSetImplLayout<Pointer> implement HashSetLayout {} ;
 template <class A>
 class HashSet implement HashSetImplLayout<A> {
 protected:
-	using HashSetImplLayout<A>::mSet ;
-	using HashSetImplLayout<A>::mRange ;
-	using HashSetImplLayout<A>::mVisitor ;
+	using HashSetLayout::mSet ;
+	using HashSetLayout::mRange ;
+	using HashSetLayout::mWrite ;
+	using HashSetLayout::mVisitor ;
 
 public:
 	implicit HashSet () = default ;
@@ -2111,7 +2123,7 @@ public:
 	}
 
 	void erase (CR<A> item) {
-		return SetHolder::hold (thiz)->erase (Pointer::from (item)) ;
+		return HashSetHolder::hold (thiz)->erase (Pointer::from (item)) ;
 	}
 } ;
 
@@ -2166,6 +2178,7 @@ struct BitSetHolder implement Interface {
 	virtual Bool contain (CR<Pointer> item) const = 0 ;
 	virtual void erase (CR<Pointer> item) = 0 ;
 	virtual void fill (CR<Byte> item) = 0 ;
+	virtual void resize (CR<Length> size_) = 0 ;
 	virtual BitSetLayout sand (CR<BitSetLayout> that) const = 0 ;
 	virtual BitSetLayout sor (CR<BitSetLayout> that) const = 0 ;
 	virtual BitSetLayout sxor (CR<BitSetLayout> that) const = 0 ;
@@ -2328,6 +2341,10 @@ public:
 
 	void fill (CR<Byte> item) {
 		return BitSetHolder::hold (thiz)->fill (item) ;
+	}
+
+	void resize (CR<Length> size_) {
+		return BitSetHolder::hold (thiz)->resize (size_) ;
 	}
 
 	BitSet sand (CR<BitSet> that) const {
