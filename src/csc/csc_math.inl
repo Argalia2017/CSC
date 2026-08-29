@@ -538,23 +538,23 @@ public:
 	}
 
 	Flt32 pdf (CR<Flt32> a) const override {
-		const auto r1x = -square (a) * Flt32 (0.5) ;
+		const auto r1x = -square (a) / 2 ;
 		return exp (r1x) * Flt32 (MATH_PDF0) ;
 	}
 
 	Flt64 pdf (CR<Flt64> a) const override {
-		const auto r1x = -square (a) * Flt64 (0.5) ;
+		const auto r1x = -square (a) / 2 ;
 		return exp (r1x) * Flt64 (MATH_PDF0) ;
 	}
 
 	Flt32 cbf (CR<Flt32> a) const override {
 		const auto r1x = a * Flt32 (inverse (MATH_SQRT2)) ;
-		return (1 + std::erf (r1x)) * Flt32 (0.5) ;
+		return (1 + std::erf (r1x)) / 2 ;
 	}
 
 	Flt64 cbf (CR<Flt64> a) const override {
 		const auto r1x = a * Flt64 (inverse (MATH_SQRT2)) ;
-		return (1 + std::erf (r1x)) * Flt64 (0.5) ;
+		return (1 + std::erf (r1x)) / 2 ;
 	}
 
 	Bool all_of (CR<Wrapper<Bool>> b) const override {
@@ -628,6 +628,38 @@ public:
 		}
 		return move (ret) ;
 	}
+
+	Bool mid_of (CR<Val32> a ,CR<Val32> min_ ,CR<Val32> max_) const override {
+		if (a < min_)
+			return FALSE ;
+		if (a >= max_)
+			return FALSE ;
+		return TRUE ;
+	}
+
+	Bool mid_of (CR<Val64> a ,CR<Val64> min_ ,CR<Val64> max_) const override {
+		if (a < min_)
+			return FALSE ;
+		if (a >= max_)
+			return FALSE ;
+		return TRUE ;
+	}
+
+	Bool mid_of (CR<Flt32> a ,CR<Flt32> min_ ,CR<Flt32> max_) const override {
+		if (a < min_)
+			return FALSE ;
+		if (a >= max_)
+			return FALSE ;
+		return TRUE ;
+	}
+
+	Bool mid_of (CR<Flt64> a ,CR<Flt64> min_ ,CR<Flt64> max_) const override {
+		if (a < min_)
+			return FALSE ;
+		if (a >= max_)
+			return FALSE ;
+		return TRUE ;
+	}
 } ;
 
 exports CR<Super<UniqueRef<MathProcLayout>>> MathProcHolder::expr_m () {
@@ -658,8 +690,8 @@ public:
 		self.mAvg = self.mAvg + r3x * r2x ;
 		const auto r4x = r1x * r2x * MathProc::square (self.mStd) + r1x * MathProc::square (r3x * r2x) ;
 		self.mStd = MathProc::sqrt (r4x) ;
-		const auto r5x = r1x * r2x * MathProc::square (self.mRms) + MathProc::square (error) * r2x ;
-		self.mRms = MathProc::sqrt (r5x) ;
+		const auto r5x = -self.mPro + MathProc::step (4 - error) ;
+		self.mPro = self.mPro + r5x * r2x ;
 		self.mCount = Length (r1x + 1) ;
 	}
 } ;
@@ -951,8 +983,6 @@ exports CFat<FloatProcHolder> FloatProcHolder::hold (CR<FloatProcLayout> that) {
 	return CFat<FloatProcHolder> (FloatProcImplHolder () ,that) ;
 }
 
-template class External<FEXP2CacheHolder ,FEXP2CacheLayout> ;
-
 struct FEXP2CacheLayout {} ;
 
 exports CR<Super<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
@@ -965,6 +995,8 @@ exports CR<Super<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
 	}) ;
 }
 
+template class External<FEXP2CacheHolder ,FEXP2CacheLayout> ;
+
 exports VFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (VR<FEXP2CacheLayout> that) {
 	return VFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::expr ,that) ;
 }
@@ -972,8 +1004,6 @@ exports VFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (VR<FEXP2CacheLayout> that
 exports CFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (CR<FEXP2CacheLayout> that) {
 	return CFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::expr ,that) ;
 }
-
-template class External<FEXP10CacheHolder ,FEXP10CacheLayout> ;
 
 struct FEXP10CacheLayout {} ;
 
@@ -986,6 +1016,8 @@ exports CR<Super<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::expr_m () {
 		return move (ret) ;
 	}) ;
 }
+
+template class External<FEXP10CacheHolder ,FEXP10CacheLayout> ;
 
 exports VFat<FEXP10CacheHolder> FEXP10CacheHolder::hold (VR<FEXP10CacheLayout> that) {
 	return VFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheLayout>::expr ,that) ;
@@ -1205,105 +1237,181 @@ exports CFat<ByteProcHolder> ByteProcHolder::hold (CR<ByteProcLayout> that) {
 	return CFat<ByteProcHolder> (ByteProcImplHolder () ,that) ;
 }
 
-class IntegerImplHolder final implement Fat<IntegerHolder ,IntegerLayout> {
+class BigRealImplHolder final implement Fat<BigRealHolder ,BigRealLayout> {
 private:
 	using INTEGER_MIN_SIZE = ENUM<8> ;
 
 public:
 	void initialize (CR<Length> size_) override {
-		const auto r1x = inline_alignas (size_ ,INTEGER_MIN_SIZE::expr) ;
-		const auto r2x = MathProc::max_of (r1x ,INTEGER_MIN_SIZE::expr * 2) ;
-		self.mInteger = RefBuffer<Byte> (r2x) ;
-		inline_memset (Pointer::from (self.mInteger.ref) ,self.mInteger.size ()) ;
-		self.mWidth = r2x ;
-		self.mShift = INTEGER_MIN_SIZE::expr ;
+		const auto r1x = inline_max (size_ ,1) ;
+		const auto r2x = inline_alignas (r1x ,INTEGER_MIN_SIZE::expr) ;
+		self.mReal = RefBuffer<Byte> (r2x) ;
+		inline_memset (Pointer::from (self.mReal.ref) ,self.mReal.size ()) ;
+		self.mWidth = r1x ;
+		self.mShift = 0 ;
 	}
 
-	void initialize (CR<IntegerLayout> that) override {
+	void initialize (CR<BigRealLayout> that) override {
 		const auto r1x = inline_alignas (that.mWidth ,INTEGER_MIN_SIZE::expr) ;
-		self.mInteger = RefBuffer<Byte> (r1x) ;
+		self.mReal = RefBuffer<Byte> (r1x) ;
 		for (auto &&i : range (0 ,that.mWidth))
-			self.mInteger[i] = that.mInteger[i] ;
+			self.mReal[i] = that.mReal[i] ;
 		self.mWidth = that.mWidth ;
 		self.mShift = that.mShift ;
 	}
 
-	IntegerLayout share () const {
-		IntegerLayout ret ;
-		IntegerHolder::hold (ret)->initialize (self) ;
+	BigRealLayout share () const {
+		BigRealLayout ret ;
+		BigRealHolder::hold (ret)->initialize (self) ;
 		return move (ret) ;
 	}
 
-	static Byte get (CR<IntegerLayout> that ,CR<Index> index) {
+	static Byte get (CR<BigRealLayout> that ,CR<Index> index) {
 		if (index < 0)
 			return Byte (0X00) ;
 		Index ix = MathProc::min_of (index ,that.mWidth - 1) ;
-		return that.mInteger[ix] ;
+		return that.mReal[ix] ;
 	}
 
 	Length size () const override {
-		if (!self.mInteger.exist ())
+		if (!self.mReal.exist ())
 			return 0 ;
-		return self.mWidth - self.mShift ;
+		return self.mWidth ;
 	}
 
-	Val64 fetch () const override {
-		assert (self.mInteger.exist ()) ;
-		auto rax = Quad (0X00) ;
-		const auto r1x = SIZE_OF<Val64>::expr ;
-		const auto r2x = self.mShift ;
-		for (auto &&i : range (0 ,r1x)) {
-			Index ix = r2x + i ;
-			const auto r3x = Quad (get (self ,ix)) << (i * 8) ;
-			rax |= r3x ;
+	Index precision () const override {
+		if (!self.mReal.exist ())
+			return 0 ;
+		Index ret = self.mWidth - 1 ;
+		const auto r1x = self.mReal[ret] ;
+		while (TRUE) {
+			if (ret <= 0)
+				break ;
+			if (self.mReal[ret - 1] != r1x)
+				break ;
+			ret-- ;
 		}
-		return Val64 (rax) ;
+		return move (ret) ;
 	}
 
-	void store (CR<Val64> item) override {
-		assert (self.mInteger.exist ()) ;
-		const auto r1x = SIZE_OF<Val64>::expr ;
-		const auto r2x = self.mShift ;
-		const auto r3x = r1x + r2x ;
-		assert (self.mInteger.size () >= r3x) ;
-		for (auto &&i : range (0 ,r2x))
-			self.mInteger[i] = Byte (0X00) ;
-		for (auto &&i : range (0 ,r1x)) {
-			Index ix = r2x + i ;
-			const auto r4x = Quad (item) >> (i * 8) ;
-			self.mInteger[ix] = Byte (r4x) ;
+	Flt64 fetch () const override {
+		assert (self.mReal.exist ()) ;
+		const auto r1x = get (self ,self.mWidth - 1) ;
+		const auto r2x = Bool (r1x == Byte (0XFF)) ;
+		auto rax = Notation () ;
+		rax.mRadix = 2 ;
+		rax.mSign = r2x ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (r2x)
+				discard ;
+			const auto r3x = precision () - 8 ;
+			const auto r4x = r3x - self.mShift ;
+			rax.mMantissa = Quad (0X00) ;
+			for (auto &&i : range (0 ,8)) {
+				Index ix = i + r3x ;
+				const auto r5x = Quad (get (self ,ix)) << Val32 (i * 8) ;
+				rax.mMantissa = rax.mMantissa | r5x ;
+			}
+			rax.mDownflow = Quad (0X00) ;
+			rax.mExponent = r4x * 8 ;
 		}
-		self.mWidth = r3x ;
+		if ifdo (act) {
+			const auto r6x = sabs () ;
+			const auto r7x = BigRealHolder::hold (r6x)->precision () - 8 ;
+			const auto r8x = r7x - r6x.mShift ;
+			rax.mMantissa = Quad (0X00) ;
+			for (auto &&i : range (0 ,8)) {
+				Index ix = i + r7x ;
+				const auto r9x = Quad (get (r6x ,ix)) << Val32 (i * 8) ;
+				rax.mMantissa = rax.mMantissa | r9x ;
+			}
+			rax.mDownflow = Quad (0X00) ;
+			rax.mExponent = r8x * 8 ;
+		}
+		return FloatProc::encode (rax) ;
+	}
+
+	void store (CR<Flt64> item) override {
+		assert (self.mReal.exist ()) ;
+		auto rax = FloatProc::decode (item) ;
+		const auto r1x = rax.mExponent - inline_alignas (rax.mExponent - 7 ,8) ;
+		for (auto &&i : range (0 ,r1x)) {
+			noop (i) ;
+			rax.mMantissa = rax.mMantissa << 1 ;
+			rax.mExponent-- ;
+		}
+		const auto r2x = rax.mExponent / 8 ;
+		const auto r3x = r2x >= 0 ? r2x : inline_max (-r2x - 8 ,0) ;
+		const auto r4x = inline_max (r2x ,0) ;
+		const auto r5x = 8 + r3x ;
+		assume (self.mReal.size () >= r5x) ;
+		inline_memset (Pointer::from (self.mReal.ref) ,r5x) ;
+		for (auto &&i : range (0 ,8)) {
+			Index ix = i + r4x ;
+			const auto r6x = rax.mMantissa >> Val32 (i * 8) ;
+			self.mReal[ix] = Byte (r6x) ;
+		}
+		self.mWidth = r5x ;
+		self.mShift = r4x - r2x ;
 		check_mask (self) ;
+		if ifdo (TRUE) {
+			if (!rax.mSign)
+				discard ;
+			self = minus () ;
+		}
 	}
 
-	Bool equal (CR<IntegerLayout> that) const override {
-		const auto r1x = inline_max (self.mWidth ,that.mWidth) ;
+	static Length aligned_width (CR<BigRealLayout> a ,CR<BigRealLayout> b) {
+		const auto r1x = a.mWidth - a.mShift ;
+		const auto r2x = b.mWidth - b.mShift ;
+		const auto r3x = inline_max (r1x ,r2x) ;
+		const auto r4x = inline_max (a.mShift ,b.mShift) ;
+		return r3x + r4x ;
+	}
+
+	static Length aligned_shift (CR<BigRealLayout> a ,CR<BigRealLayout> b) {
+		const auto r1x = inline_max (a.mShift ,b.mShift) ;
+		return r1x ;
+	}
+
+	Bool equal (CR<BigRealLayout> that) const override {
+		const auto r1x = aligned_width (self ,that) ;
+		const auto r2x = aligned_shift (self ,that) ;
+		const auto r3x = r1x - 1 - r2x + self.mShift ;
+		const auto r4x = r1x - 1 - r2x + that.mShift ;
 		for (auto &&i : range (0 ,r1x)) {
-			Index ix = r1x - 1 - i ;
-			const auto r2x = inline_equal (get (self ,ix) ,get (that ,ix)) ;
-			if (!r2x)
-				return r2x ;
+			Index ix = r3x - i ;
+			Index iy = r4x - i ;
+			const auto r5x = inline_equal (get (self ,ix) ,get (that ,iy)) ;
+			if (!r5x)
+				return r5x ;
 		}
 		return TRUE ;
 	}
 
-	Flag compr (CR<IntegerLayout> that) const override {
-		const auto r1x = inline_max (self.mWidth ,that.mWidth) ;
-		const auto r2x = -inline_compr (get (self ,r1x) ,get (that ,r1x)) ;
-		if (r2x != ZERO)
-			return r2x ;
+	Flag compr (CR<BigRealLayout> that) const override {
+		const auto r1x = aligned_width (self ,that) ;
+		const auto r2x = aligned_shift (self ,that) ;
+		const auto r3x = r1x - 1 - r2x + self.mShift ;
+		const auto r4x = r1x - 1 - r2x + that.mShift ;
+		const auto r5x = inline_compr (get (self ,r1x) ,get (that ,r1x)) ;
+		if (r5x != ZERO)
+			return -r5x ;
 		for (auto &&i : range (0 ,r1x)) {
-			Index ix = r1x - 1 - i ;
-			const auto r3x = inline_compr (get (self ,ix) ,get (that ,ix)) ;
-			if (r3x != ZERO)
-				return r3x ;
+			Index ix = r3x - i ;
+			Index iy = r4x - i ;
+			const auto r6x = inline_compr (get (self ,ix) ,get (that ,iy)) ;
+			if (r6x != ZERO)
+				return r6x ;
 		}
 		return ZERO ;
 	}
 
 	void visit (CR<Visitor> visitor) const override {
 		visitor.enter () ;
+		visitor.push (Quad (self.mWidth)) ;
+		visitor.push (Quad (self.mShift)) ;
 		const auto r1x = self.mWidth ;
 		for (auto &&i : range (0 ,r1x)) {
 			const auto r2x = get (self ,i) ;
@@ -1312,177 +1420,152 @@ public:
 		visitor.leave () ;
 	}
 
-	IntegerLayout sadd (CR<IntegerLayout> that) const override {
-		assert (self.mShift == that.mShift) ;
-		IntegerLayout ret ;
-		const auto r1x = inline_max (self.mWidth ,that.mWidth) ;
-		IntegerHolder::hold (ret)->initialize (r1x) ;
+	BigRealLayout sadd (CR<BigRealLayout> that) const override {
+		BigRealLayout ret ;
+		const auto r1x = aligned_width (self ,that) ;
+		const auto r2x = aligned_shift (self ,that) ;
+		const auto r3x = self.mShift - r2x ;
+		const auto r4x = that.mShift - r2x ;
+		BigRealHolder::hold (ret)->initialize (r1x) ;
 		auto rax = Val32 (0) ;
 		for (auto &&i : range (0 ,r1x)) {
-			const auto r2x = Val32 (get (self ,i)) + Val32 (get (that ,i)) + rax ;
-			rax = Val32 (Char (r2x) >> 8) ;
-			ret.mInteger[i] = Byte (r2x) ;
+			Index ix = r3x + i ;
+			Index iy = r4x + i ;
+			const auto r5x = Val32 (get (self ,ix)) + Val32 (get (that ,iy)) + rax ;
+			rax = Val32 (Char (r5x) >> 8) ;
+			ret.mReal[i] = Byte (r5x) ;
 		}
 		ret.mWidth = r1x ;
-		ret.mShift = self.mShift ;
+		ret.mShift = r2x ;
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
-	IntegerLayout ssub (CR<IntegerLayout> that) const override {
-		assert (self.mShift == that.mShift) ;
-		IntegerLayout ret ;
-		const auto r1x = inline_max (self.mWidth ,that.mWidth) ;
-		IntegerHolder::hold (ret)->initialize (r1x) ;
+	BigRealLayout ssub (CR<BigRealLayout> that) const override {
+		BigRealLayout ret ;
+		const auto r1x = aligned_width (self ,that) ;
+		const auto r2x = aligned_shift (self ,that) ;
+		const auto r3x = self.mShift - r2x ;
+		const auto r4x = that.mShift - r2x ;
+		BigRealHolder::hold (ret)->initialize (r1x) ;
 		auto rax = Val32 (0) ;
 		for (auto &&i : range (0 ,r1x)) {
-			const auto r2x = Val32 (get (self ,i)) - Val32 (get (that ,i)) - rax ;
-			rax = Val32 (r2x < 0) ;
-			const auto r3x = r2x + 256 * rax ;
-			ret.mInteger[i] = Byte (r3x) ;
+			Index ix = r3x + i ;
+			Index iy = r4x + i ;
+			const auto r5x = Val32 (get (self ,ix)) - Val32 (get (that ,iy)) - rax ;
+			rax = Val32 (r5x < 0) ;
+			const auto r6x = r5x + 256 * rax ;
+			ret.mReal[i] = Byte (r6x) ;
 		}
 		ret.mWidth = r1x ;
-		ret.mShift = self.mShift ;
+		ret.mShift = r2x ;
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
-	IntegerLayout smul (CR<IntegerLayout> that) const override {
-		assert (self.mShift == that.mShift) ;
-		IntegerLayout ret ;
+	BigRealLayout smul (CR<BigRealLayout> that) const override {
+		BigRealLayout ret ;
 		const auto r1x = self.mWidth + that.mWidth ;
-		IntegerHolder::hold (ret)->initialize (r1x) ;
+		const auto r2x = self.mShift + that.mShift ;
+		BigRealHolder::hold (ret)->initialize (r1x) ;
 		for (auto &&i : range (0 ,r1x)) {
 			auto rax = Val32 (0) ;
 			for (auto &&j : range (0 ,r1x)) {
 				Index iy = i + j ;
 				if (iy >= r1x)
 					continue ;
-				const auto r2x = Val32 (get (self ,i)) * Val32 (get (that ,j)) + rax ;
-				const auto r3x = r2x + Val32 (ret.mInteger[iy]) ;
-				rax = Val32 (Char (r3x) >> 8) ;
-				ret.mInteger[iy] = Byte (r3x) ;
+				const auto r3x = Val32 (get (self ,i)) * Val32 (get (that ,j)) + rax ;
+				const auto r4x = r3x + Val32 (ret.mReal[iy]) ;
+				rax = Val32 (Char (r4x) >> 8) ;
+				ret.mReal[iy] = Byte (r4x) ;
 			}
 		}
 		ret.mWidth = r1x ;
-		ret.mShift = self.mShift + that.mShift ;
+		ret.mShift = r2x ;
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
-	IntegerLayout sdiv (CR<IntegerLayout> that) const override {
-		assert (self.mShift == that.mShift) ;
-		IntegerLayout ret ;
-		auto rax = IntegerLayout () ;
-		//@info: extra INTEGER_MIN_SIZE bytes for the scale window of sdiv_abs, not for alignment
-		const auto r1x = inline_max (self.mWidth ,that.mWidth) + INTEGER_MIN_SIZE::expr ;
-		IntegerHolder::hold (rax)->initialize (r1x) ;
-		IntegerHolder::hold (ret)->initialize (r1x) ;
-		const auto r2x = IntegerHolder::hold (self)->compr (Integer::zero ()) ;
-		const auto r3x = IntegerHolder::hold (that)->compr (Integer::zero ()) ;
+	BigRealLayout sdiv (CR<BigRealLayout> that) const override {
+		BigRealLayout ret ;
+		const auto r1x = BigRealHolder::hold (self)->compr (BigReal::zero ()) ;
+		const auto r2x = BigRealHolder::hold (that)->compr (BigReal::zero ()) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (r3x != 0)
+			if (r2x != ZERO)
 				discard ;
-			//@info: Integer division by zero
+			//@info: BigReal division by zero
 			assume (FALSE) ;
 		}
+		const auto r3x = BigRealHolder::hold (self)->sabs () ;
+		const auto r4x = BigRealHolder::hold (that)->sabs () ;
 		if ifdo (act) {
-			if (r2x < 0)
+			//@info: divisor raw value is 2^k, division degenerates to an exact shift
+			const auto r5x = raw_exp2 (r4x) ;
+			if (r5x < 0)
 				discard ;
-			if (r3x < 0)
-				discard ;
-			sdiv_abs (ret ,rax ,self ,that ,self.mShift) ;
+			ret = BigRealHolder::hold (r3x)->shift (8 * that.mShift - r5x) ;
 		}
 		if ifdo (act) {
-			if (r2x >= 0)
-				discard ;
-			if (r3x < 0)
-				discard ;
-			const auto r4x = IntegerHolder::hold (self)->minus () ;
-			sdiv_abs (ret ,rax ,r4x ,that ,self.mShift) ;
-			ret = IntegerHolder::hold (ret)->minus () ;
+			//@info: scale gives the quotient a fraction window of INTEGER_MIN_SIZE bytes
+			auto rax = BigRealLayout () ;
+			const auto r6x = INTEGER_MIN_SIZE::expr + that.mShift - self.mShift ;
+			const auto r7x = inline_max (self.mWidth + inline_max (r6x ,0) ,that.mWidth + 1) + 1 ;
+			BigRealHolder::hold (rax)->initialize (r7x) ;
+			BigRealHolder::hold (ret)->initialize (r7x) ;
+			sdiv_abs (ret ,rax ,r3x ,r4x ,r6x) ;
 		}
-		if ifdo (act) {
-			if (r2x < 0)
+		if ifdo (TRUE) {
+			if (MathProc::sign (r1x) == MathProc::sign (r2x))
 				discard ;
-			if (r3x >= 0)
-				discard ;
-			const auto r5x = IntegerHolder::hold (that)->minus () ;
-			sdiv_abs (ret ,rax ,self ,r5x ,self.mShift) ;
-			ret = IntegerHolder::hold (ret)->minus () ;
-		}
-		if ifdo (act) {
-			if (r2x >= 0)
-				discard ;
-			if (r3x >= 0)
-				discard ;
-			const auto r6x = IntegerHolder::hold (self)->minus () ;
-			const auto r7x = IntegerHolder::hold (that)->minus () ;
-			sdiv_abs (ret ,rax ,r6x ,r7x ,self.mShift) ;
+			ret = BigRealHolder::hold (ret)->minus () ;
 		}
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
-	IntegerLayout smod (CR<IntegerLayout> that) const override {
-		assert (self.mShift == that.mShift) ;
-		IntegerLayout ret ;
-		auto rax = IntegerLayout () ;
-		//@info: extra INTEGER_MIN_SIZE bytes for the scale window of sdiv_abs, not for alignment
-		const auto r1x = inline_max (self.mWidth ,that.mWidth) + INTEGER_MIN_SIZE::expr ;
-		IntegerHolder::hold (rax)->initialize (r1x) ;
-		IntegerHolder::hold (ret)->initialize (r1x) ;
-		const auto r2x = IntegerHolder::hold (self)->compr (Integer::zero ()) ;
-		const auto r3x = IntegerHolder::hold (that)->compr (Integer::zero ()) ;
+	BigRealLayout smod (CR<BigRealLayout> that) const override {
+		BigRealLayout ret ;
+		const auto r1x = BigRealHolder::hold (self)->compr (BigReal::zero ()) ;
+		const auto r2x = BigRealHolder::hold (that)->compr (BigReal::zero ()) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (r3x != 0)
+			if (r2x != ZERO)
 				discard ;
-			//@info: Integer division by zero
+			//@info: BigReal division by zero
 			assume (FALSE) ;
 		}
+		const auto r3x = BigRealHolder::hold (self)->sabs () ;
+		const auto r4x = BigRealHolder::hold (that)->sabs () ;
 		if ifdo (act) {
-			if (r2x < 0)
-				discard ;
-			if (r3x < 0)
-				discard ;
-			sdiv_abs (rax ,ret ,self ,that ,0) ;
+			//@info: shift divisor raw left by a bytes so the quotient is an exact integer
+			//@info: scale b keeps every dividend byte consumed
+			auto rax = BigRealLayout () ;
+			const auto r5x = inline_max (self.mShift - that.mShift ,0) ;
+			const auto r6x = inline_max (that.mShift - self.mShift ,0) ;
+			const auto r7x = BigRealHolder::hold (r4x)->shift (r5x * 8) ;
+			const auto r8x = inline_max (r3x.mWidth + r6x ,r7x.mWidth + 1) + 1 ;
+			BigRealHolder::hold (rax)->initialize (r8x) ;
+			BigRealHolder::hold (ret)->initialize (r8x) ;
+			sdiv_abs (rax ,ret ,r3x ,r7x ,r6x) ;
 		}
-		if ifdo (act) {
-			if (r2x >= 0)
+		if ifdo (TRUE) {
+			if (r1x >= ZERO)
 				discard ;
-			if (r3x < 0)
-				discard ;
-			const auto r4x = IntegerHolder::hold (self)->minus () ;
-			sdiv_abs (rax ,ret ,r4x ,that ,0) ;
-			ret = IntegerHolder::hold (ret)->minus () ;
-		}
-		if ifdo (act) {
-			if (r2x < 0)
-				discard ;
-			if (r3x >= 0)
-				discard ;
-			const auto r5x = IntegerHolder::hold (that)->minus () ;
-			sdiv_abs (rax ,ret ,self ,r5x ,0) ;
-		}
-		if ifdo (act) {
-			if (r2x >= 0)
-				discard ;
-			if (r3x >= 0)
-				discard ;
-			const auto r6x = IntegerHolder::hold (self)->minus () ;
-			const auto r7x = IntegerHolder::hold (that)->minus () ;
-			sdiv_abs (rax ,ret ,r6x ,r7x ,0) ;
-			ret = IntegerHolder::hold (ret)->minus () ;
+			ret = BigRealHolder::hold (ret)->minus () ;
 		}
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
-	void sdiv_abs (VR<IntegerLayout> quotient ,VR<IntegerLayout> remainder ,CR<IntegerLayout> dividend ,CR<IntegerLayout> divisor ,CR<Length> scale) const {
+	void sdiv_abs (VR<BigRealLayout> quotient ,VR<BigRealLayout> remainder ,CR<BigRealLayout> dividend ,CR<BigRealLayout> divisor ,CR<Length> scale) const {
+		//@info: quotient.value = dividend.value / divisor.value, truncated below quotient byte 0
+		//@info: quotient.mShift = scale + dividend.mShift - divisor.mShift
+		//@info: remainder.mShift = scale + dividend.mShift
 		const auto r1x = scale ;
 		const auto r2x = quotient.mWidth ;
+		assert (r1x + dividend.mShift >= divisor.mShift) ;
+		assert (r2x >= divisor.mWidth + 1) ;
 		for (auto &&i : range (0 ,r2x)) {
 			Index ix = r2x - 1 - i ;
 			Index iy = ix - r1x ;
@@ -1491,118 +1574,163 @@ public:
 				const auto r3x = MathProc::exp2_bit (jx) ;
 				for (auto &&k : range (0 ,r2x - 1)) {
 					Index kx = r2x - 1 - k ;
-					remainder.mInteger[kx] = ByteProc::shift (remainder.mInteger[kx] ,remainder.mInteger[kx - 1] ,7) ;
+					remainder.mReal[kx] = ByteProc::shift (remainder.mReal[kx] ,remainder.mReal[kx - 1] ,7) ;
 				}
 				if ifdo (TRUE) {
-					if (r2x == 0)
-						discard ;
 					Index kx = 0 ;
-					remainder.mInteger[kx] = remainder.mInteger[kx] << 1 ;
+					remainder.mReal[kx] = remainder.mReal[kx] << 1 ;
 				}
-				remainder.mInteger[0] |= (get (dividend ,iy) >> jx) & Byte (0X01) ;
-				const auto r4x = IntegerHolder::hold (remainder)->compr (Integer::zero ()) ;
-				assert (r4x >= 0) ;
+				remainder.mReal[0] |= (get (dividend ,iy) >> jx) & Byte (0X01) ;
 				auto act = TRUE ;
 				if ifdo (act) {
-					const auto r5x = IntegerHolder::hold (remainder)->compr (divisor) ;
-					if (r5x < ZERO)
+					const auto r4x = raw_compr (remainder ,divisor) ;
+					if (r4x < ZERO)
 						discard ;
 					auto rax = Val32 (0) ;
 					for (auto &&k : range (0 ,r2x)) {
-						const auto r6x = Val32 (get (remainder ,k)) - Val32 (get (divisor ,k)) - rax ;
-						rax = Val32 (r6x < 0) ;
-						const auto r7x = r6x + 256 * rax ;
-						remainder.mInteger[k] = Byte (r7x) ;
+						const auto r5x = Val32 (get (remainder ,k)) - Val32 (get (divisor ,k)) - rax ;
+						rax = Val32 (r5x < 0) ;
+						const auto r6x = r5x + 256 * rax ;
+						remainder.mReal[k] = Byte (r6x) ;
 					}
-					quotient.mInteger[ix] |= Byte (r3x) ;
+					quotient.mReal[ix] |= Byte (r3x) ;
 				}
 				if ifdo (act) {
-					quotient.mInteger[ix] &= ~Byte (r3x) ;
+					quotient.mReal[ix] &= ~Byte (r3x) ;
 				}
 			}
 		}
-		quotient.mShift = r1x ;
-		remainder.mShift = dividend.mShift ;
+		quotient.mShift = r1x + dividend.mShift - divisor.mShift ;
+		remainder.mShift = r1x + dividend.mShift ;
 	}
 
-	IntegerLayout sabs () const override {
+	static Flag raw_compr (CR<BigRealLayout> lhs ,CR<BigRealLayout> rhs) {
+		const auto r1x = inline_max (lhs.mWidth ,rhs.mWidth) ;
+		for (auto &&i : range (0 ,r1x)) {
+			Index ix = r1x - 1 - i ;
+			const auto r2x = inline_compr (get (lhs ,ix) ,get (rhs ,ix)) ;
+			if (r2x != ZERO)
+				return r2x ;
+		}
+		return ZERO ;
+	}
+
+	static Length raw_exp2 (CR<BigRealLayout> that) {
+		Length ret = -1 ;
+		auto rax = ZERO ;
+		for (auto &&i : range (0 ,that.mWidth)) {
+			const auto r1x = Val32 (that.mReal[i]) ;
+			for (auto &&j : range (0 ,8)) {
+				if ((r1x & Val32 (MathProc::exp2_bit (j))) == 0)
+					continue ;
+				rax++ ;
+				ret = i * 8 + j ;
+			}
+		}
+		if (rax != 1)
+			return -1 ;
+		return ret ;
+	}
+
+	BigRealLayout sabs () const override {
 		if (get (self ,self.mWidth - 1) == Byte (0XFF))
 			return minus () ;
 		return share () ;
 	}
 
-	IntegerLayout minus () const override {
-		IntegerLayout ret ;
-		IntegerHolder::hold (ret)->initialize (self.mWidth) ;
-		for (auto &&i : range (0 ,ret.mInteger.size ()))
-			ret.mInteger[i] = ~get (self ,i) ;
+	BigRealLayout minus () const override {
+		BigRealLayout ret ;
+		BigRealHolder::hold (ret)->initialize (self.mWidth) ;
+		for (auto &&i : range (0 ,ret.mWidth))
+			ret.mReal[i] = ~get (self ,i) ;
 		auto rax = Val32 (1) ;
 		for (auto &&i : range (0 ,ret.mWidth)) {
-			const auto r1x = Val32 (ret.mInteger[i]) + rax ;
+			const auto r1x = Val32 (ret.mReal[i]) + rax ;
 			rax = Val32 (Char (r1x) >> 8) ;
-			ret.mInteger[i] = Byte (r1x) ;
+			ret.mReal[i] = Byte (r1x) ;
 		}
-		check_mask (ret) ;
-		return move (ret) ;
-	}
-
-	IntegerLayout shift (CR<Length> scale) const override {
-		if (scale > 0)
-			return shift_abs_l (MathProc::abs (scale)) ;
-		if (scale < 0)
-			return shift_abs_r (MathProc::abs (scale)) ;
-		return share () ;
-	}
-
-	IntegerLayout shift_abs_l (CR<Length> scale) const {
-		assert (scale >= 0) ;
-		assert (self.mWidth > 0) ;
-		IntegerLayout ret ;
-		const auto r1x = scale / 8 ;
-		const auto r2x = 8 - scale % 8  ;
-		const auto r3x = self.mWidth + r1x + 1 ;
-		IntegerHolder::hold (ret)->initialize (r3x) ;
-		for (auto &&i : range (0 ,r3x)) {
-			Index ix = i - r1x ;
-			const auto r4x = get (self ,ix) ;
-			const auto r5x = get (self ,ix - 1) ;
-			ret.mInteger[i] = ByteProc::shift (r4x ,r5x ,r2x) ;
-		}
-		ret.mWidth = r3x ;
+		ret.mWidth = self.mWidth ;
 		ret.mShift = self.mShift ;
 		check_mask (ret) ;
 		return move (ret) ;
 	}
 
-	IntegerLayout shift_abs_r (CR<Length> scale) const {
-		assert (scale >= 0) ;
-		IntegerLayout ret ;
-		const auto r1x = scale / 8 ;
-		const auto r2x = scale % 8 ;
-		const auto r3x = self.mWidth ;
-		IntegerHolder::hold (ret)->initialize (r3x) ;
-		for (auto &&i : range (0 ,r3x)) {
-			Index ix = i + r1x ;
-			const auto r4x = get (self ,ix) ;
-			const auto r5x = get (self ,ix + 1) ;
-			ret.mInteger[i] = ByteProc::shift (r5x ,r4x ,r2x) ;
-		}
-		ret.mWidth = r3x ;
-		ret.mShift = self.mShift ;
-		check_mask (ret) ;
-		return move (ret) ;
-	}
-
-	IntegerLayout sround () const override {
-		IntegerLayout ret = share () ;
-		if ifdo (TRUE) {
-			Index ix = MathProc::max_of (ret.mShift - 1 ,ZERO) ;
-			if (Val32 (ret.mInteger[ix]) < 128)
+	BigRealLayout shift (CR<Length> scale) const override {
+		BigRealLayout ret ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (scale != 0)
 				discard ;
-			IntegerHolder::hold (ret)->increase () ;
+			ret = share () ;
+		}
+		const auto r1x = MathProc::abs (scale) ;
+		const auto r2x = r1x / 8 ;
+		const auto r3x = r1x % 8 ;
+		const auto r4x = self.mWidth + r2x + Val32 (r3x != 0) ;
+		if ifdo (act) {
+			if (scale <= 0)
+				discard ;
+			BigRealHolder::hold (ret)->initialize (r4x) ;
+			for (auto &&i : range (0 ,r4x)) {
+				Index ix = i - r2x ;
+				ret.mReal[i] = get (self ,ix) ;
+			}
+			ret.mWidth = r4x ;
+			ret.mShift = self.mShift ;
+			shift_abs_l (ret ,r3x) ;
+		}
+		if ifdo (act) {
+			if (scale >= 0)
+				discard ;
+			BigRealHolder::hold (ret)->initialize (r4x) ;
+			for (auto &&i : range (0 ,r4x)) {
+				Index ix = i - 1 ;
+				ret.mReal[i] = get (self ,ix) ;
+			}
+			ret.mWidth = r4x ;
+			ret.mShift = self.mShift + r2x + 1 ;
+			shift_abs_r (ret ,r3x) ;
+		}
+		check_mask (ret) ;
+		return move (ret) ;
+	}
+
+	void shift_abs_l (VR<BigRealLayout> that ,CR<Length> scale) const {
+		if (scale == 0)
+			return ;
+		assert (inline_mid (scale ,0 ,8)) ;
+		const auto r1x = 8 - scale ;
+		for (auto &&i : range (0 ,that.mWidth)) {
+			Index ix = that.mWidth - 1 - i ;
+			const auto r2x = get (that ,ix) ;
+			const auto r3x = get (that ,ix - 1) ;
+			that.mReal[ix] = ByteProc::shift (r2x ,r3x ,r1x) ;
+		}
+	}
+
+	void shift_abs_r (VR<BigRealLayout> that ,CR<Length> scale) const {
+		if (scale == 0)
+			return ;
+		assert (inline_mid (scale ,0 ,8)) ;
+		const auto r1x = scale ;
+		for (auto &&i : range (0 ,that.mWidth)) {
+			Index ix = i ;
+			const auto r2x = get (that ,ix) ;
+			const auto r3x = get (that ,ix + 1) ;
+			that.mReal[ix] = ByteProc::shift (r3x ,r2x ,r1x) ;
+		}
+	}
+
+	BigRealLayout sround () const override {
+		BigRealLayout ret = share () ;
+		if ifdo (TRUE) {
+			Index ix = inline_max (ret.mShift - 1 ,0) ;
+			if (ByteProc::any_bit (ret.mReal[ix] ,Byte (0X80)))
+				discard ;
+			BigRealHolder::hold (ret)->increase () ;
 		}
 		for (auto &&i : range (0 ,ret.mShift)) {
-			ret.mInteger[i] = Byte (0X00) ;
+			ret.mReal[i] = Byte (0X00) ;
 		}
 		check_mask (ret) ;
 		return move (ret) ;
@@ -1616,9 +1744,9 @@ public:
 				break ;
 			if (rax == 0)
 				break ;
-			const auto r1x = Val32 (self.mInteger[ix]) + rax ;
+			const auto r1x = Val32 (self.mReal[ix]) + rax ;
 			rax = Val32 (Char (r1x) >> 8) ;
-			self.mInteger[ix] = Byte (r1x) ;
+			self.mReal[ix] = Byte (r1x) ;
 		}
 		check_mask (self) ;
 	}
@@ -1631,62 +1759,62 @@ public:
 				break ;
 			if (rax == 0)
 				break ;
-			const auto r1x = Val32 (self.mInteger[ix]) - rax ;
+			const auto r1x = Val32 (self.mReal[ix]) - rax ;
 			rax = Val32 (r1x < 0) ;
 			const auto r2x = r1x + 256 * rax ;
-			self.mInteger[ix] = Byte (r1x) ;
+			self.mReal[ix] = Byte (r2x) ;
 		}
 		check_mask (self) ;
 	}
 
-	static void check_mask (VR<IntegerLayout> that) {
+	static void check_mask (VR<BigRealLayout> that) {
+		const auto r1x = BigRealHolder::hold (that)->precision () ;
+		Index ix = inline_max (r1x ,that.mShift) ;
+		that.mWidth = ix + 1 ;
 		if ifdo (TRUE) {
-			const auto r1x = that.mShift - INTEGER_MIN_SIZE::expr ;
-			if (r1x <= 0)
-				discard ;
-			for (auto &&i : range (0 ,that.mWidth - r1x)) {
-				that.mInteger[i] = that.mInteger[i + r1x] ;
+			Index iy = 0 ;
+			while (TRUE) {
+				if (iy >= that.mShift)
+					break ;
+				if (that.mReal[iy] != Byte (0X00))
+					break ;
+				iy++ ;
 			}
-			that.mWidth -= r1x ;
-			that.mShift = INTEGER_MIN_SIZE::expr ;
+			if (iy == 0)
+				discard ;
+			for (auto &&i : range (0 ,that.mWidth - iy)) {
+				that.mReal[i] = that.mReal[i + iy] ;
+			}
+			that.mWidth -= iy ;
+			that.mShift -= iy ;
 		}
-		assert (that.mShift == INTEGER_MIN_SIZE::expr) ;
-		Index ix = that.mWidth - 1 ;
+		ix = that.mWidth - 1 ;
 		if ifdo (TRUE) {
-			const auto r2x = that.mInteger[ix] ;
+			const auto r2x = that.mReal[ix] ;
 			if (r2x == Byte (0X00))
 				discard ;
 			if (r2x == Byte (0XFF))
 				discard ;
 			const auto r3x = that.mWidth + 1 ;
 			if ifdo (TRUE) {
-				if (r3x <= that.mInteger.size ())
+				if (r3x <= that.mReal.size ())
 					discard ;
 				const auto r4x = inline_alignas (r3x ,INTEGER_MIN_SIZE::expr) ;
-				that.mInteger.resize (r4x) ;
+				that.mReal.resize (r4x) ;
 			}
 			ix++ ;
-			that.mInteger[ix] = ByteProc::binary (r2x & Byte (0X80)) ;
+			that.mReal[ix] = ByteProc::binary (r2x & Byte (0X80)) ;
 			that.mWidth = ix + 1 ;
 		}
-		ix = that.mWidth - 1 ;
-		while (TRUE) {
-			if (ix <= that.mShift)
-				break ;
-			if (that.mInteger[ix] != that.mInteger[ix - 1])
-				break ;
-			ix-- ;
-		}
-		that.mWidth = ix + 1 ;
 	}
 } ;
 
-exports VFat<IntegerHolder> IntegerHolder::hold (VR<IntegerLayout> that) {
-	return VFat<IntegerHolder> (IntegerImplHolder () ,that) ;
+exports VFat<BigRealHolder> BigRealHolder::hold (VR<BigRealLayout> that) {
+	return VFat<BigRealHolder> (BigRealImplHolder () ,that) ;
 }
 
-exports CFat<IntegerHolder> IntegerHolder::hold (CR<IntegerLayout> that) {
-	return CFat<IntegerHolder> (IntegerImplHolder () ,that) ;
+exports CFat<BigRealHolder> BigRealHolder::hold (CR<BigRealLayout> that) {
+	return CFat<BigRealHolder> (BigRealImplHolder () ,that) ;
 }
 
 struct JetNode ;
@@ -1726,8 +1854,7 @@ class JetImplHolder final implement Fat<JetHolder ,JetLayout> {
 public:
 	void initialize (CR<Length> size_ ,CR<Flt64> item) override {
 		assert (size_ > 0) ;
-		check_recycle (JetImplLayout::expr) ;
-		self.mThis = JetImplLayout::expr.mThis ;
+		check_recycle (self) ;
 		self.mIndex.m1st = self.mThis->mTree.alloc (Box<JetNode>::make ()) ;
 		self.mIndex.m2nd = address (self.mThis.ref) ;
 		ptr (self).mDepth = 1 ;
@@ -1744,7 +1871,7 @@ public:
 	}
 
 	void initialize (CR<Length> size_ ,CR<Flt64> item ,CR<Index> slot) override {
-		assert (inline_between (slot ,0 ,size_)) ;
+		assert (inline_mid (slot ,0 ,size_)) ;
 		initialize (size_ ,item) ;
 		ptr (self).mSlot = slot ;
 		ptr (self).mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<Wrapper<Flt64>> params) {
@@ -1760,17 +1887,13 @@ public:
 		}) ;
 	}
 
-	void check_recycle (VR<JetImplLayout> root) {
-		if ifdo (TRUE) {
-			if (root.mThis.exist ())
-				discard ;
-			root.mThis = SharedRef<JetTree>::make () ;
-			root.mThis->mCheck = 0 ;
-		}
-		if (root.mThis.counter () > 1)
+	void check_recycle (VR<JetLayout> root) {
+		root.mThis = JetImplLayout::expr.mThis ;
+		if (root.mThis.exist ())
 			return ;
-		root.mThis->mTree.clear () ;
-		root.mThis->mCheck++ ;
+		root.mThis = SharedRef<JetTree>::make () ;
+		root.mThis->mCheck = 0 ;
+		JetImplLayout::expr.mThis = root.mThis.weak () ;
 	}
 
 	static VR<JetNode> ptr (CR<JetLayout> that) {
@@ -2326,13 +2449,31 @@ public:
 
 	Word crchash16 (CR<Pointer> src ,CR<Length> size_ ,CR<Word> val) const override {
 		static const ARR<csc_uint16_t ,ENUM<256>> mCache {
-			0x0000 ,0x1021 ,0x2042 ,0x3063 ,0x4084 ,0x50A5 ,0x60C6 ,0x70E7 ,0x8108 ,0x9129 ,0xA14A ,0xB16B ,0xC18C ,0xD1AD ,0xE1CE ,0xF1EF ,0x1231 ,0x0210 ,0x3273 ,0x2252 ,0x52B5 ,0x4294 ,0x72F7 ,0x62D6 ,0x9339 ,0x8318 ,0xB37B ,0xA35A ,0xD3BD ,0xC39C ,0xF3FF ,0xE3DE ,0x2462 ,0x3443 ,0x0420 ,0x1401 ,0x64E6 ,0x74C7 ,0x44A4 ,0x5485 ,0xA56A ,0xB54B ,0x8528 ,0x9509 ,0xE5EE ,0xF5CF ,0xC5AC ,0xD58D ,0x3653 ,0x2672 ,0x1611 ,0x0630 ,0x76D7 ,0x66F6 ,0x5695 ,0x46B4 ,0xB75B ,0xA77A ,0x9719 ,0x8738 ,0xF7DF ,0xE7FE ,0xD79D ,0xC7BC ,0x48C4 ,0x58E5 ,0x6886 ,0x78A7 ,0x0840 ,0x1861 ,0x2802 ,0x3823 ,0xC9CC ,0xD9ED ,0xE98E ,0xF9AF ,0x8948 ,0x9969 ,0xA90A ,0xB92B ,0x5AF5 ,0x4AD4 ,0x7AB7 ,0x6A96 ,0x1A71 ,0x0A50 ,0x3A33 ,0x2A12 ,0xDBFD ,0xCBDC ,0xFBBF ,0xEB9E ,0x9B79 ,0x8B58 ,0xBB3B ,0xAB1A ,0x6CA6 ,0x7C87 ,0x4CE4 ,0x5CC5 ,0x2C22 ,0x3C03 ,0x0C60 ,0x1C41 ,0xEDAE ,0xFD8F ,0xCDEC ,0xDDCD ,0xAD2A ,0xBD0B ,0x8D68 ,0x9D49 ,0x7E97 ,0x6EB6 ,0x5ED5 ,0x4EF4 ,0x3E13 ,0x2E32 ,0x1E51 ,0x0E70 ,0xFF9F ,0xEFBE ,0xDFDD ,0xCFFC ,0xBF1B ,0xAF3A ,0x9F59 ,0x8F78 ,0x9188 ,0x81A9 ,0xB1CA ,0xA1EB ,0xD10C ,0xC12D ,0xF14E ,0xE16F ,0x1080 ,0x00A1 ,0x30C2 ,0x20E3 ,0x5004 ,0x4025 ,0x7046 ,0x6067 ,0x83B9 ,0x9398 ,0xA3FB ,0xB3DA ,0xC33D ,0xD31C ,0xE37F ,0xF35E ,0x02B1 ,0x1290 ,0x22F3 ,0x32D2 ,0x4235 ,0x5214 ,0x6277 ,0x7256 ,0xB5EA ,0xA5CB ,0x95A8 ,0x8589 ,0xF56E ,0xE54F ,0xD52C ,0xC50D ,0x34E2 ,0x24C3 ,0x14A0 ,0x0481 ,0x7466 ,0x6447 ,0x5424 ,0x4405 ,0xA7DB ,0xB7FA ,0x8799 ,0x97B8 ,0xE75F ,0xF77E ,0xC71D ,0xD73C ,0x26D3 ,0x36F2 ,0x0691 ,0x16B0 ,0x6657 ,0x7676 ,0x4615 ,0x5634 ,0xD94C ,0xC96D ,0xF90E ,0xE92F ,0x99C8 ,0x89E9 ,0xB98A ,0xA9AB ,0x5844 ,0x4865 ,0x7806 ,0x6827 ,0x18C0 ,0x08E1 ,0x3882 ,0x28A3 ,0xCB7D ,0xDB5C ,0xEB3F ,0xFB1E ,0x8BF9 ,0x9BD8 ,0xABBB ,0xBB9A ,0x4A75 ,0x5A54 ,0x6A37 ,0x7A16 ,0x0AF1 ,0x1AD0 ,0x2AB3 ,0x3A92 ,0xFD2E ,0xED0F ,0xDD6C ,0xCD4D ,0xBDAA ,0xAD8B ,0x9DE8 ,0x8DC9 ,0x7C26 ,0x6C07 ,0x5C64 ,0x4C45 ,0x3CA2 ,0x2C83 ,0x1CE0 ,0x0CC1 ,0xEF1F ,0xFF3E ,0xCF5D ,0xDF7C ,0xAF9B ,0xBFBA ,0x8FD9 ,0x9FF8 ,0x6E17 ,0x7E36 ,0x4E55 ,0x5E74 ,0x2E93 ,0x3EB2 ,0x0ED1 ,0x1EF0} ;
+			0X0000 ,0X1189 ,0X2312 ,0X329B ,0X4624 ,0X57AD ,0X6536 ,0X74BF ,0X8C48 ,0X9DC1 ,0XAF5A ,0XBED3 ,0XCA6C ,0XDBE5 ,0XE97E ,0XF8F7 ,0X1081 ,0X0108 ,0X3393 ,0X221A ,0X56A5 ,0X472C ,0X75B7 ,0X643E ,0X9CC9 ,0X8D40 ,0XBFDB ,0XAE52 ,0XDAED ,0XCB64 ,0XF9FF ,0XE876 ,0X2102 ,0X308B ,0X0210 ,0X1399 ,0X6726 ,0X76AF ,0X4434 ,0X55BD ,0XAD4A ,0XBCC3 ,0X8E58 ,0X9FD1 ,0XEB6E ,0XFAE7 ,0XC87C ,0XD9F5 ,0X3183 ,0X200A ,0X1291 ,0X0318 ,0X77A7 ,0X662E ,0X54B5 ,0X453C ,0XBDCB ,0XAC42 ,0X9ED9 ,0X8F50 ,0XFBEF ,0XEA66 ,0XD8FD ,0XC974 ,0X4204 ,0X538D ,0X6116 ,0X709F ,0X0420 ,0X15A9 ,0X2732 ,0X36BB ,0XCE4C ,0XDFC5 ,0XED5E ,0XFCD7 ,0X8868 ,0X99E1 ,0XAB7A ,0XBAF3 ,0X5285 ,0X430C ,0X7197 ,0X601E ,0X14A1 ,0X0528 ,0X37B3 ,0X263A ,0XDECD ,0XCF44 ,0XFDDF ,0XEC56 ,0X98E9 ,0X8960 ,0XBBFB ,0XAA72 ,0X6306 ,0X728F ,0X4014 ,0X519D ,0X2522 ,0X34AB ,0X0630 ,0X17B9 ,0XEF4E ,0XFEC7 ,0XCC5C ,0XDDD5 ,0XA96A ,0XB8E3 ,0X8A78 ,0X9BF1 ,0X7387 ,0X620E ,0X5095 ,0X411C ,0X35A3 ,0X242A ,0X16B1 ,0X0738 ,0XFFCF ,0XEE46 ,0XDCDD ,0XCD54 ,0XB9EB ,0XA862 ,0X9AF9 ,0X8B70 ,0X8408 ,0X9581 ,0XA71A ,0XB693 ,0XC22C ,0XD3A5 ,0XE13E ,0XF0B7 ,0X0840 ,0X19C9 ,0X2B52 ,0X3ADB ,0X4E64 ,0X5FED ,0X6D76 ,0X7CFF ,0X9489 ,0X8500 ,0XB79B ,0XA612 ,0XD2AD ,0XC324 ,0XF1BF ,0XE036 ,0X18C1 ,0X0948 ,0X3BD3 ,0X2A5A ,0X5EE5 ,0X4F6C ,0X7DF7 ,0X6C7E ,0XA50A ,0XB483 ,0X8618 ,0X9791 ,0XE32E ,0XF2A7 ,0XC03C ,0XD1B5 ,0X2942 ,0X38CB ,0X0A50 ,0X1BD9 ,0X6F66 ,0X7EEF ,0X4C74 ,0X5DFD ,0XB58B ,0XA402 ,0X9699 ,0X8710 ,0XF3AF ,0XE226 ,0XD0BD ,0XC134 ,0X39C3 ,0X284A ,0X1AD1 ,0X0B58 ,0X7FE7 ,0X6E6E ,0X5CF5 ,0X4D7C ,0XC60C ,0XD785 ,0XE51E ,0XF497 ,0X8028 ,0X91A1 ,0XA33A ,0XB2B3 ,0X4A44 ,0X5BCD ,0X6956 ,0X78DF ,0X0C60 ,0X1DE9 ,0X2F72 ,0X3EFB ,0XD68D ,0XC704 ,0XF59F ,0XE416 ,0X90A9 ,0X8120 ,0XB3BB ,0XA232 ,0X5AC5 ,0X4B4C ,0X79D7 ,0X685E ,0X1CE1 ,0X0D68 ,0X3FF3 ,0X2E7A ,0XE70E ,0XF687 ,0XC41C ,0XD595 ,0XA12A ,0XB0A3 ,0X8238 ,0X93B1 ,0X6B46 ,0X7ACF ,0X4854 ,0X59DD ,0X2D62 ,0X3CEB ,0X0E70 ,0X1FF9 ,0XF78F ,0XE606 ,0XD49D ,0XC514 ,0XB1AB ,0XA022 ,0X92B9 ,0X8330 ,0X7BC7 ,0X6A4E ,0X58D5 ,0X495C ,0X3DE3 ,0X2C6A ,0X1EF1 ,0X0F78} ;
 		Word ret = val ;
 		auto &&rax = keep[TYPE<ARR<Byte>>::expr] (src) ;
 		for (auto &&i : range (0 ,size_)) {
-			const auto r1x = (ret >> 8) ^ Word (rax[i]) ;
-			const auto r2x = Index (r1x & Word (0XFF)) ;
-			ret = Word (mCache[r2x]) ^ (ret << 8) ;
+			const auto r1x = ret ^ Word (rax[i]) ;
+			const auto r2x = Index (r1x & Word (0xFF)) ;
+			ret = Word (mCache[r2x]) ^ (ret >> 8) ;
+		}
+		return move (ret) ;
+	}
+
+	Char crchash32 (CR<Pointer> src ,CR<Length> size_) const override {
+		return crchash32 (src ,size_ ,Char (0X00)) ;
+	}
+
+	Char crchash32 (CR<Pointer> src ,CR<Length> size_ ,CR<Char> val) const override {
+		static const ARR<csc_uint32_t ,ENUM<256>> mCache
+		{
+			0X00000000 ,0X77073096 ,0XEE0E612C ,0X990951BA ,0X076DC419 ,0X706AF48F ,0XE963A535 ,0X9E6495A3 ,0X0EDB8832 ,0X79DCB8A4 ,0XE0D5E91E ,0X97D2D988 ,0X09B64C2B ,0X7EB17CBD ,0XE7B82D07 ,0X90BF1D91 ,0X1DB71064 ,0X6AB020F2 ,0XF3B97148 ,0X84BE41DE ,0X1ADAD47D ,0X6DDDE4EB ,0XF4D4B551 ,0X83D385C7 ,0X136C9856 ,0X646BA8C0 ,0XFD62F97A ,0X8A65C9EC ,0X14015C4F ,0X63066CD9 ,0XFA0F3D63 ,0X8D080DF5 ,0X3B6E20C8 ,0X4C69105E ,0XD56041E4 ,0XA2677172 ,0X3C03E4D1 ,0X4B04D447 ,0XD20D85FD ,0XA50AB56B ,0X35B5A8FA ,0X42B2986C ,0XDBBBC9D6 ,0XACBCF940 ,0X32D86CE3 ,0X45DF5C75 ,0XDCD60DCF ,0XABD13D59 ,0X26D930AC ,0X51DE003A ,0XC8D75180 ,0XBFD06116 ,0X21B4F4B5 ,0X56B3C423 ,0XCFBA9599 ,0XB8BDA50F ,0X2802B89E ,0X5F058808 ,0XC60CD9B2 ,0XB10BE924 ,0X2F6F7C87 ,0X58684C11 ,0XC1611DAB ,0XB6662D3D ,0X76DC4190 ,0X01DB7106 ,0X98D220BC ,0XEFD5102A ,0X71B18589 ,0X06B6B51F ,0X9FBFE4A5 ,0XE8B8D433 ,0X7807C9A2 ,0X0F00F934 ,0X9609A88E ,0XE10E9818 ,0X7F6A0DBB ,0X086D3D2D ,0X91646C97 ,0XE6635C01 ,0X6B6B51F4 ,0X1C6C6162 ,0X856530D8 ,0XF262004E ,0X6C0695ED ,0X1B01A57B ,0X8208F4C1 ,0XF50FC457 ,0X65B0D9C6 ,0X12B7E950 ,0X8BBEB8EA ,0XFCB9887C ,0X62DD1DDF ,0X15DA2D49 ,0X8CD37CF3 ,0XFBD44C65 ,0X4DB26158 ,0X3AB551CE ,0XA3BC0074 ,0XD4BB30E2 ,0X4ADFA541 ,0X3DD895D7 ,0XA4D1C46D ,0XD3D6F4FB ,0X4369E96A ,0X346ED9FC ,0XAD678846 ,0XDA60B8D0 ,0X44042D73 ,0X33031DE5 ,0XAA0A4C5F ,0XDD0D7CC9 ,0X5005713C ,0X270241AA ,0XBE0B1010 ,0XC90C2086 ,0X5768B525 ,0X206F85B3 ,0XB966D409 ,0XCE61E49F ,0X5EDEF90E ,0X29D9C998 ,0XB0D09822 ,0XC7D7A8B4 ,0X59B33D17 ,0X2EB40D81 ,0XB7BD5C3B ,0XC0BA6CAD ,0XEDB88320 ,0X9ABFB3B6 ,0X03B6E20C ,0X74B1D29A ,0XEAD54739 ,0X9DD277AF ,0X04DB2615 ,0X73DC1683 ,0XE3630B12 ,0X94643B84 ,0X0D6D6A3E ,0X7A6A5AA8 ,0XE40ECF0B ,0X9309FF9D ,0X0A00AE27 ,0X7D079EB1 ,0XF00F9344 ,0X8708A3D2 ,0X1E01F268 ,0X6906C2FE ,0XF762575D ,0X806567CB ,0X196C3671 ,0X6E6B06E7 ,0XFED41B76 ,0X89D32BE0 ,0X10DA7A5A ,0X67DD4ACC ,0XF9B9DF6F ,0X8EBEEFF9 ,0X17B7BE43 ,0X60B08ED5 ,0XD6D6A3E8 ,0XA1D1937E ,0X38D8C2C4 ,0X4FDFF252 ,0XD1BB67F1 ,0XA6BC5767 ,0X3FB506DD ,0X48B2364B ,0XD80D2BDA ,0XAF0A1B4C ,0X36034AF6 ,0X41047A60 ,0XDF60EFC3 ,0XA867DF55 ,0X316E8EEF ,0X4669BE79 ,0XCB61B38C ,0XBC66831A ,0X256FD2A0 ,0X5268E236 ,0XCC0C7795 ,0XBB0B4703 ,0X220216B9 ,0X5505262F ,0XC5BA3BBE ,0XB2BD0B28 ,0X2BB45A92 ,0X5CB36A04 ,0XC2D7FFA7 ,0XB5D0CF31 ,0X2CD99E8B ,0X5BDEAE1D ,0X9B64C2B0 ,0XEC63F226 ,0X756AA39C ,0X026D930A ,0X9C0906A9 ,0XEB0E363F ,0X72076785 ,0X05005713 ,0X95BF4A82 ,0XE2B87A14 ,0X7BB12BAE ,0X0CB61B38 ,0X92D28E9B ,0XE5D5BE0D ,0X7CDCEFB7 ,0X0BDBDF21 ,0X86D3D2D4 ,0XF1D4E242 ,0X68DDB3F8 ,0X1FDA836E ,0X81BE16CD ,0XF6B9265B ,0X6FB077E1 ,0X18B74777 ,0X88085AE6 ,0XFF0F6A70 ,0X66063BCA ,0X11010B5C ,0X8F659EFF ,0XF862AE69 ,0X616BFFD3 ,0X166CCF45 ,0XA00AE278 ,0XD70DD2EE ,0X4E048354 ,0X3903B3C2 ,0XA7672661 ,0XD06016F7 ,0X4969474D ,0X3E6E77DB ,0XAED16A4A ,0XD9D65ADC ,0X40DF0B66 ,0X37D83BF0 ,0XA9BCAE53 ,0XDEBB9EC5 ,0X47B2CF7F ,0X30B5FFE9 ,0XBDBDF21C ,0XCABAC28A ,0X53B39330 ,0X24B4A3A6 ,0XBAD03605 ,0XCDD70693 ,0X54DE5729 ,0X23D967BF ,0XB3667A2E ,0XC4614AB8 ,0X5D681B02 ,0X2A6F2B94 ,0XB40BBE37 ,0XC30C8EA1 ,0X5A05DF1B ,0X2D02EF8D} ;
+		Char ret = val ;
+		auto &&rax = keep[TYPE<ARR<Byte>>::expr] (src) ;
+		for (auto &&i : range (0 ,size_)) {
+			const auto r1x = ret ^ Char (rax[i]) ;
+			const auto r2x = Index (r1x & Char (0xFF)) ;
+			ret = Char (mCache[r2x]) ^ (ret >> 8) ;
 		}
 		return move (ret) ;
 	}

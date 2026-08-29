@@ -596,20 +596,23 @@ template <class SIZE>
 using TYPE_SENQUENCE = typename TYPE_SENQUENCE_HELP<SIZE ,RANK0 ,ALWAYS>::RET ;
 
 template <class...>
-trait TYPE_PICK_HELP ;
+trait TYPE_FIND_HELP ;
 
-template <class A ,class CURR>
-trait TYPE_PICK_HELP<A ,CURR ,REQUIRE<ENUM_EQ_ZERO<CURR>>> {
-	using RET = TYPE_M1ST_ITEM<A> ;
+template <class A ,class B ,class CURR>
+trait TYPE_FIND_HELP<A ,B ,CURR ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<A>>>> {
+	using RET = ENUM<-1> ;
 } ;
 
-template <class A ,class CURR>
-trait TYPE_PICK_HELP<A ,CURR ,REQUIRE<ENUM_GT_ZERO<CURR>>> {
-	using RET = typename TYPE_PICK_HELP<TYPE_M1ST_REST<A> ,ENUM_DEC<CURR> ,ALWAYS>::RET ;
+template <class A ,class B ,class CURR>
+trait TYPE_FIND_HELP<A ,B ,CURR ,REQUIRE<ENUM_GT_ZERO<RANK_OF<A>>>> {
+	using R1X = TYPE_M1ST_ITEM<A> ;
+	using R2X = typename TYPE_FIND_HELP<TYPE_M1ST_REST<A> ,B ,ENUM_INC<CURR> ,ALWAYS>::RET ;
+	using R3X = CONDITIONAL<IS_SAME<R1X ,B> ,CURR ,R2X> ;
+	using RET = ENUM<R3X::expr> ;
 } ;
 
-template <class A ,class CURR>
-using TYPE_PICK = typename TYPE_PICK_HELP<A ,CURR ,ALWAYS>::RET ;
+template <class A ,class B>
+using TYPE_FIND = typename TYPE_FIND_HELP<A ,B ,RANK0 ,ALWAYS>::RET ;
 
 template <class...>
 trait ENUM_ALL_HELP ;
@@ -841,8 +844,8 @@ trait IS_BASIC_HELP<A ,ALWAYS> {
 	using R1X = IS_BOOL<A> ;
 	using R2X = IS_VALUE<A> ;
 	using R3X = IS_FLOAT<A> ;
-	using R4X = IS_TEXT<A> ;
-	using R5X = IS_BYTE<A> ;
+	using R4X = IS_BYTE<A> ;
+	using R5X = IS_TEXT<A> ;
 	using R6X = IS_NULL<A> ;
 	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X> ;
 } ;

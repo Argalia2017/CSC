@@ -425,9 +425,9 @@ public:
 	template <class ARG1 ,class = REQUIRE<IS_CLASS<ARG1>>>
 	implicit Color (CR<ARG1> that) {
 		require (IS_TRIVIAL<ARG1>) ;
-		const auto r1x = SIZE_OF<ARG1>::expr ;
-		const auto r2x = ALIGN_OF<ARG1>::expr ;
-		ColorHolder::hold (thiz)->initialize (address (that) ,r1x ,r2x) ;
+		const auto r1x = ALIGN_OF<ARG1>::expr ;
+		const auto r2x = SIZE_OF<ARG1>::expr / r1x ;
+		ColorHolder::hold (thiz)->initialize (address (that) ,r2x ,r1x) ;
 	}
 
 	static Color all (CR<Val32> that) {
@@ -710,12 +710,6 @@ public:
 		return ImageProcHolder::hold (expr)->sampler (image ,x ,y) ;
 	}
 } ;
-
-class TensorSlice0 implement SliceLayout {} ;
-
-class TensorSlice1 implement SliceLayout {} ;
-
-class TensorSlice2 implement SliceLayout {} ;
 
 inline CR<Slice> TensorSlice (CR<Slice> span_) {
 	return span_ ;

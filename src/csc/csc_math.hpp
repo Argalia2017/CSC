@@ -13,8 +13,8 @@ namespace CSC {
 static constexpr auto MATH_E = Flt64 (2.71828182845904523536) ;
 static constexpr auto MATH_PI = Flt64 (3.14159265358979323846) ;
 static constexpr auto MATH_SQRT2 = Flt64 (1.41421356237309504880) ;
-static constexpr auto MATH_PDF0 = Flt64 (0.39894228040143267794) ;
-static constexpr auto MATH_R = MATH_PI / Flt64 (180) ;
+static constexpr auto MATH_PDF0 = Flt64 (0.398942280401432677939) ;
+static constexpr auto MATH_R = Flt64 (0.0174532925199432957692) ;
 static constexpr auto MATH_LN2 = Flt64 (0.693147180559945309417) ;
 static constexpr auto MATH_LN10 = Flt64 (2.30258509299404568402) ;
 
@@ -116,6 +116,10 @@ struct MathProcHolder implement Interface {
 	virtual Val64 min_of (CR<Wrapper<Val64>> b) const = 0 ;
 	virtual Flt32 min_of (CR<Wrapper<Flt32>> b) const = 0 ;
 	virtual Flt64 min_of (CR<Wrapper<Flt64>> b) const = 0 ;
+	virtual Bool mid_of (CR<Val32> a ,CR<Val32> min_ ,CR<Val32> max_) const = 0 ;
+	virtual Bool mid_of (CR<Val64> a ,CR<Val64> min_ ,CR<Val64> max_) const = 0 ;
+	virtual Bool mid_of (CR<Flt32> a ,CR<Flt32> min_ ,CR<Flt32> max_) const = 0 ;
+	virtual Bool mid_of (CR<Flt64> a ,CR<Flt64> min_ ,CR<Flt64> max_) const = 0 ;
 } ;
 
 class MathProc implement Super<UniqueRef<MathProcLayout>> {
@@ -313,6 +317,11 @@ public:
 	static ARG1 min_of (CR<ARG1> a ,CR<ARG2>...b) {
 		return MathProcHolder::hold (expr)->min_of (MakeWrapper (a ,b...)) ;
 	}
+
+	template <class ARG1 ,class ARG2>
+	static ARG1 mid_of (CR<ARG1> a ,CR<ARG2> min_ ,CR<ARG2> max_) {
+		return MathProcHolder::hold (expr)->mid_of (a ,ARG1 (min_) ,ARG1 (max_)) ;
+	}
 } ;
 
 struct NormalErrorLayout {
@@ -320,7 +329,7 @@ struct NormalErrorLayout {
 	Flt64 mMax ;
 	Flt64 mAvg ;
 	Flt64 mStd ;
-	Flt64 mRms ;
+	Flt64 mPro ;
 
 public:
 	implicit NormalErrorLayout () noexcept {
@@ -328,7 +337,7 @@ public:
 		mMax = 0 ;
 		mAvg = 0 ;
 		mStd = 0 ;
-		mRms = 0 ;
+		mPro = 0 ;
 	}
 } ;
 
@@ -573,250 +582,255 @@ public:
 	}
 } ;
 
-struct IntegerLayout {
-	RefBuffer<Byte> mInteger ;
+struct BigRealLayout {
+	RefBuffer<Byte> mReal ;
 	Length mWidth ;
 	Length mShift ;
 
 public:
-	implicit IntegerLayout () noexcept {
+	implicit BigRealLayout () noexcept {
 		mWidth = 0 ;
 		mShift = 0 ;
 	}
 } ;
 
-struct IntegerHolder implement Interface {
-	imports VFat<IntegerHolder> hold (VR<IntegerLayout> that) ;
-	imports CFat<IntegerHolder> hold (CR<IntegerLayout> that) ;
+struct BigRealHolder implement Interface {
+	imports VFat<BigRealHolder> hold (VR<BigRealLayout> that) ;
+	imports CFat<BigRealHolder> hold (CR<BigRealLayout> that) ;
 
 	virtual void initialize (CR<Length> size_) = 0 ;
-	virtual void initialize (CR<IntegerLayout> that) = 0 ;
+	virtual void initialize (CR<BigRealLayout> that) = 0 ;
 	virtual Length size () const = 0 ;
-	virtual Val64 fetch () const = 0 ;
-	virtual void store (CR<Val64> item) = 0 ;
-	virtual Bool equal (CR<IntegerLayout> that) const = 0 ;
-	virtual Flag compr (CR<IntegerLayout> that) const = 0 ;
+	virtual Index precision () const = 0 ;
+	virtual Flt64 fetch () const = 0 ;
+	virtual void store (CR<Flt64> item) = 0 ;
+	virtual Bool equal (CR<BigRealLayout> that) const = 0 ;
+	virtual Flag compr (CR<BigRealLayout> that) const = 0 ;
 	virtual void visit (CR<Visitor> visitor) const = 0 ;
-	virtual IntegerLayout sadd (CR<IntegerLayout> that) const = 0 ;
-	virtual IntegerLayout ssub (CR<IntegerLayout> that) const = 0 ;
-	virtual IntegerLayout smul (CR<IntegerLayout> that) const = 0 ;
-	virtual IntegerLayout sdiv (CR<IntegerLayout> that) const = 0 ;
-	virtual IntegerLayout smod (CR<IntegerLayout> that) const = 0 ;
-	virtual IntegerLayout sabs () const = 0 ;
-	virtual IntegerLayout minus () const = 0 ;
-	virtual IntegerLayout shift (CR<Length> scale) const = 0 ;
-	virtual IntegerLayout sround () const = 0 ;
+	virtual BigRealLayout sadd (CR<BigRealLayout> that) const = 0 ;
+	virtual BigRealLayout ssub (CR<BigRealLayout> that) const = 0 ;
+	virtual BigRealLayout smul (CR<BigRealLayout> that) const = 0 ;
+	virtual BigRealLayout sdiv (CR<BigRealLayout> that) const = 0 ;
+	virtual BigRealLayout smod (CR<BigRealLayout> that) const = 0 ;
+	virtual BigRealLayout sabs () const = 0 ;
+	virtual BigRealLayout minus () const = 0 ;
+	virtual BigRealLayout shift (CR<Length> scale) const = 0 ;
+	virtual BigRealLayout sround () const = 0 ;
 	virtual void increase () = 0 ;
 	virtual void decrease () = 0 ;
 } ;
 
-class Integer implement IntegerLayout {
+class BigReal implement BigRealLayout {
 protected:
-	using IntegerLayout::mInteger ;
-	using IntegerLayout::mWidth ;
-	using IntegerLayout::mShift ;
+	using BigRealLayout::mReal ;
+	using BigRealLayout::mWidth ;
+	using BigRealLayout::mShift ;
 
 public:
-	implicit Integer () = default ;
+	implicit BigReal () = default ;
 
-	explicit Integer (CR<Val64> item) {
-		IntegerHolder::hold (thiz)->initialize (SIZE_OF<Val64>::expr) ;
-		IntegerHolder::hold (thiz)->store (item) ;
+	explicit BigReal (CR<Flt64> item) {
+		BigRealHolder::hold (thiz)->initialize (512) ;
+		BigRealHolder::hold (thiz)->store (item) ;
 	}
 
-	static CR<Integer> zero () {
+	static CR<BigReal> zero () {
 		return memorize ([&] () {
-			return Integer (0) ;
+			return BigReal (0) ;
 		}) ;
 	}
 
-	static CR<Integer> iden () {
+	static CR<BigReal> iden () {
 		return memorize ([&] () {
-			return Integer (1) ;
+			return BigReal (1) ;
 		}) ;
 	}
 
-	implicit Integer (CR<Integer> that) {
-		IntegerHolder::hold (thiz)->initialize (that) ;
+	implicit BigReal (CR<BigReal> that) {
+		BigRealHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VR<Integer> operator= (CR<Integer> that) {
+	forceinline VR<BigReal> operator= (CR<BigReal> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit Integer (RR<Integer> that) = default ;
+	implicit BigReal (RR<BigReal> that) = default ;
 
-	forceinline VR<Integer> operator= (RR<Integer> that) = default ;
+	forceinline VR<BigReal> operator= (RR<BigReal> that) = default ;
 
-	Integer clone () const {
+	BigReal clone () const {
 		return move (thiz) ;
 	}
 
 	Length size () const {
-		return IntegerHolder::hold (thiz)->size () ;
+		return BigRealHolder::hold (thiz)->size () ;
 	}
 
-	Val64 fetch () const {
-		return IntegerHolder::hold (thiz)->fetch () ;
+	Index precision () const {
+		return BigRealHolder::hold (thiz)->precision () ;
 	}
 
-	forceinline explicit operator Val64 () const {
+	Flt64 fetch () const {
+		return BigRealHolder::hold (thiz)->fetch () ;
+	}
+
+	forceinline explicit operator Flt64 () const {
 		return fetch () ;
 	}
 
-	void store (CR<Val64> item) {
-		return IntegerHolder::hold (thiz)->store (item) ;
+	void store (CR<Flt64> item) {
+		return BigRealHolder::hold (thiz)->store (item) ;
 	}
 
-	Bool equal (CR<Integer> that) const {
-		return IntegerHolder::hold (thiz)->equal (that) ;
+	Bool equal (CR<BigReal> that) const {
+		return BigRealHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline Bool operator== (CR<Integer> that) const {
+	forceinline Bool operator== (CR<BigReal> that) const {
 		return equal (that) ;
 	}
 
-	forceinline Bool operator!= (CR<Integer> that) const {
+	forceinline Bool operator!= (CR<BigReal> that) const {
 		return (!equal (that)) ;
 	}
 
-	Flag compr (CR<Integer> that) const {
-		return IntegerHolder::hold (thiz)->compr (that) ;
+	Flag compr (CR<BigReal> that) const {
+		return BigRealHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline Bool operator< (CR<Integer> that) const {
+	forceinline Bool operator< (CR<BigReal> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline Bool operator<= (CR<Integer> that) const {
+	forceinline Bool operator<= (CR<BigReal> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline Bool operator> (CR<Integer> that) const {
+	forceinline Bool operator> (CR<BigReal> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline Bool operator>= (CR<Integer> that) const {
+	forceinline Bool operator>= (CR<BigReal> that) const {
 		return compr (that) >= ZERO ;
 	}
 
 	void visit (CR<Visitor> visitor) const {
-		return IntegerHolder::hold (thiz)->visit (visitor) ;
+		return BigRealHolder::hold (thiz)->visit (visitor) ;
 	}
 
-	Integer sadd (CR<Integer> that) const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->sadd (that) ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+	BigReal sadd (CR<BigReal> that) const {
+		BigRealLayout ret = BigRealHolder::hold (thiz)->sadd (that) ;
+		return move (keep[TYPE<BigReal>::expr] (ret)) ;
 	}
 
-	forceinline Integer operator+ (CR<Val64> that) const = delete ;
+	forceinline BigReal operator+ (CR<Flt64> that) const = delete ;
 
-	forceinline Integer operator+ (CR<Integer> that) const {
+	forceinline BigReal operator+ (CR<BigReal> that) const {
 		return sadd (that) ;
 	}
 
-	forceinline void operator+= (CR<Integer> that) {
+	forceinline void operator+= (CR<BigReal> that) {
 		thiz = sadd (that) ;
 	}
 
-	Integer ssub (CR<Integer> that) const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->ssub (that) ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+	BigReal ssub (CR<BigReal> that) const {
+		BigRealLayout ret = BigRealHolder::hold (thiz)->ssub (that) ;
+		return move (keep[TYPE<BigReal>::expr] (ret)) ;
 	}
 
-	forceinline Integer operator- (CR<Val64> that) const = delete ;
+	forceinline BigReal operator- (CR<Flt64> that) const = delete ;
 
-	forceinline Integer operator- (CR<Integer> that) const {
+	forceinline BigReal operator- (CR<BigReal> that) const {
 		return ssub (that) ;
 	}
 
-	forceinline void operator-= (CR<Integer> that) {
+	forceinline void operator-= (CR<BigReal> that) {
 		thiz = ssub (that) ;
 	}
 
-	Integer smul (CR<Integer> that) const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->smul (that) ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+	BigReal smul (CR<BigReal> that) const {
+		BigRealLayout ret = BigRealHolder::hold (thiz)->smul (that) ;
+		return move (keep[TYPE<BigReal>::expr] (ret)) ;
 	}
 
-	forceinline Integer operator* (CR<Val64> that) const = delete ;
+	forceinline BigReal operator* (CR<Flt64> that) const = delete ;
 
-	forceinline Integer operator* (CR<Integer> that) const {
+	forceinline BigReal operator* (CR<BigReal> that) const {
 		return smul (that) ;
 	}
 
-	forceinline void operator*= (CR<Integer> that) {
+	forceinline void operator*= (CR<BigReal> that) {
 		thiz = smul (that) ;
 	}
 
-	Integer sdiv (CR<Integer> that) const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->sdiv (that) ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+	BigReal sdiv (CR<BigReal> that) const {
+		BigRealLayout ret = BigRealHolder::hold (thiz)->sdiv (that) ;
+		return move (keep[TYPE<BigReal>::expr] (ret)) ;
 	}
 
-	forceinline Integer operator/ (CR<Val64> that) const = delete ;
+	forceinline BigReal operator/ (CR<Flt64> that) const = delete ;
 
-	forceinline Integer operator/ (CR<Integer> that) const {
+	forceinline BigReal operator/ (CR<BigReal> that) const {
 		return sdiv (that) ;
 	}
 
-	forceinline void operator/= (CR<Integer> that) {
+	forceinline void operator/= (CR<BigReal> that) {
 		thiz = sdiv (that) ;
 	}
 
-	Integer smod (CR<Integer> that) const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->smod (that) ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+	BigReal smod (CR<BigReal> that) const {
+		BigRealLayout ret = BigRealHolder::hold (thiz)->smod (that) ;
+		return move (keep[TYPE<BigReal>::expr] (ret)) ;
 	}
 
-	forceinline Integer operator% (CR<Val64> that) const = delete ;
+	forceinline BigReal operator% (CR<Flt64> that) const = delete ;
 
-	forceinline Integer operator% (CR<Integer> that) const {
+	forceinline BigReal operator% (CR<BigReal> that) const {
 		return smod (that) ;
 	}
 
-	forceinline void operator%= (CR<Integer> that) {
+	forceinline void operator%= (CR<BigReal> that) {
 		thiz = smod (that) ;
 	}
 
-	Integer sabs () const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->sabs () ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+	BigReal sabs () const {
+		BigRealLayout ret = BigRealHolder::hold (thiz)->sabs () ;
+		return move (keep[TYPE<BigReal>::expr] (ret)) ;
 	}
 
-	Integer minus () const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->minus () ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+	BigReal minus () const {
+		BigRealLayout ret = BigRealHolder::hold (thiz)->minus () ;
+		return move (keep[TYPE<BigReal>::expr] (ret)) ;
 	}
 
-	forceinline Integer operator+ () const {
+	forceinline BigReal operator+ () const {
 		return thiz ;
 	}
 
-	forceinline Integer operator- () const {
+	forceinline BigReal operator- () const {
 		return minus () ;
 	}
 
-	Integer shift (CR<Length> scale) const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->shift (scale) ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+	BigReal shift (CR<Length> scale) const {
+		BigRealLayout ret = BigRealHolder::hold (thiz)->shift (scale) ;
+		return move (keep[TYPE<BigReal>::expr] (ret)) ;
 	}
 
-	forceinline Integer operator<< (CR<Length> scale) const {
+	forceinline BigReal operator<< (CR<Length> scale) const {
 		return shift (+scale) ;
 	}
 
-	forceinline Integer operator>> (CR<Length> scale) const {
+	forceinline BigReal operator>> (CR<Length> scale) const {
 		return shift (-scale) ;
 	}
 
-	Integer sround () const {
-		IntegerLayout ret = IntegerHolder::hold (thiz)->sround () ;
-		return move (keep[TYPE<Integer>::expr] (ret)) ;
+	BigReal sround () const {
+		BigRealLayout ret = BigRealHolder::hold (thiz)->sround () ;
+		return move (keep[TYPE<BigReal>::expr] (ret)) ;
 	}
 
 	void increase () {
-		return IntegerHolder::hold (thiz)->increase () ;
+		return BigRealHolder::hold (thiz)->increase () ;
 	}
 
 	forceinline void operator++ (int) {
@@ -824,7 +838,7 @@ public:
 	}
 
 	void decrease () {
-		return IntegerHolder::hold (thiz)->decrease () ;
+		return BigRealHolder::hold (thiz)->decrease () ;
 	}
 
 	forceinline void operator-- (int) {
@@ -1071,6 +1085,8 @@ struct HashProcHolder implement Interface {
 	virtual Byte crchash8 (CR<Pointer> src ,CR<Length> size_ ,CR<Byte> val) const = 0 ;
 	virtual Word crchash16 (CR<Pointer> src ,CR<Length> size_) const = 0 ;
 	virtual Word crchash16 (CR<Pointer> src ,CR<Length> size_ ,CR<Word> val) const = 0 ;
+	virtual Char crchash32 (CR<Pointer> src ,CR<Length> size_) const = 0 ;
+	virtual Char crchash32 (CR<Pointer> src ,CR<Length> size_ ,CR<Char> val) const = 0 ;
 } ;
 
 class HashProc implement Super<UniqueRef<HashProcLayout>> {
@@ -1109,6 +1125,14 @@ public:
 
 	static Word crchash16 (CR<Pointer> src ,CR<Length> size_ ,CR<Word> val) {
 		return HashProcHolder::hold (expr)->crchash16 (src ,size_ ,val) ;
+	}
+
+	static Char crchash32 (CR<Pointer> src ,CR<Length> size_) {
+		return HashProcHolder::hold (expr)->crchash32 (src ,size_) ;
+	}
+
+	static Char crchash32 (CR<Pointer> src ,CR<Length> size_ ,CR<Char> val) {
+		return HashProcHolder::hold (expr)->crchash32 (src ,size_ ,val) ;
 	}
 } ;
 } ;

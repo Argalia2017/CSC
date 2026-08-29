@@ -19,7 +19,7 @@ struct FUNCTION_from_initializer_list {
 		const auto r3x = inline_list_pair (params ,r2x) ;
 		const auto r4x = (r3x.m2nd - r3x.m1st) / r2x ;
 		const auto r5x = Slice (r3x.m1st ,r4x ,r2x) ;
-		RefBufferHolder::hold (ret)->initialize (holder ,r5x ,Box<int>::make ()) ;
+		RefBufferHolder::hold (ret)->initialize (holder ,r5x ,Box<Val>::make ()) ;
 		return move (ret) ;
 	}
 } ;
@@ -157,7 +157,7 @@ public:
 		const auto r1x = ArrayHolder::hold (item)->size () ;
 		if (r1x == 0)
 			return ;
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		assert (index + r1x <= size ()) ;
 		const auto r2x = RFat<ReflectClone> (self.mArray.unknown ()) ;
 		for (auto &&i : range (0 ,r1x)) {
@@ -424,7 +424,7 @@ public:
 
 	void trunc (CR<Index> index) override {
 		for (auto &&i : range (index ,index + 2)) {
-			if (!inline_between (i ,0 ,self.mString.size ()))
+			if (!inline_mid (i ,0 ,self.mString.size ()))
 				continue ;
 			set (i ,Stru32 (0X00)) ;
 		}
@@ -440,7 +440,7 @@ public:
 		const auto r1x = SliceHolder::hold (item)->size () ;
 		if (r1x == 0)
 			return ;
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		assert (index + r1x <= size ()) ;
 		for (auto &&i : range (0 ,r1x)) {
 			Index ix = index + i ;
@@ -452,7 +452,7 @@ public:
 		const auto r1x = StringHolder::hold (item)->length () ;
 		if (r1x == 0)
 			return ;
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		assert (index + r1x <= size ()) ;
 		auto rax = Stru32 () ;
 		for (auto &&i : range (0 ,r1x)) {
@@ -466,9 +466,9 @@ public:
 		if (begin_ >= end_)
 			return Slice () ;
 		const auto r1x = size () ;
-		if (!inline_between (begin_ ,0 ,r1x))
+		if (!inline_mid (begin_ ,0 ,r1x))
 			return Slice () ;
-		if (!inline_between (end_ ,0 ,r1x + 1))
+		if (!inline_mid (end_ ,0 ,r1x + 1))
 			return Slice () ;
 		return Slice (address (self.mString[begin_]) ,end_ - begin_ ,step ()) ;
 	}
@@ -630,14 +630,14 @@ public:
 	}
 
 	VR<Pointer> at (CR<Index> index) leftvalue override {
-		assert (inline_between (index ,0 ,length ())) ;
+		assert (inline_mid (index ,0 ,length ())) ;
 		const auto r1x = self.mDeque.size () ;
 		Index ix = MathProc::wrap (index + self.mRead ,r1x) ;
 		return self.mDeque.at (ix) ;
 	}
 
 	CR<Pointer> at (CR<Index> index) const leftvalue override {
-		assert (inline_between (index ,0 ,length ())) ;
+		assert (inline_mid (index ,0 ,length ())) ;
 		const auto r1x = self.mDeque.size () ;
 		Index ix = MathProc::wrap (index + self.mRead ,r1x) ;
 		return self.mDeque.at (ix) ;
@@ -828,7 +828,7 @@ public:
 	}
 
 	CR<Pointer> at (CR<Index> index) const leftvalue override {
-		assert (inline_between (index ,0 ,length ())) ;
+		assert (inline_mid (index ,0 ,length ())) ;
 		return self.mPriority.at (index) ;
 	}
 
@@ -1084,6 +1084,12 @@ public:
 		self.mList.free (ix) ;
 	}
 
+	Bool is_slot (CR<Index> index) const override {
+		if (!inline_mid (index ,0 ,self.mList.min_resize ()))
+			return FALSE ;
+		return self.mList.used (index) ;
+	}
+
 	Index insert (RR<BoxLayout> item) override {
 		check_exist () ;
 		Index ret = self.mList.alloc (move (item)) ;
@@ -1096,9 +1102,7 @@ public:
 
 	Index insert (CR<Index> index ,RR<BoxLayout> item) override {
 		check_exist () ;
-		if (!inline_between (index ,0 ,self.mList.size ()))
-			return NONE ;
-		if (!self.mList.used (index))
+		if (!is_slot (index))
 			return NONE ;
 		Index ret = self.mList.alloc (move (item)) ;
 		Index ix = self.mList.bt (index).mLeft ;
@@ -1194,6 +1198,7 @@ public:
 		self.mList.clear () ;
 		self.mRange = RefBuffer<Index> () ;
 		self.mTop = 0 ;
+		self.mRemap = FALSE ;
 	}
 
 	Length size () const override {
@@ -1230,12 +1235,18 @@ public:
 
 	Index find_next (CR<Index> index) const {
 		Index ret = index ;
+		const auto r1x = self.mRemap ? self.mTop : self.mRange.size () ;
 		while (TRUE) {
-			if (ret >= self.mRange.size ())
+			if (ret >= r1x)
 				break ;
 			if (self.mRange[ret] != NONE)
 				break ;
 			ret++ ;
+		}
+		if ifdo (TRUE) {
+			if (ret < r1x)
+				discard ;
+			ret = self.mRange.size () ;
 		}
 		return move (ret) ;
 	}
@@ -1248,6 +1259,14 @@ public:
 		assert (self.mRange[iy] == NONE) ;
 		self.mRange[iy] = ix ;
 		self.mRemap = FALSE ;
+	}
+
+	Bool is_slot (CR<Index> index) const override {
+		if (!inline_mid (index ,0 ,self.mRange.size ()))
+			return FALSE ;
+		if (self.mRange[index] != NONE)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	Index insert (RR<BoxLayout> item) override {
@@ -1263,9 +1282,7 @@ public:
 
 	Index insert (CR<Index> index ,RR<BoxLayout> item) override {
 		check_exist () ;
-		if (!inline_between (index ,0 ,self.mRange.size ()))
-			return NONE ;
-		if (self.mList.used (self.mRange[index]))
+		if (!is_slot (index))
 			return NONE ;
 		Index ix = self.mList.alloc (move (item)) ;
 		check_resize () ;
@@ -1309,12 +1326,8 @@ public:
 			iy++ ;
 		}
 		self.mTop = ix ;
-		while (TRUE) {
-			if (ix >= self.mRange.size ())
-				break ;
-			self.mRange[ix] = NONE ;
-			ix++ ;
-		}
+		for (auto &&i : range (ix ,self.mRange.size ()))
+			self.mRange[i] = NONE ;
 		self.mRemap = TRUE ;
 	}
 
@@ -1445,6 +1458,7 @@ public:
 		check_exist () ;
 		Index ix = self.mThis->mList.alloc (move (item)) ;
 		self.mThis->mCheck++ ;
+		self.mThis->mCheck = inline_max (self.mThis->mCheck ,1) ;
 		self.mThis->mList.bt (ix).mMap = map_ ;
 		self.mThis->mList.bt (ix).mDown = self.mRoot ;
 		self.mRoot = ix ;
@@ -1478,6 +1492,10 @@ public:
 			}
 		}
 		return NONE ;
+	}
+
+	Bool contain (CR<Pointer> item) const override {
+		return find (item) != NONE ;
 	}
 
 	Array<Index> search (CR<Pointer> begin_ ,CR<Pointer> end_) const override {
@@ -1515,10 +1533,6 @@ public:
 			}
 		}
 		return ix ;
-	}
-
-	Bool contain (CR<Pointer> item) const override {
-		return find (item) != NONE ;
 	}
 
 	Index map (CR<Pointer> item) const override {
@@ -1645,7 +1659,7 @@ public:
 	}
 
 	Index iend () const override {
-		return self.mSet.size () ;
+		return self.mSet.min_resize () ;
 	}
 
 	Index inext (CR<Index> index) const override {
@@ -1655,7 +1669,7 @@ public:
 	Index find_next (CR<Index> index) const {
 		Index ret = index ;
 		while (TRUE) {
-			if (ret >= self.mSet.size ())
+			if (ret >= self.mSet.min_resize ())
 				break ;
 			if (self.mSet.used (ret))
 				break ;
@@ -2236,7 +2250,7 @@ public:
 	}
 
 	Index iend () const override {
-		return self.mSet.size () ;
+		return self.mSet.min_resize () ;
 	}
 
 	Index inext (CR<Index> index) const override {
@@ -2246,7 +2260,7 @@ public:
 	Index find_next (CR<Index> index) const {
 		Index ret = index ;
 		while (TRUE) {
-			if (ret >= self.mSet.size ())
+			if (ret >= self.mSet.min_resize ())
 				break ;
 			if (self.mSet.used (ret))
 				break ;
@@ -2379,7 +2393,7 @@ public:
 		for (auto &&i : range (0 ,r1x))
 			self.mRange[i] = NONE ;
 		self.mWrite = 0 ;
-		for (auto &&i : range (0 ,self.mSet.size ())) {
+		for (auto &&i : range (0 ,self.mSet.min_resize ())) {
 			if (i == curr)
 				continue ;
 			if (!self.mSet.used (i))
@@ -2548,13 +2562,13 @@ public:
 
 	void add (RR<BoxLayout> item) override {
 		const auto r1x = Index (bitwise (BoxHolder::hold (item)->ref)) ;
-		assume (inline_between (r1x ,0 ,size ())) ;
+		assume (inline_mid (r1x ,0 ,size ())) ;
 		set (r1x ,TRUE) ;
 	}
 
 	Bool contain (CR<Pointer> item) const override {
 		const auto r1x = Index (bitwise (item)) ;
-		if (!inline_between (r1x ,0 ,size ()))
+		if (!inline_mid (r1x ,0 ,size ()))
 			return FALSE ;
 		Bool ret = FALSE ;
 		get (r1x ,ret) ;
@@ -2563,7 +2577,7 @@ public:
 
 	void erase (CR<Pointer> item) override {
 		const auto r1x = Index (bitwise (item)) ;
-		if (!inline_between (r1x ,0 ,size ()))
+		if (!inline_mid (r1x ,0 ,size ()))
 			return ;
 		set (r1x ,FALSE) ;
 	}
@@ -2592,6 +2606,7 @@ public:
 		BitSetLayout ret ;
 		const auto r1x = size () ;
 		const auto r2x = BitSetHolder::hold (that)->size () ;
+		noop (r2x) ;
 		assert (r1x == r2x) ;
 		BitSetHolder::hold (ret)->initialize (r1x) ;
 		for (auto &&i : range (0 ,self.mSet.size ())) {
@@ -2605,6 +2620,7 @@ public:
 		BitSetLayout ret ;
 		const auto r1x = size () ;
 		const auto r2x = BitSetHolder::hold (that)->size () ;
+		noop (r2x) ;
 		assert (r1x == r2x) ;
 		BitSetHolder::hold (ret)->initialize (r1x) ;
 		for (auto &&i : range (0 ,self.mSet.size ())) {
@@ -2618,6 +2634,7 @@ public:
 		BitSetLayout ret ;
 		const auto r1x = size () ;
 		const auto r2x = BitSetHolder::hold (that)->size () ;
+		noop (r2x) ;
 		assert (r1x == r2x) ;
 		BitSetHolder::hold (ret)->initialize (r1x) ;
 		for (auto &&i : range (0 ,self.mSet.size ())) {
@@ -2631,6 +2648,7 @@ public:
 		BitSetLayout ret ;
 		const auto r1x = size () ;
 		const auto r2x = BitSetHolder::hold (that)->size () ;
+		noop (r2x) ;
 		assert (r1x == r2x) ;
 		BitSetHolder::hold (ret)->initialize (r1x) ;
 		for (auto &&i : range (0 ,self.mSet.size ())) {
@@ -2656,6 +2674,8 @@ public:
 		if (ix < 0)
 			return ;
 		const auto r1x = that.mWidth % 8 ;
+		if (r1x == 0)
+			return ;
 		const auto r2x = MathProc::exp2_bit (r1x) - 1 ;
 		that.mSet[ix] &= Byte (r2x) ;
 	}

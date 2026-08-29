@@ -134,9 +134,9 @@ public:
 	}
 
 	Stru32 str_from_hex (CR<Index> hex) const override {
-		if (inline_between (hex ,0 ,10))
+		if (inline_mid (hex ,0 ,10))
 			return Stru32 ('0') + Stru32 (hex) ;
-		if (inline_between (hex ,10 ,16))
+		if (inline_mid (hex ,10 ,16))
 			return Stru32 ('A') + Stru32 (hex) - 10 ;
 		assume (FALSE) ;
 		return Stru32 () ;
@@ -210,15 +210,16 @@ public:
 		self.mStream = move (stream) ;
 		self.mDiffEndian = FALSE ;
 		reset () ;
+		set_tab (0) ;
 	}
 
 	void use_overflow (CR<Function<CR<Pointer>>> overflow) override {
 		self.mOverflow = overflow ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) override {
-		self.mCats = cats ;
-		self.mCatIndex = 0 ;
+	void set_tab (CR<Length> tab_align) override {
+		self.mTabIndex = self.mRead ;
+		self.mTabAlign = tab_align ;
 	}
 
 	Length size () const override {
@@ -329,24 +330,24 @@ public:
 	}
 
 	void read (VR<Stru32> item) override {
-		item = 0 ;
-		auto rax = Byte () ;
+		auto rax = Char (0X00) ;
+		auto rbx = Byte () ;
 		Index ix = 0 ;
 		while (TRUE) {
-			read (rax) ;
-			const auto r1x = Stru32 (rax) ;
-			if (r1x < Stru32 (0X80))
+			read (rbx) ;
+			if (!ByteProc::any_bit (rbx ,Byte (0X80)))
 				break ;
-			item |= Stru32 (rax & Byte (0X7F)) << ix ;
+			rax |= Char (rbx & Byte (0X7F)) << ix ;
 			ix += 7 ;
 		}
-		item |= Stru32 (rax) << ix ;
+		rax |= Char (rbx) << ix ;
+		item = Stru32 (rax) ;
 	}
 
 	void read (CR<Slice> item) override {
 		auto rax = Stru32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_between (Index (item[i]) ,0 ,128)) ;
+			assume (inline_mid (Index (item[i]) ,0 ,128)) ;
 			read (rax) ;
 			assume (rax == item[i]) ;
 		}
@@ -388,12 +389,12 @@ public:
 		self.mDiffEndian = !self.mDiffEndian ;
 	}
 
-	void read (CR<typeof (CAT)>) override {
-		if (self.mCats.size () == 0)
+	void read (CR<typeof (TAB)>) override {
+		if (self.mTabAlign <= 0)
 			return ;
-		read (self.mCats[self.mCatIndex]) ;
-		self.mCatIndex++ ;
-		replace (self.mCatIndex ,self.mCats.size () ,0) ;
+		const auto r1x = inline_max (self.mRead - self.mTabIndex ,0) ;
+		self.mRead += self.mTabAlign - r1x ;
+		self.mTabIndex = self.mRead ;
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -431,15 +432,16 @@ public:
 		self.mStream = move (stream) ;
 		self.mDiffEndian = FALSE ;
 		reset () ;
+		set_tab (0) ;
 	}
 
 	void use_overflow (CR<Function<CR<Pointer>>> overflow) override {
 		self.mOverflow = overflow ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) override {
-		self.mCats = cats ;
-		self.mCatIndex = 0 ;
+	void set_tab (CR<Length> tab_align) override {
+		self.mTabIndex = self.mRead ;
+		self.mTabAlign = tab_align ;
 	}
 
 	Length size () const override {
@@ -756,7 +758,7 @@ public:
 	void read (CR<Slice> item) override {
 		auto rax = Stru32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_between (Index (item[i]) ,0 ,128)) ;
+			assume (inline_mid (Index (item[i]) ,0 ,128)) ;
 			read (rax) ;
 			assume (rax == item[i]) ;
 		}
@@ -835,11 +837,12 @@ public:
 		}
 	}
 
-	void read (CR<typeof (CAT)>) override {
-		if (self.mCats.size () == 0)
+	void read (CR<typeof (TAB)>) override {
+		if (self.mTabAlign <= 0)
 			return ;
-		read (self.mCats[self.mCatIndex]) ;
-		replace (self.mCatIndex ,self.mCats.size () ,0) ;
+		const auto r1x = inline_max (self.mRead - self.mTabIndex ,0) ;
+		self.mRead += self.mTabAlign - r1x ;
+		self.mTabIndex = self.mRead ;
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -878,15 +881,16 @@ public:
 		self.mStream = move (stream) ;
 		self.mDiffEndian = FALSE ;
 		reset () ;
+		set_tab (0) ;
 	}
 
 	void use_overflow (CR<Function<CR<Pointer>>> overflow) override {
 		self.mOverflow = overflow ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) override {
-		self.mCats = cats ;
-		self.mCatIndex = 0 ;
+	void set_tab (CR<Length> tab_align) override {
+		self.mTabIndex = self.mWrite ;
+		self.mTabAlign = tab_align ;
 	}
 
 	Length size () const override {
@@ -990,9 +994,9 @@ public:
 	}
 
 	void write (CR<Stru32> item) override {
-		auto rax = item ;
+		auto rax = Char (item) ;
 		while (TRUE) {
-			if (rax < Stru32 (0X80))
+			if (!ByteProc::any_bit (rax ,Char (0XFFFFFF80)))
 				break ;
 			const auto r1x = (Byte (rax) & Byte (0X7F)) | Byte (0X80) ;
 			write (r1x) ;
@@ -1004,7 +1008,7 @@ public:
 
 	void write (CR<Slice> item) override {
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_between (Index (item[i]) ,0 ,128)) ;
+			assume (inline_mid (Index (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
 	}
@@ -1044,11 +1048,17 @@ public:
 		self.mDiffEndian = !self.mDiffEndian ;
 	}
 
-	void write (CR<typeof (CAT)>) override {
-		if (self.mCats.size () == 0)
+	void write (CR<typeof (TAB)>) override {
+		if (self.mTabAlign <= 0)
 			return ;
-		write (self.mCats[self.mCatIndex]) ;
-		replace (self.mCatIndex ,self.mCats.size () ,0) ;
+		const auto r1x = inline_max (self.mWrite - self.mTabIndex ,0) ;
+		const auto r2x = inline_max (r1x - self.mTabAlign ,0) ;
+		self.mWrite -= r2x ;
+		for (auto &&i : range (0 ,self.mTabAlign - r1x)) {
+			noop (i) ;
+			write (Stru32 (' ')) ;
+		}
+		self.mTabIndex = self.mWrite ;
 	}
 
 	void write (CR<typeof (GAP)>) override {
@@ -1086,15 +1096,16 @@ public:
 		self.mStream = move (stream) ;
 		self.mDiffEndian = FALSE ;
 		reset () ;
+		set_tab (0) ;
 	}
 
 	void use_overflow (CR<Function<CR<Pointer>>> overflow) override {
 		self.mOverflow = overflow ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) override {
-		self.mCats = cats ;
-		self.mCatIndex = 0 ;
+	void set_tab (CR<Length> tab_align) override {
+		self.mTabIndex = self.mWrite ;
+		self.mTabAlign = tab_align ;
 	}
 
 	Length size () const override {
@@ -1502,7 +1513,7 @@ public:
 
 	void write (CR<Slice> item) override {
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_between (Index (item[i]) ,0 ,128)) ;
+			assume (inline_mid (Index (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
 	}
@@ -1559,11 +1570,17 @@ public:
 		}
 	}
 
-	void write (CR<typeof (CAT)>) override {
-		if (self.mCats.size () == 0)
+	void write (CR<typeof (TAB)>) override {
+		if (self.mTabAlign <= 0)
 			return ;
-		write (self.mCats[self.mCatIndex]) ;
-		replace (self.mCatIndex ,self.mCats.size () ,0) ;
+		const auto r1x = inline_max (self.mWrite - self.mTabIndex ,0) ;
+		const auto r2x = inline_max (r1x - self.mTabAlign ,0) ;
+		self.mWrite -= r2x ;
+		for (auto &&i : range (0 ,self.mTabAlign - r1x)) {
+			noop (i) ;
+			write (Stru32 (' ')) ;
+		}
+		self.mTabIndex = self.mWrite ;
 	}
 
 	void write (CR<typeof (GAP)>) override {
@@ -1615,7 +1632,7 @@ public:
 					discard ;
 				if ifdo (TRUE) {
 					const auto r1x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
-					if (!inline_between (r1x ,0 ,self.mWrite))
+					if (!inline_mid (r1x ,0 ,self.mWrite))
 						discard ;
 					auto &&rbx = keep[TYPE<VFat<WritingHolder>>::expr] (self.mParams[r1x]) ;
 					rbx->friend_write (writer) ;
@@ -1638,7 +1655,7 @@ public:
 					discard ;
 				if ifdo (TRUE) {
 					const auto r2x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
-					if (!inline_between (r2x ,0 ,self.mWrite))
+					if (!inline_mid (r2x ,0 ,self.mWrite))
 						discard ;
 					auto &&rbx = keep[TYPE<VFat<WritingHolder>>::expr] (self.mParams[r2x]) ;
 					rbx->friend_write (writer) ;
@@ -1945,7 +1962,7 @@ public:
 
 	void write_aligned (CR<Writer> writer ,CR<Val64> number ,CR<Length> align) const override {
 		auto rax = WriteValueBuffer () ;
-		assert (inline_between (align ,0 ,rax.mBuffer.size ())) ;
+		assert (inline_mid (align ,0 ,rax.mBuffer.size ())) ;
 		rax.mWrite = rax.mBuffer.size () ;
 		auto rbx = MathProc::abs (number) ;
 		for (auto &&i : range (0 ,align)) {
@@ -1961,62 +1978,80 @@ public:
 
 	void read_base64u (CR<Reader> reader ,VR<RefBuffer<Byte>> item) const override {
 		static const ARR<Val32 ,ENUM<256>> mCache {
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,62 ,64 ,62 ,64 ,63 ,
-			52 ,53 ,54 ,55 ,56 ,57 ,58 ,59 ,60 ,61 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,0 ,1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10 ,11 ,12 ,13 ,14 ,
-			15 ,16 ,17 ,18 ,19 ,20 ,21 ,22 ,23 ,24 ,25 ,64 ,64 ,64 ,64 ,63 ,
-			64 ,26 ,27 ,28 ,29 ,30 ,31 ,32 ,33 ,34 ,35 ,36 ,37 ,38 ,39 ,40 ,
-			41 ,42 ,43 ,44 ,45 ,46 ,47 ,48 ,49 ,50 ,51 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,
-			64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64 ,64} ;
-		const auto r1x = reader.size () - reader.length () ;
-		assume (r1x % 4 == 0) ;
-		const auto r2x = r1x / 4 ;
-		item = RefBuffer<Byte> (r2x * 3) ;
-		auto rax = Buffer4<Stru32> () ;
-		for (auto &&i : range (0 ,r2x)) {
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,62 ,-1 ,62 ,-1 ,63 ,
+			52 ,53 ,54 ,55 ,56 ,57 ,58 ,59 ,60 ,61 ,-1 ,-1 ,-1 ,64 ,-1 ,-1 ,
+			-1 ,+0 ,+1 ,+2 ,+3 ,+4 ,+5 ,+6 ,+7 ,+8 ,+9 ,10 ,11 ,12 ,13 ,14 ,
+			15 ,16 ,17 ,18 ,19 ,20 ,21 ,22 ,23 ,24 ,25 ,-1 ,-1 ,-1 ,-1 ,63 ,
+			-1 ,26 ,27 ,28 ,29 ,30 ,31 ,32 ,33 ,34 ,35 ,36 ,37 ,38 ,39 ,40 ,
+			41 ,42 ,43 ,44 ,45 ,46 ,47 ,48 ,49 ,50 ,51 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
+			-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1} ;
+		auto rax = Stru32 () ;
+		const auto r1x = reader.shape () ;
+		if ifdo (TRUE) {
+			reader.read (rax) ;
+			while (TRUE) {
+				if (rax == Stru32 (0X00))
+					break ;
+				const auto r2x = mCache[Val32 (Byte (rax))] ;
+				if (r2x == -1)
+					break ;
+				reader.read (rax) ;
+			}
+		}
+		const auto r3x = reader.length () - 1 - r1x.mRead ;
+		assume (r3x % 4 == 0) ;
+		reader.reset (r1x) ;
+		const auto r4x = r3x / 4 ;
+		auto rbx = Buffer4<Byte> () ;
+		item = RefBuffer<Byte> (r4x * 3) ;
+		for (auto &&i : range (0 ,r4x)) {
 			Index ix = i * 3 ;
-			reader >> rax[0] ;
-			reader >> rax[1] ;
-			reader >> rax[2] ;
-			reader >> rax[3] ;
-			const auto r3x = Byte (mCache[Val32 (Byte (rax[0]))]) ;
-			const auto r4x = Byte (mCache[Val32 (Byte (rax[1]))]) ;
-			const auto r5x = Byte (mCache[Val32 (Byte (rax[2]))]) ;
-			const auto r6x = Byte (mCache[Val32 (Byte (rax[3]))]) ;
-			item[ix + 0] = ByteProc::shift (r3x ,(r4x << 2) ,6) ;
-			item[ix + 1] = ByteProc::shift (r4x ,(r5x << 2) ,4) ;
-			item[ix + 2] = ByteProc::shift (r5x ,(r6x << 2) ,2) ;
+			reader >> rax ;
+			rbx[0] = Byte (rax) ;
+			reader >> rax ;
+			rbx[1] = Byte (rax) ;
+			reader >> rax ;
+			rbx[2] = Byte (rax) ;
+			reader >> rax ;
+			rbx[3] = Byte (rax) ;
+			const auto r5x = Byte (mCache[Val32 (rbx[0])]) ;
+			const auto r6x = Byte (mCache[Val32 (rbx[1])]) ;
+			const auto r7x = Byte (mCache[Val32 (rbx[2])]) ;
+			const auto r8x = Byte (mCache[Val32 (rbx[3])]) ;
+			item[ix + 0] = ByteProc::shift (r5x ,(r6x << 2) ,6) ;
+			item[ix + 1] = ByteProc::shift (r6x ,(r7x << 2) ,4) ;
+			item[ix + 2] = ByteProc::shift (r7x ,(r8x << 2) ,2) ;
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (rax[2] != Stru32 ('='))
+			if (Stru32 (rbx[2]) != Stru32 ('='))
 				discard ;
-			if (rax[3] != Stru32 ('='))
+			if (Stru32 (rbx[3]) != Stru32 ('='))
 				discard ;
-			Index ix = (r2x - 1) * 3 ;
-			const auto r7x = Byte (mCache[Val32 (Byte (rax[0]))]) ;
-			const auto r8x = Byte (mCache[Val32 (Byte (rax[1]))]) ;
-			item[ix + 0] = ByteProc::shift (r7x ,(r8x << 2) ,6) ;
+			Index ix = (r4x - 1) * 3 ;
+			const auto r9x = Byte (mCache[Val32 (rbx[0])]) ;
+			const auto r10x = Byte (mCache[Val32 (rbx[1])]) ;
+			item[ix + 0] = ByteProc::shift (r9x ,(r10x << 2) ,6) ;
 			item.resize (ix + 1) ;
 		}
 		if ifdo (act) {
-			if (rax[3] != Stru32 ('='))
+			if (Stru32 (rbx[3]) != Stru32 ('='))
 				discard ;
-			Index ix = (r2x - 1) * 3 ;
-			const auto r9x = Byte (mCache[Val32 (Byte (rax[0]))]) ;
-			const auto r10x = Byte (mCache[Val32 (Byte (rax[1]))]) ;
-			const auto r11x = Byte (mCache[Val32 (Byte (rax[2]))]) ;
-			item[ix + 0] = ByteProc::shift (r9x ,(r10x << 2) ,6) ;
-			item[ix + 1] = ByteProc::shift (r10x ,(r11x << 2) ,4) ;
+			Index ix = (r4x - 1) * 3 ;
+			const auto r11x = Byte (mCache[Val32 (rbx[0])]) ;
+			const auto r12x = Byte (mCache[Val32 (rbx[1])]) ;
+			const auto r13x = Byte (mCache[Val32 (rbx[2])]) ;
+			item[ix + 0] = ByteProc::shift (r11x ,(r12x << 2) ,6) ;
+			item[ix + 1] = ByteProc::shift (r12x ,(r13x << 2) ,4) ;
 			item.resize (ix + 2) ;
 		}
 	}

@@ -39,9 +39,9 @@ public:
 	}
 
 	Bool contain (CR<Pixel> item) const override {
-		if (!inline_between (item.mX ,0 ,self.mCX))
+		if (!inline_mid (item.mX ,0 ,self.mCX))
 			return FALSE ;
-		if (!inline_between (item.mY ,0 ,self.mCY))
+		if (!inline_mid (item.mY ,0 ,self.mCY))
 			return FALSE ;
 		return TRUE ;
 	}
@@ -199,15 +199,15 @@ public:
 	}
 
 	VR<Pointer> at (CR<Index> x ,CR<Index> y) leftvalue override {
-		assert (inline_between (x ,0 ,cx ())) ;
-		assert (inline_between (y ,0 ,cy ())) ;
+		assert (inline_mid (x ,0 ,cx ())) ;
+		assert (inline_mid (y ,0 ,cy ())) ;
 		Index ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
 		return self.mImage.at (ix) ;
 	}
 
 	CR<Pointer> at (CR<Index> x ,CR<Index> y) const leftvalue override {
-		assert (inline_between (x ,0 ,cx ())) ;
-		assert (inline_between (y ,0 ,cy ())) ;
+		assert (inline_mid (x ,0 ,cx ())) ;
+		assert (inline_mid (y ,0 ,cy ())) ;
 		Index ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
 		return self.mImage.at (ix) ;
 	}
@@ -234,8 +234,8 @@ public:
 			return ;
 		if (r2x == 0)
 			return ;
-		assert (inline_between (x ,0 ,cx ())) ;
-		assert (inline_between (y ,0 ,cy ())) ;
+		assert (inline_mid (x ,0 ,cx ())) ;
+		assert (inline_mid (y ,0 ,cy ())) ;
 		assert (x + r1x <= cx ()) ;
 		assert (y + r2x <= cy ()) ;
 		const auto r3x = ImageHolder::hold (item)->step () ;
@@ -274,43 +274,42 @@ public:
 	void initialize (CR<Flag> buffer ,CR<Length> size_ ,CR<Length> step_) override {
 		assert (size_ > 0) ;
 		assert (step_ > 0) ;
-		const auto r1x = size_ / step_ ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (step_ != 1)
 				discard ;
 			self.mWhite = Val32 (~Byte (0X00)) ;
-			for (auto &&i : range (0 ,r1x)) {
-				const auto r2x = buffer + i * step_ ;
-				const auto r3x = Byte (bitwise (Pointer::make (r2x))) ;
-				self.mColor[i] = Val32 (r3x) ;
+			for (auto &&i : range (0 ,size_)) {
+				const auto r1x = buffer + i * step_ ;
+				const auto r2x = Byte (bitwise (Pointer::make (r1x))) ;
+				self.mColor[i] = Val32 (r2x) ;
 			}
 		}
 		if ifdo (act) {
 			if (step_ != 2)
 				discard ;
 			self.mWhite = Val32 (~Word (0X00)) ;
-			for (auto &&i : range (0 ,r1x)) {
-				const auto r4x = buffer + i * step_ ;
-				const auto r5x = Word (bitwise (Pointer::make (r4x))) ;
-				self.mColor[i] = Val32 (r5x) ;
+			for (auto &&i : range (0 ,size_)) {
+				const auto r3x = buffer + i * step_ ;
+				const auto r4x = Word (bitwise (Pointer::make (r3x))) ;
+				self.mColor[i] = Val32 (r4x) ;
 			}
 		}
 		if ifdo (act) {
 			if (step_ != 4)
 				discard ;
-			const auto r6x = Flt32 (65535) ;
-			self.mWhite = Val32 (r6x) ;
-			for (auto &&i : range (0 ,r1x)) {
-				const auto r7x = buffer + i * step_ ;
-				const auto r8x = Flt32 (bitwise (Pointer::make (r7x))) ;
-				self.mColor[i] = Val32 (r8x * r6x) ;
+			const auto r5x = Flt32 (65535) ;
+			self.mWhite = Val32 (r5x) ;
+			for (auto &&i : range (0 ,size_)) {
+				const auto r6x = buffer + i * step_ ;
+				const auto r7x = Flt32 (bitwise (Pointer::make (r6x))) ;
+				self.mColor[i] = Val32 (r7x * r5x) ;
 			}
 		}
 		if ifdo (act) {
 			assume (FALSE) ;
 		}
-		for (auto &&i : range (r1x ,4)) {
+		for (auto &&i : range (size_ ,4)) {
 			self.mColor[i] = 0 ;
 		}
 		self.mWhite *= Val32 (COLOR_SHIFT::expr) ;
@@ -713,8 +712,6 @@ exports CFat<ColorProcHolder> ColorProcHolder::hold (CR<ColorProcLayout> that) {
 	return CFat<ColorProcHolder> (ColorProcImplHolder () ,that) ;
 }
 
-template class External<ImageProcHolder ,ImageProcLayout> ;
-
 struct ImageProcLayout {
 	UniqueRef<Bool> mContext ;
 } ;
@@ -728,6 +725,8 @@ exports CR<Super<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
 		return move (ret) ;
 	}) ;
 }
+
+template class External<ImageProcHolder ,ImageProcLayout> ;
 
 exports VFat<ImageProcHolder> ImageProcHolder::hold (VR<ImageProcLayout> that) {
 	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::expr ,that) ;
@@ -832,6 +831,8 @@ struct TensorTree {
 	Index mCheck ;
 } ;
 
+class TensorSliceLayout implement SliceLayout {} ;
+
 class TensorImplHolder final implement Fat<TensorHolder ,TensorLayout> {
 public:
 	void initialize (RR<RefBufferLayout> that) override {
@@ -848,9 +849,7 @@ public:
 	}
 
 	void initialize (CR<Length> size_ ,CR<Just<TensorType>> type_) override {
-		noop (Array<TensorSlice0> ()) ;
-		noop (Array<TensorSlice1> ()) ;
-		noop (Array<TensorSlice2> ()) ;
+		noop (Array<TensorSliceLayout> ()) ;
 		self.mThis = SharedRef<TensorTree>::make () ;
 		const auto r1x = step_from_tensor_type (type_) ;
 		const auto r2x = size_ * r1x + 16 ;
@@ -1038,14 +1037,13 @@ public:
 	}
 
 	TensorLayout span (CR<Wrapper<Slice>> shape_) const override {
-		const auto r1x = shape_.rank () ;
-		assert (r1x > 0) ;
 		TensorLayout ret ;
 		ret.mThis = self.mThis ;
 		ret.mWidth = self.mWidth ;
-		const auto r2x = rank () ;
-		assert (r1x <= r2x) ;
-		const auto r3x = invoke ([&] () {
+		const auto r1x = shape_.rank () ;
+		assert (r1x > 0) ;
+		assert (r1x <= rank ()) ;
+		const auto r2x = invoke ([&] () {
 			Length ret = 0 ;
 			for (auto &&i : range (0 ,r1x)) {
 				if (shape_[i].size () != 1)
@@ -1054,36 +1052,36 @@ public:
 			}
 			return move (ret) ;
 		}) ;
-		const auto r4x = self.mSpan.length () - r3x ;
-		ret.mSpan = Array<Slice> (r4x) ;
+		const auto r3x = self.mSpan.length () - r2x ;
+		ret.mSpan = Array<Slice> (r3x) ;
 		auto rax = IDEN ;
 		auto rbx = ZERO ;
 		Index jx = 0 ;
 		for (auto &&i : self.mSpan.iter ()) {
-			const auto r5x = i < r1x ? shape_[i] : Slice::all () ;
+			const auto r4x = i < r1x ? shape_[i] : Slice::all () ;
 			if ifdo (TRUE) {
-				if (r5x.size () != 1)
+				if (r4x.size () != 1)
 					discard ;
-				const auto r6x = MathProc::wrap (r5x.offset (0) ,self.mSpan[i].size ()) ;
-				rbx += self.mSpan[i].offset (r6x) ;
+				const auto r5x = MathProc::wrap (r4x.offset (0) ,self.mSpan[i].size ()) ;
+				rbx += self.mSpan[i].offset (r5x) ;
 			}
 			if ifdo (TRUE) {
-				if (r5x.size () == 1)
+				if (r4x.size () == 1)
 					discard ;
-				assume (r5x.size () <= self.mSpan[i].size ()) ;
-				const auto r7x = r5x.size () < 0 ? self.mSpan[i].size () : r5x.size () ;
-				const auto r8x = self.mSpan[i].offset (0) + rbx ;
-				const auto r9x = self.mSpan[i].step () ;
-				ret.mSpan[jx] = Slice (r8x ,r7x ,r9x) ;
+				assume (r4x.size () <= self.mSpan[i].size ()) ;
+				const auto r6x = r4x.size () < 0 ? self.mSpan[i].size () : r4x.size () ;
+				const auto r7x = self.mSpan[i].offset (0) + rbx ;
+				const auto r8x = self.mSpan[i].step () ;
+				ret.mSpan[jx] = Slice (r7x ,r6x ,r8x) ;
 				jx++ ;
-				rax *= r7x ;
+				rax *= r6x ;
 				rbx = 0 ;
 			}
 		}
 		assume (TensorHolder::hold (ret)->size () >= rax) ;
 		if ifdo (TRUE) {
 			if ifdo (TRUE) {
-				if (jx >= r4x)
+				if (jx >= r3x)
 					discard ;
 				ret.mSpan[jx] = Slice::one (0) ;
 				jx++ ;
@@ -1113,16 +1111,16 @@ public:
 		auto rbx = ZERO ;
 		Index jx = 0 ;
 		for (auto &&i : self.mSpan.iter ()) {
-			const auto r5x = self.mSpan[i] ;
+			const auto r4x = self.mSpan[i] ;
 			if ifdo (TRUE) {
-				if (r5x.size () != 1)
+				if (r4x.size () != 1)
 					discard ;
-				rbx += r5x.offset (0) ;
+				rbx += r4x.offset (0) ;
 			}
 			if ifdo (TRUE) {
-				if (r5x.size () == 1)
+				if (r4x.size () == 1)
 					discard ;
-				ret.mSpan[jx] = slice_add (r5x ,rbx) ;
+				ret.mSpan[jx] = slice_add (r4x ,rbx) ;
 				jx++ ;
 				rbx = 0 ;
 			}

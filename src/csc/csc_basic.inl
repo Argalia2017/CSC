@@ -126,6 +126,7 @@ exports CFat<FunctionHolder> FunctionHolder::hold (CR<FunctionLayout> that) {
 }
 
 struct AutoRefTree {
+	Flag mExtend ;
 	Clazz mClazz ;
 	BoxLayout mValue ;
 } ;
@@ -135,20 +136,27 @@ public:
 	void initialize (CR<Unknown> holder) override {
 		assert (!exist ()) ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<AutoRefTree> () ,holder ,1) ;
+		self.mThis->mExtend = inline_vptr (holder) ;
 		self.mThis->mClazz = Clazz (holder) ;
-		BoxHolder::hold (raw ())->initialize (holder) ;
-		const auto r1x = RFat<ReflectCreate> (holder) ;
-		r1x->create (BoxHolder::hold (raw ())->ref ,1) ;
-		self.mLayout = address (BoxHolder::hold (raw ())->ref) ;
-	}
-
-	void initialize (CR<Unknown> holder ,CR<Clazz> clazz_) override {
-		assert (!exist ()) ;
-		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<AutoRefTree> () ,holder ,1) ;
-		self.mThis->mClazz = clazz_ ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		self.mLayout = address (BoxHolder::hold (raw ())->ref) ;
 		BoxHolder::hold (raw ())->release () ;
+	}
+	
+	void initialize (CR<AutoRefLayout> that) override {
+		assert (!exist ()) ;
+		if ifdo (TRUE) {
+			if (that.mThis == NULL)
+				discard ;
+			const auto r1x = Unknown (that.mThis->mExtend) ;
+			const auto r2x = r1x.reflect (ReflectClone::expr) ;
+			assume (r2x != ZERO) ;
+			initialize (r1x) ;
+			const auto r3x = RFat<ReflectClone> (r1x) ;
+			assume (r3x->is_noexcept ()) ;
+			r3x->clone (ref ,BoxHolder::hold (that.mThis->mValue)->ref) ;
+			BoxHolder::hold (raw ())->remake (r1x ,self.mLayout) ;
+		}
 	}
 
 	void destroy () override {
@@ -275,7 +283,7 @@ public:
 			Scope anonymous (rax.mMutex) ;
 			RefHolder::hold (self.mThis)->initialize (REGISTER::expr ,r6x) ;
 			self.mThis.intrusive (RefUnknownBinder<SharedRefTree> ()) ;
-			if(self.mThis == NULL)
+			if (self.mThis == NULL)
 				discard ;
 			self.mThis->mCounter++ ;
 		}
@@ -457,7 +465,8 @@ exports CFat<UniqueRefHolder> UniqueRefHolder::hold (CR<UniqueRefLayout> that) {
 }
 
 struct RefBufferTree {
-	Length mCapacity ;
+	Length mMinCapacity ;
+	Length mMaxCapacity ;
 	BoxLayout mValue ;
 } ;
 
@@ -483,7 +492,8 @@ public:
 			self.mStep = r2x->type_size () ;
 			const auto r3x = RFat<ReflectCreate> (r1x) ;
 			r3x->create (ref ,size_) ;
-			self.mThis->mCapacity = size_ ;
+			self.mThis->mMinCapacity = 0 ;
+			self.mThis->mMaxCapacity = size_ ;
 		}
 		if ifdo (act) {
 			self.mBuffer = ZERO ;
@@ -502,18 +512,19 @@ public:
 		self.mBuffer = buffer.offset (0) ;
 		self.mSize = buffer.size () ;
 		self.mStep = buffer.step () ;
-		self.mThis->mCapacity = USED ;
+		self.mThis->mMinCapacity = 0 ;
+		self.mThis->mMaxCapacity = 0 ;
 	}
 
 	void destroy () override {
 		if (!exist ())
 			return ;
 		if ifdo (TRUE) {
-			if (self.mThis->mCapacity <= 0)
+			if (self.mThis->mMaxCapacity <= 0)
 				discard ;
 			const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
 			const auto r2x = RFat<ReflectDestroy> (r1x) ;
-			r2x->destroy (ref ,self.mThis->mCapacity) ;
+			r2x->destroy (ref ,self.mThis->mMaxCapacity) ;
 			BoxHolder::hold (raw ())->release () ;
 		}
 		self.mBuffer = ZERO ;
@@ -530,7 +541,9 @@ public:
 	Bool fixed () const override {
 		if (!exist ())
 			return FALSE ;
-		if (self.mThis->mCapacity != USED)
+		if (self.mThis->mMinCapacity != 0)
+			return FALSE ;
+		if (self.mThis->mMaxCapacity != 0)
 			return FALSE ;
 		return TRUE ;
 	}
@@ -568,31 +581,65 @@ public:
 	}
 
 	VR<Pointer> at (CR<Index> index) leftvalue override {
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		const auto r1x = self.mBuffer + index * self.mStep ;
 		return Pointer::make (r1x) ;
 	}
 
 	CR<Pointer> at (CR<Index> index) const leftvalue override {
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		const auto r1x = self.mBuffer + index * self.mStep ;
 		return Pointer::make (r1x) ;
 	}
 
+	Length min_resize () const override {
+		if (!self.mThis.exist ())
+			return 0 ;
+		return self.mThis->mMinCapacity ;
+	}
+
+	Length max_resize () const override {
+		if (!self.mThis.exist ())
+			return 0 ;
+		return self.mThis->mMaxCapacity ;
+	}
+
 	void resize (CR<Length> size_) override {
-		check_exist () ;
 		const auto r1x = inline_max (size_ ,0) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (exist ())
+				discard ;
+			initialize (unknown () ,r1x) ;
+		}
 		if (r1x == size ())
 			return ;
-		assume (!fixed ()) ;
-		assume (self.mThis.exclusive ()) ;
+		if ifdo (act) {
+			if (r1x >= min_resize ())
+				discard ;
+			assert (FALSE) ;
+		}
+		if ifdo (act) {
+			if (r1x <= max_resize ())
+				discard ;
+			assume (!fixed ()) ;
+			assume (self.mThis.exclusive ()) ;
+			resize_real (r1x) ;
+		}
+		if ifdo (act) {
+			self.mSize = r1x ;
+		}
+	}
+
+	void resize_real (CR<Length> size_) {
+		const auto r1x = size_ ;
 		auto rax = RefBufferLayout () ;
 		rax.mThis.intrusive (unknown ()) ;
 		const auto r2x = RFat<ReflectElement> (unknown ())->element () ;
 		const auto r3x = RFat<ReflectSize> (r2x) ;
 		const auto r4x = r3x->type_size () ;
-		const auto r5x = inline_min (r1x ,size ()) ;
-		const auto r6x = step () > 0 ? step () : r4x ;
+		const auto r5x = size () ;
+		const auto r6x = step () ;
 		const auto r7x = r5x * r6x / r4x ;
 		const auto r8x = r1x * r6x / r4x ;
 		assert (r7x * r4x == r5x * r6x) ;
@@ -608,14 +655,9 @@ public:
 		const auto r10x = RFat<ReflectCreate> (r2x) ;
 		const auto r11x = rax.mBuffer + r9x ;
 		r10x->create (Pointer::make (r11x) ,r8x - r7x) ;
-		rax.mThis->mCapacity = r8x ;
+		rax.mThis->mMinCapacity = min_resize () ;
+		rax.mThis->mMaxCapacity = r8x ;
 		swap (self ,rax) ;
-	}
-
-	void check_exist () {
-		if (exist ())
-			return ;
-		initialize (unknown () ,0) ;
 	}
 } ;
 
@@ -719,13 +761,13 @@ public:
 	}
 
 	VR<Pointer> at (CR<Index> index) leftvalue override {
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		update_sync (index) ;
 		return ref ;
 	}
 
 	CR<Pointer> at (CR<Index> index) const leftvalue override {
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		update_sync (index) ;
 		return ref ;
 	}
@@ -774,14 +816,14 @@ public:
 	void destroy () override {
 		if (!exist ())
 			return ;
-		const auto r1x = inline_alignas (self.mLength ,ALLOCATOR_MIN_SIZE::expr) ;
-		const auto r2x = inline_min (r1x ,size ()) ;
-		const auto r3x = RFat<ReflectDestroy> (unknown ()) ;
-		for (auto &&i : range (0 ,r2x)) {
+		const auto r1x = min_resize () ;
+		const auto r2x = RFat<ReflectDestroy> (unknown ()) ;
+		for (auto &&i : range (0 ,r1x)) {
 			if (ptr (self ,i).mNext != USED)
 				continue ;
-			r3x->destroy (self.mAllocator.at (i) ,1) ;
+			r2x->destroy (self.mAllocator.at (i) ,1) ;
 		}
+		set_min_resize (0) ;
 	}
 
 	Bool exist () const override {
@@ -890,6 +932,14 @@ public:
 		return r1x == USED ;
 	}
 
+	Length min_resize () const override {
+		return self.mAllocator.min_resize () ;
+	}
+
+	Length max_resize () const override {
+		return self.mAllocator.max_resize () ;
+	}
+
 	void resize (CR<Length> size_) override {
 		check_exist () ;
 		RefBufferHolder::hold (self.mAllocator)->resize (size_) ;
@@ -902,10 +952,14 @@ public:
 	}
 
 	void check_resize () {
-		if (self.mLength != 0)
-			if (self.mFree != NONE)
-				return ;
-		const auto r1x = self.mLength ;
+		const auto r1x = min_resize () ;
+		if ifdo (TRUE) {
+			if (r1x > 0)
+				discard ;
+			self.mFree = NONE ;
+		}
+		if (self.mFree != NONE)
+			return ;
 		if ifdo (TRUE) {
 			if (r1x < size ())
 				discard ;
@@ -920,7 +974,13 @@ public:
 			ptr (self ,iy).mNext = ix ;
 			ix = iy ;
 		}
+		set_min_resize (r4x) ;
 		self.mFree = ix ;
+	}
+
+	void set_min_resize (CR<Length> size_) {
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mAllocator) ;
+		rax.mThis->mMinCapacity = size_ ;
 	}
 } ;
 

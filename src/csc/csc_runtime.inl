@@ -125,10 +125,12 @@ public:
 	}
 #endif
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_SYSTEM_POSIX__
 	std::tm calendar_from_timepoint (CR<std::time_t> time) const {
-		const auto r1x = Flag (std::localtime (&time)) ;
-		return bitwise (Pointer::make (r1x)) ;
+		std::tm ret ;
+		inline_memset (ret) ;
+		localtime_r ((&time) ,(&ret)) ;
+		return move (ret) ;
 	}
 #endif
 
@@ -159,8 +161,6 @@ exports CFat<TimeHolder> TimeHolder::hold (CR<TimeLayout> that) {
 	return CFat<TimeHolder> (TimeImplHolder () ,that) ;
 }
 
-template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
-
 struct RuntimeProcLayout {} ;
 
 exports CR<Super<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
@@ -172,6 +172,8 @@ exports CR<Super<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
 		return move (ret) ;
 	}) ;
 }
+
+template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 
 exports VFat<RuntimeProcHolder> RuntimeProcHolder::hold (VR<RuntimeProcLayout> that) {
 	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::expr ,that) ;
@@ -505,8 +507,6 @@ exports CFat<ThreadHolder> ThreadHolder::hold (CR<ThreadLayout> that) {
 	return CFat<ThreadHolder> (ThreadImplHolder () ,that) ;
 }
 
-template class External<ProcessHolder ,ProcessLayout> ;
-
 struct ProcessLayout {
 	Flag mUid ;
 	Quad mProcessCode ;
@@ -517,6 +517,8 @@ exports Ref<ProcessLayout> ProcessHolder::create () {
 	return Ref<ProcessLayout>::make () ;
 }
 
+template class External<ProcessHolder ,ProcessLayout> ;
+
 exports VFat<ProcessHolder> ProcessHolder::hold (VR<ProcessLayout> that) {
 	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::expr ,that) ;
 }
@@ -524,8 +526,6 @@ exports VFat<ProcessHolder> ProcessHolder::hold (VR<ProcessLayout> that) {
 exports CFat<ProcessHolder> ProcessHolder::hold (CR<ProcessLayout> that) {
 	return CFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::expr ,that) ;
 }
-
-template class External<LibraryHolder ,LibraryLayout> ;
 
 struct LibraryLayout {
 	String<Str> mFile ;
@@ -536,6 +536,8 @@ struct LibraryLayout {
 exports Ref<LibraryLayout> LibraryHolder::create () {
 	return Ref<LibraryLayout>::make () ;
 }
+
+template class External<LibraryHolder ,LibraryLayout> ;
 
 exports VFat<LibraryHolder> LibraryHolder::hold (VR<LibraryLayout> that) {
 	return VFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::expr ,that) ;
@@ -574,7 +576,7 @@ public:
 	}
 #endif
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_SYSTEM_POSIX__
 	Array<String<Str>> env (CR<String<Str>> name) const override {
 		const auto r1x = StringProc::stra_from (name) ;
 		const auto r2x = getenv (r1x.ref) ;
@@ -754,8 +756,6 @@ exports CFat<RandomHolder> RandomHolder::hold (CR<RandomLayout> that) {
 	return CFat<RandomHolder> (RandomImplHolder () ,that) ;
 }
 
-template class External<SingletonProcHolder ,SingletonProcLayout> ;
-
 struct SingletonImplLayout {
 	Pin<SingletonImplLayout> mPin ;
 	Mutex mMutex ;
@@ -805,6 +805,8 @@ exports CR<Super<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::expr_m ()
 	}) ;
 }
 
+template class External<SingletonProcHolder ,SingletonProcLayout> ;
+
 exports VFat<SingletonProcHolder> SingletonProcHolder::hold (VR<SingletonProcLayout> that) {
 	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::expr ,that) ;
 }
@@ -815,7 +817,7 @@ exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CR<SingletonProcLay
 
 struct GlobalNode {
 	Pin<GlobalNode> mPin ;
-	Flag mHolder ;
+	Length mCheck ;
 	AutoRef<Pointer> mValue ;
 } ;
 
@@ -845,16 +847,17 @@ public:
 				discard ;
 			ix = self.mThis->mGlobalList.insert () ;
 			self.mThis->mGlobalNameSet.add (name ,ix) ;
-			self.mThis->mGlobalList[ix].mHolder = inline_vptr (holder) ;
+			self.mThis->mGlobalList[ix].mCheck = 0 ;
+			self.mThis->mGlobalList[ix].mValue = AutoRef<Pointer> (holder) ;
 		}
 		self.mIndex = ix ;
-		ClazzHolder::hold (self.mClazz)->initialize (holder) ;
+		self.mClazz = self.mThis->mGlobalList[ix].mValue.clazz () ;
 	}
 
 	void startup () const override {
 		auto rax = Singleton<GlobalProc>::expr.mThis ;
 		Scope anonymous (rax->mMutex) ;
-		assume (!rax->mFinalize) ;
+		rax->mFinalize = FALSE ;
 	}
 
 	void shutdown () const override {
@@ -870,28 +873,34 @@ public:
 	Bool exist () const override {
 		Scope anonymous (self.mThis->mMutex) ;
 		Index ix = self.mIndex ;
-		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
-		return self.mClazz == rax.clazz () ;
+		if (ix == NONE)
+			return FALSE ;
+		if (self.mThis->mGlobalList[ix].mCheck == 0)
+			return FALSE ;
+		const auto r1x = self.mThis->mGlobalList[ix].mValue.clazz () ;
+		if (r1x != self.mClazz)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	AutoRef<Pointer> fetch () const override {
 		Scope anonymous (self.mThis->mMutex) ;
 		Index ix = self.mIndex ;
-		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
-		assume (rax.exist ()) ;
-		const auto r1x = Unknown (self.mThis->mGlobalList[ix].mHolder) ;
-		AutoRef<Pointer> ret = AutoRef<Pointer> (r1x) ;
-		const auto r2x = RFat<ReflectClone> (r1x) ;
-		r2x->clone (ret.ref ,rax.ref) ;
+		assume (ix != NONE) ;
+		assume (self.mThis->mGlobalList[ix].mCheck > 0) ;
+		AutoRef<Pointer> ret = self.mThis->mGlobalList[ix].mValue.clone () ;
+		noop (ret) ;
 		return move (ret) ;
 	}
 
 	void store (RR<AutoRef<Pointer>> item) const override {
 		Scope anonymous (self.mThis->mMutex) ;
 		Index ix = self.mIndex ;
-		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
-		assume (!rax.exist ()) ;
+		assume (ix != NONE) ;
+		assume (self.mClazz == item.clazz ()) ;
 		self.mThis->mGlobalList[ix].mPin->mValue = move (item) ;
+		self.mThis->mGlobalList[ix].mCheck++ ;
+		self.mThis->mGlobalList[ix].mCheck = inline_max (self.mThis->mGlobalList[ix].mCheck ,1) ;
 	}
 } ;
 

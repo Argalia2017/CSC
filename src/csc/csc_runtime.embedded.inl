@@ -22,11 +22,13 @@
 #include <dlfcn.h>
 #include <cxxabi.h>
 
-#ifdef __CSC_SYSTEM_LINUX__
-#include <execinfo.h>
+#ifdef __CSC_SYSTEM_EMBEDDED__
+#include <process.h>
+#include <devctl.h>
+#include <unwind.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <sys/syscall.h>
+#include <sys/procfs.h>
 #endif
 
 #include <cstdlib>
@@ -49,6 +51,12 @@ struct Dl_info_symbol {
 	DEF<char[1]> mSymbol ;
 } ;
 
+struct UnwindBacktraceContext {
+	Flag mBuffer ;
+	Length mSize ;
+	Length mCount ;
+} ;
+
 class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,RuntimeProcLayout> {
 public:
 	void initialize () override {
@@ -57,13 +65,20 @@ public:
 
 	Tuple<Flag ,Flag> stack_limit () const override {
 		Tuple<Flag ,Flag> ret ;
-		auto rax = pthread_attr_t () ;
-		auto rbx = Tuple<csc_handle_t ,csc_size_t> () ;
-		pthread_getattr_np (pthread_self () ,(&rax)) ;
-		pthread_attr_getstack ((&rax) ,(&rbx.m1st) ,(&rbx.m2nd)) ;
-		pthread_attr_destroy ((&rax)) ;
-		ret.m1st = Flag (rbx.m1st) ;
-		ret.m2nd = ret.m1st + Flag (rbx.m2nd) ;
+		const auto r1x = String<Str> (slice ("/proc/self/ctl")) ;
+		const auto r2x = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
+			me = posix::open (r1x ,O_RDWR) ;
+			assume (me != NONE) ;
+		} ,[&] (VR<csc_pipe_t> me) {
+			posix::close (me) ;
+		}) ;
+		auto rax = procfs_status () ;
+		inline_memset (rax) ;
+		rax.tid = pthread_t (gettid ()) ;
+		const auto r3x = devctl (r2x ,DCMD_PROC_TIDSTATUS ,(&rax) ,SIZE_OF<procfs_status>::expr ,NULL) ;
+		assume (r3x == EOK) ;
+		ret.m1st = Flag (rax.stkbase) ;
+		ret.m2nd = ret.m1st + Flag (rax.stksize) ;
 		return move (ret) ;
 	}
 
@@ -75,7 +90,7 @@ public:
 		const auto r2x = r1x + SIZE_OF<Dl_info_symbol>::expr + 1024 ;
 		const auto r3x = r2x + SIZE_OF<Dl_info>::expr ;
 		const auto r4x = address (ret[ret.size () - r3x]) ;
-		const auto r5x = Length (backtrace (PTR<VR<csc_handle_t>> (r4x) ,csc_enum_t (128))) - skip ;
+		const auto r5x = unwind_backtrace (r4x ,128) - skip ;
 		auto &&rax = keep[TYPE<Dl_info_symbol>::expr] (Pointer::make (r4x + r1x)) ;
 		auto &&rbx = keep[TYPE<Dl_info>::expr] (Pointer::make (r4x + r2x)) ;
 		for (auto &&i : range (0 ,r5x)) {
@@ -112,6 +127,25 @@ public:
 		return move (ret) ;
 	}
 
+	Length unwind_backtrace (CR<Flag> buffer ,CR<Length> size_) const {
+		auto rax = UnwindBacktraceContext () ;
+		rax.mBuffer = buffer ;
+		rax.mSize = size_ ;
+		rax.mCount = 0 ;
+		_Unwind_Backtrace (unwind_backtrace_step ,(&rax)) ;
+		return rax.mCount ;
+	}
+
+	static _Unwind_Reason_Code unwind_backtrace_step (struct _Unwind_Context *context ,void *arg) {
+		auto &&rax = keep[TYPE<UnwindBacktraceContext>::expr] (Pointer::make (Flag (arg))) ;
+		if (rax.mCount >= rax.mSize)
+			return _URC_END_OF_STACK ;
+		const auto r1x = rax.mBuffer + rax.mCount * SIZE_OF<csc_handle_t>::expr ;
+		bitwise (Pointer::make (r1x)) = csc_handle_t (_Unwind_GetIP (context)) ;
+		rax.mCount++ ;
+		return _URC_NO_REASON ;
+	}
+
 	Slice slice_filename (CR<Slice> s) const {
 		const auto r1x = s.size () ;
 		Index ix = r1x - 1 ;
@@ -134,7 +168,7 @@ public:
 	}
 
 	Flag thread_uid () const override {
-		return Flag (syscall (SYS_gettid)) ;
+		return Flag (gettid ()) ;
 	}
 
 	void thread_sleep (CR<Time> time) const override {
@@ -147,7 +181,7 @@ public:
 	}
 
 	Flag process_uid () const override {
-		return Flag (syscall (SYS_getpid)) ;
+		return Flag (getpid ()) ;
 	}
 
 	void process_exit () const override {
@@ -165,9 +199,19 @@ public:
 
 	String<Str> library_main () const override {
 		String<Str> ret = String<Str>::make () ;
-		const auto r1x = String<Str> (slice ("/proc/self/exe")) ;
-		const auto r2x = Index (readlink (r1x ,ret ,csc_size_t (ret.size ()))) ;
-		ret.trunc (r2x) ;
+		const auto r1x = String<Str> (slice ("/proc/self/exefile")) ;
+		const auto r2x = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
+			me = posix::open (r1x ,O_RDONLY) ;
+			assume (me != NONE) ;
+		} ,[&] (VR<csc_pipe_t> me) {
+			posix::close (me) ;
+		}) ;
+		auto rbx = ret.size () ;
+		rbx = posix::read (r2x ,ret.ref ,rbx) ;
+		assume (rbx >= 0) ;
+		ret.trunc (rbx) ;
+		rbx = strcspn (ret.ref ,"\n") ;
+		ret.trunc (rbx) ;
 		return move (ret) ;
 	}
 } ;
@@ -210,34 +254,17 @@ public:
 	Quad process_time (CR<String<Stru>> info ,CR<Flag> uid) const {
 		if (info.length () == 0)
 			return Quad (0X00) ;
-		auto rax = TextReader (info.borrow ()) ;
-		auto rbx = String<Stru> () ;
-		rax >> GAP ;
-		rax >> ReadBlank (rbx) ;
-		const auto r1x = StringParse<Val64>::make (rbx) ;
-		assume (r1x == uid) ;
-		rax >> GAP ;
-		rax >> slice ("(") ;
-		while (TRUE) {
-			const auto r2x = rax.pull (TYPE<Stru32>::expr) ;
-			if (r2x == Stru32 (0X00))
-				break ;
-			if (r2x == Stru32 (')'))
-				break ;
-			assume (r2x != Stru32 ('(')) ;
-		}
-		rax >> GAP ;
-		rax >> ReadBlank (rbx) ;
-		assume (rbx.length () == 1) ;
-		for (auto &&i : range (0 ,18)) {
-			noop (i) ;
-			rax >> GAP ;
-			rax >> ReadBlank (rbx) ;
-		}
-		rax >> GAP ;
-		rax >> ReadBlank (rbx) ;
-		const auto r3x = StringParse<Val64>::make (rbx) ;
-		return Quad (r3x) ;
+		const auto r1x = String<Str>::make (Format (slice ("/proc/$1/ctl")) (uid)) ;
+		const auto r2x = posix::open (r1x ,O_RDWR) ;
+		if (r2x == NONE)
+			return Quad (0X00) ;
+		auto rax = procfs_info () ;
+		inline_memset (rax) ;
+		const auto r3x = devctl (r2x ,DCMD_PROC_INFO ,(&rax) ,SIZE_OF<procfs_info>::expr ,NULL) ;
+		posix::close (r2x) ;
+		if (r3x != EOK)
+			return Quad (0X00) ;
+		return Quad (rax.start_time) ;
 	}
 
 	void initialize (CR<RefBuffer<Byte>> snapshot_) override {

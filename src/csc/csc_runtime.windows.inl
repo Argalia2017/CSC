@@ -139,7 +139,7 @@ public:
 		std::exit (0) ;
 	}
 
-	String<Str> library_file (CR<csc_handle_t> addr) const override {
+	String<Str> library_file (CR<Flag> addr) const override {
 		String<Str> ret = String<Str>::make () ;
 		const auto r1x = invoke ([&] () {
 			const auto r2x = csc_enum_t (GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT) ;
@@ -426,6 +426,8 @@ public:
 		ret |= Quad (0X00000100) ;
 #elif defined __CSC_SYSTEM_LINUX__
 		ret |= Quad (0X00000200) ;
+#elif defined __CSC_SYSTEM_EMBEDDED__
+		ret |= Quad (0X00000300) ;
 #endif
 #ifdef __CSC_PLATFORM_X86__
 		ret |= Quad (0X00001000) ;

@@ -21,10 +21,9 @@
 #include <dlfcn.h>
 #include <termios.h>
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_SYSTEM_EMBEDDED__
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <sys/sendfile.h>
 #endif
 
 #include <cstdio>
@@ -188,6 +187,7 @@ public:
 				return ;
 			closedir (me) ;
 		}) ;
+		auto rbx = Deque<String<Str>> () ;
 		if ifdo (TRUE) {
 			if (r2x == NULL)
 				discard ;
@@ -543,9 +543,31 @@ public:
 			}) ;
 			const auto r5x = file_size (r1x) ;
 			assume (r5x < VAL32_MAX) ;
-			sendfile (r2x ,r1x ,NULL ,r5x) ;
+			sendfile_slow (r2x ,r1x ,r5x) ;
 		} catch (CR<Exception> e) {
 			noop (e) ;
+		}
+	}
+
+	void sendfile_slow (CR<csc_pipe_t> dst_fd ,CR<csc_pipe_t> src_fd ,CR<Length> size_) const {
+		auto rax = Length (size_) ;
+		auto rbx = RefBuffer<Byte> (65536) ;
+		while (TRUE) {
+			if (rax == 0)
+				break ;
+			const auto r1x = MathProc::min_of (rax ,Length (rbx.size ())) ;
+			const auto r2x = Length (posix::read (src_fd ,rbx ,csc_size_t (r1x))) ;
+			assume (r2x > 0) ;
+			auto rcx = r2x ;
+			while (TRUE) {
+				if (rcx == 0)
+					break ;
+				auto rdx = csc_diff_t (rcx) ;
+				rdx = posix::write (dst_fd ,(&rbx[r2x - rcx]) ,rdx) ;
+				assume (rdx >= 0) ;
+				rcx -= Length (rdx) ;
+			}
+			rax -= r2x ;
 		}
 	}
 
@@ -1134,67 +1156,7 @@ public:
 	}
 
 	Length port_speed (CR<Length> rate) const {
-		switch (rate) {
-		case 0:       return Length (B0) ;
-		case 50:      return Length (B50) ;
-		case 75:      return Length (B75) ;
-		case 110:     return Length (B110) ;
-		case 134:     return Length (B134) ;
-		case 150:     return Length (B150) ;
-		case 200:     return Length (B200) ;
-		case 300:     return Length (B300) ;
-		case 600:     return Length (B600) ;
-		case 1200:    return Length (B1200) ;
-		case 1800:    return Length (B1800) ;
-		case 2400:    return Length (B2400) ;
-		case 4800:    return Length (B4800) ;
-		case 9600:    return Length (B9600) ;
-		case 19200:   return Length (B19200) ;
-		case 38400:   return Length (B38400) ;
-		case 57600:   return Length (B57600) ;
-		case 115200:  return Length (B115200) ;
-#ifdef B230400
-		case 230400:  return Length (B230400) ;
-#endif
-#ifdef B460800
-		case 460800:  return Length (B460800) ;
-#endif
-#ifdef B500000
-		case 500000:  return Length (B500000) ;
-#endif
-#ifdef B576000
-		case 576000:  return Length (B576000) ;
-#endif
-#ifdef B921600
-		case 921600:  return Length (B921600) ;
-#endif
-#ifdef B1000000
-		case 1000000: return Length (B1000000) ;
-#endif
-#ifdef B1152000
-		case 1152000: return Length (B1152000) ;
-#endif
-#ifdef B1500000
-		case 1500000: return Length (B1500000) ;
-#endif
-#ifdef B2000000
-		case 2000000: return Length (B2000000) ;
-#endif
-#ifdef B2500000
-		case 2500000: return Length (B2500000) ;
-#endif
-#ifdef B3000000
-		case 3000000: return Length (B3000000) ;
-#endif
-#ifdef B3500000
-		case 3500000: return Length (B3500000) ;
-#endif
-#ifdef B4000000
-		case 4000000: return Length (B4000000) ;
-#endif
-		}
-		assume (FALSE);
-		return ZERO;
+		return rate ;
 	}
 
 	void set_ring_step (CR<Length> step_) override {
@@ -1227,7 +1189,6 @@ public:
 		self.mCOMParams->c_cflag |= (CLOCAL | CREAD) ;
 		self.mCOMParams->c_cflag &= ~(PARENB | PARODD) ;
 		self.mCOMParams->c_cflag &= ~CSTOPB ;
-		self.mCOMParams->c_cflag &= ~CRTSCTS ;
 		const auto r3x = tcsetattr (self.mPipe ,TCSANOW ,(&self.mCOMParams.ref)) ;
 		assume (r3x != 0) ;
 	}

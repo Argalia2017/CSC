@@ -1137,6 +1137,7 @@ struct ListHolder implement Interface {
 	virtual void take () = 0 ;
 	virtual void push (RR<BoxLayout> item) = 0 ;
 	virtual void pop () = 0 ;
+	virtual Bool is_slot (CR<Index> index) const = 0 ;
 	virtual Index insert (RR<BoxLayout> item) = 0 ;
 	virtual Index insert (CR<Index> index ,RR<BoxLayout> item) = 0 ;
 	virtual void remove (CR<Index> index) = 0 ;
@@ -1309,6 +1310,10 @@ public:
 		pop () ;
 	}
 
+	Bool is_slot (CR<Index> index) const {
+		return ListHolder::hold (thiz)->is_slot (index) ;
+	}
+
 	Index insert () {
 		auto rax = Box<A>::make () ;
 		return ListHolder::hold (thiz)->insert (move (rax)) ;
@@ -1354,6 +1359,7 @@ struct ArrayListHolder implement Interface {
 	virtual Index iend () const = 0 ;
 	virtual Index inext (CR<Index> index) const = 0 ;
 	virtual void add (RR<BoxLayout> item) = 0 ;
+	virtual Bool is_slot (CR<Index> index) const = 0 ;
 	virtual Index insert (RR<BoxLayout> item) = 0 ;
 	virtual Index insert (CR<Index> index ,RR<BoxLayout> item) = 0 ;
 	virtual void remove (CR<Index> index) = 0 ;
@@ -1485,6 +1491,10 @@ public:
 		return ArrayListHolder::hold (thiz)->add (move (rax)) ;
 	}
 
+	Bool is_slot (CR<Index> index) const {
+		return ArrayListHolder::hold (thiz)->is_slot (index) ;
+	}
+
 	Index insert () {
 		auto rax = Box<A>::make () ;
 		return ArrayListHolder::hold (thiz)->insert (move (rax)) ;
@@ -1545,8 +1555,8 @@ struct SortedMapHolder implement Interface {
 	virtual Index inext (CR<Index> index) const = 0 ;
 	virtual void add (RR<BoxLayout> item ,CR<Index> map_) = 0 ;
 	virtual Index find (CR<Pointer> item) const = 0 ;
-	virtual Array<Index> search (CR<Pointer> begin_ ,CR<Pointer> end_) const = 0 ;
 	virtual Bool contain (CR<Pointer> item) const = 0 ;
+	virtual Array<Index> search (CR<Pointer> begin_ ,CR<Pointer> end_) const = 0 ;
 	virtual Index map (CR<Pointer> item) const = 0 ;
 	virtual void remap () = 0 ;
 } ;
@@ -1699,12 +1709,12 @@ public:
 		return SortedMapHolder::hold (thiz)->find (Pointer::from (item)) ;
 	}
 
-	Array<Index> search (CR<A> begin_ ,CR<A> end_) const {
-		return SortedMapHolder::hold (thiz)->search (Pointer::from (begin_) ,Pointer::from (end_)) ;
-	}
-
 	Bool contain (CR<A> item) const {
 		return SortedMapHolder::hold (thiz)->contain (Pointer::from (item)) ;
+	}
+
+	Array<Index> search (CR<A> begin_ ,CR<A> end_) const {
+		return SortedMapHolder::hold (thiz)->search (Pointer::from (begin_) ,Pointer::from (end_)) ;
 	}
 
 	Index map (CR<A> item) const {

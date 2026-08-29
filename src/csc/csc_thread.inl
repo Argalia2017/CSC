@@ -56,10 +56,11 @@ public:
 	void set_thread_size (CR<Length> size_) override {
 		Scope anonymous (self.mThreadMutex) ;
 		assert (self.mThreadFlag == ThreadFlag::Preparing) ;
-		self.mThread = Array<Thread> (size_) ;
-		self.mThreadJoin = BitSet (size_) ;
-		self.mThreadQueue = Array<IndexIterator> (size_) ;
-		self.mThreadLoadLength = Array<Length> (size_) ;
+		const auto r1x = MathProc::max_of (size_ ,Length (1)) ;
+		self.mThread = Array<Thread> (r1x) ;
+		self.mThreadJoin = BitSet (r1x) ;
+		self.mThreadQueue = Array<IndexIterator> (r1x) ;
+		self.mThreadLoadLength = Array<Length> (r1x) ;
 	}
 
 	void set_queue_size (CR<Length> size_) override {
@@ -191,13 +192,8 @@ public:
 		crash () ;
 		for (auto &&i : self.mThread.iter ())
 			self.mThread[i].stop () ;
-		self.mThread = Array<Thread> () ;
 		self.mThreadFunc = Function<CR<Index>> () ;
 		self.mThreadFlag = ThreadFlag::Preparing ;
-		self.mThreadJoin = BitSet () ;
-		self.mThreadQueue = Array<IndexIterator> () ;
-		self.mThreadLoadLength = Array<Length> () ;
-		self.mItemQueue = Deque<IndexIterator> () ;
 	}
 } ;
 
@@ -255,10 +251,11 @@ public:
 	void set_thread_size (CR<Length> size_) override {
 		Scope anonymous (self.mThreadMutex) ;
 		assert (self.mThreadFlag == ThreadFlag::Preparing) ;
-		self.mThread = Array<Thread> (size_) ;
-		self.mThreadJoin = BitSet (size_) ;
-		self.mSearchSolution = Array<CalcSolution> (size_) ;
-		self.mThreadSolution = Array<CalcSolution> (size_) ;
+		const auto r1x = MathProc::max_of (size_ ,Length (1)) ;
+		self.mThread = Array<Thread> (r1x) ;
+		self.mThreadJoin = BitSet (r1x) ;
+		self.mSearchSolution = Array<CalcSolution> (r1x) ;
+		self.mThreadSolution = Array<CalcSolution> (r1x) ;
 		self.mNewSolution = FALSE ;
 	}
 
@@ -267,8 +264,9 @@ public:
 		assert (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assert (self.mThread.size () > 0) ;
 		self.mBestSolution.mIteration = ZERO ;
-		self.mBestSolution.mError.mAvg = infinity ;
-		self.mBestSolution.mError.mStd = 0 ;
+		self.mBestSolution.mCost.mMax = infinity ;
+		self.mBestSolution.mCost.mAvg = infinity ;
+		self.mBestSolution.mCost.mStd = 0 ;
 		self.mBestSolution.mInput = input ;
 		for (auto &&i : self.mThreadSolution.iter ())
 			self.mThreadSolution[i].mIteration = NONE ;
@@ -347,8 +345,8 @@ public:
 	Bool is_better (CR<CalcSolution> a ,CR<CalcSolution> b) const {
 		const auto r1x = Index (Flt64 (a.mIteration) * self.mConfidenceFator) ;
 		Index ix = MathProc::clamp (r1x ,ZERO ,self.mConfidence.length ()) ;
-		const auto r2x = a.mError.mAvg - a.mError.mStd * self.mConfidence[ix] ;
-		const auto r3x = b.mError.mAvg - b.mError.mStd * self.mConfidence[ix] ;
+		const auto r2x = a.mCost.mAvg - a.mCost.mStd * self.mConfidence[ix] ;
+		const auto r3x = b.mCost.mAvg - b.mCost.mStd * self.mConfidence[ix] ;
 		if (r2x < r3x)
 			return TRUE ;
 		return FALSE ;
@@ -378,9 +376,10 @@ public:
 		if ifdo (act) {
 			assume (self.mBestSolution.mIteration != NONE) ;
 			const auto r1x = bitset_xor (self.mThreadSolution[slot].mInput ,self.mSearchSolution[slot].mInput) ;
-			self.mThreadSolution[slot] = move (self.mSearchSolution[slot]) ;
-			self.mSearchSolution[slot].mError.mAvg = infinity ;
-			self.mSearchSolution[slot].mError.mStd = 0 ;
+			self.mThreadSolution[slot] = self.mBestSolution ;
+			self.mSearchSolution[slot].mCost.mMax = infinity ;
+			self.mSearchSolution[slot].mCost.mAvg = infinity ;
+			self.mSearchSolution[slot].mCost.mStd = 0 ;
 			self.mSearchSolution[slot].mInput = bitset_xor (self.mBestSolution.mInput ,r1x) ;
 		}
 		return FALSE ;
@@ -460,12 +459,8 @@ public:
 		crash () ;
 		for (auto &&i : self.mThread.iter ())
 			self.mThread[i].stop () ;
-		self.mThread = Array<Thread> () ;
 		self.mThreadFunc = Function<CR<CalcSolution> ,VR<CalcSolution>> () ;
 		self.mThreadFlag = ThreadFlag::Preparing ;
-		self.mThreadJoin = BitSet () ;
-		self.mThreadSolution = Array<CalcSolution> () ;
-		self.mSearchSolution = Array<CalcSolution> () ;
 		self.mBestSolution = CalcSolution () ;
 	}
 } ;

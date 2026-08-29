@@ -48,7 +48,7 @@ public:
 		return move (ret) ;
 	}
 
-	Length width (CR<Index> from) const override {
+	Length count (CR<Index> from) const override {
 		if (self.mTable[from].mUp == NONE)
 			return 0 ;
 		return self.mTable[from].mWidth ;
@@ -92,8 +92,8 @@ public:
 		return ix == iy ;
 	}
 
-	Deque<Index> cluster (CR<Index> from) override {
-		Deque<Index> ret ;
+	BitSet cluster (CR<Index> from) override {
+		BitSet ret = BitSet (self.mTable.size ()) ;
 		if ifdo (TRUE) {
 			Index ix = lead (from) ;
 			if (ix == NONE)
@@ -133,6 +133,7 @@ exports CFat<DisjointHolder> DisjointHolder::hold (CR<DisjointLayout> that) {
 class RansacImplHolder final implement Fat<RansacHolder ,RansacLayout> {
 public:
 	void initialize (CR<Length> rank_ ,CR<Length> size_) override {
+		assert (rank_ > 0) ;
 		assert (size_ > 0) ;
 		assert (rank_ <= size_) ;
 		self.mRank = rank_ ;
@@ -234,12 +235,127 @@ exports CFat<RansacHolder> RansacHolder::hold (CR<RansacLayout> that) {
 	return CFat<RansacHolder> (RansacImplHolder () ,that) ;
 }
 
+class KMeansImplHolder final implement Fat<KMeansHolder ,KMeansLayout> {
+public:
+	void initialize (CR<Length> rank_ ,CR<DataFrame> pool) override {
+		assert (rank_ > 0) ;
+		self.mRank = rank_ ;
+		self.mPool = pool ;
+		const auto r1x = self.mPool.size () ;
+		assert (rank_ <= r1x) ;
+		self.mCurrCenter = Array<Array<Flt64>> (self.mRank) ;
+		self.mCurrCluster = Array<BitSet> (self.mRank) ;
+		self.mNextCluster = Array<BitSet> (self.mRank) ;
+		for (auto &&i : range (0 ,self.mRank)) {
+			self.mCurrCluster[i] = BitSet (r1x) ;
+			self.mNextCluster[i] = BitSet (r1x) ;
+		}
+		self.mCost.mMax = infinity ;
+		self.mCost.mAvg = infinity ;
+		self.mCost.mStd = 0 ;
+	}
+
+	Length rank () const override {
+		return self.mRank ;
+	}
+
+	Bool good () const override {
+		if (self.mCost.mMax > 0)
+			return TRUE ;
+		return FALSE ;
+	}
+
+	void next () override {
+		update_curr_center () ;
+		update_next_cluster () ;
+		update_curr_cluster () ;
+	}
+
+	void update_curr_center () {
+		auto rax = self.mPool.map (slice ("point") ,0) ;
+		for (auto &&i : range (0 ,self.mRank)) {
+			const auto r1x = rax.channel () ;
+			self.mCurrCenter[i] = Array<Flt64> (r1x) ;
+			self.mCurrCenter[i].fill (0) ;
+			for (auto &&j : self.mCurrCluster[i]) {
+				rax.target (j) ;
+				for (auto &&k : range (0 ,r1x)) {
+					noop (k) ;
+					//self.mCurrCenter[i][k] += rax[k] ;
+				}
+			}
+			const auto r2x = MathProc::inverse (Flt64 (self.mCurrCluster[i].length ())) ;
+			for (auto &&k : range (0 ,r1x)) {
+				self.mCurrCenter[i][k] *= r2x ;
+			}
+		}
+	}
+
+	void update_next_cluster () {
+		for (auto &&i : range (0 ,self.mRank))
+			self.mNextCluster[i].clear () ;
+		auto rax = self.mPool.map (slice ("point") ,0) ;
+		for (auto &&i : self.mPool.iter ()) {
+			rax.target (i) ;
+			auto rbx = IndexPair<Flt64> () ;
+			rbx.m2nd = NONE ;
+			for (auto &&j : range (0 ,self.mRank)) {
+				const auto r1x = distance (self.mCurrCenter[j] ,rax) ;
+				if (rbx.m2nd != NONE)
+					if (rbx.m1st <= r1x)
+						continue ;
+				rbx.m1st = r1x ;
+				rbx.m2nd = j ;
+			}
+			self.mNextCluster[rbx.m2nd].add (i) ;
+		}
+	}
+
+	void update_curr_cluster () {
+		self.mCost = NormalError () ;
+		auto rax = self.mPool.map (slice ("point") ,0) ;
+		for (auto &&i : range (0 ,self.mRank)) {
+			const auto r1x = self.mCurrCluster[i] - self.mNextCluster[i] ;
+			for (auto &&j : r1x) {
+				rax.target (j) ;
+				const auto r2x = distance (self.mCurrCenter[i] ,rax) ;
+				const auto r3x = MathProc::pdf (r2x) ;
+				self.mCost += r3x ;
+			}
+		}
+		swap (self.mCurrCluster ,self.mNextCluster) ;
+	}
+
+	Flt64 distance (CR<Array<Flt64>> a ,CR<Property> b) const {
+		Flt64 ret = 0 ;
+		for (auto &&i : a.iter ()) {
+			noop (i) ;
+			//ret += MathProc::square (a[i] - b[i]) ;
+		}
+		ret = MathProc::sqrt (ret) ;
+		return move (ret) ;
+	}
+
+	BitSet cluster (CR<Index> from) const override {
+		return self.mCurrCluster[from] ;
+	}
+} ;
+
+exports VFat<KMeansHolder> KMeansHolder::hold (VR<KMeansLayout> that) {
+	return VFat<KMeansHolder> (KMeansImplHolder () ,that) ;
+}
+
+exports CFat<KMeansHolder> KMeansHolder::hold (CR<KMeansLayout> that) {
+	return CFat<KMeansHolder> (KMeansImplHolder () ,that) ;
+}
+
 class KMMatchImplHolder final implement Fat<KMMatchHolder ,KMMatchLayout> {
 public:
 	void initialize (CR<Length> size_) override {
 		assert (size_ > 0) ;
 		self.mSize = size_ ;
-		self.mThreshold = Flt64 (0.1) ;
+		self.mEpsilon = Flt64 (0.1) ;
+		self.mDirection = 1 ;
 		self.mUser = Array<Flt64> (self.mSize) ;
 		self.mWork = Array<Flt64> (self.mSize) ;
 		self.mUserVisit = BitSet (self.mSize) ;
@@ -248,17 +364,33 @@ public:
 		self.mLack = Array<Flt64> (self.mSize) ;
 	}
 
-	void set_threshold (CR<Flt64> threshold) override {
-		self.mThreshold = Flt64 (threshold) ;
+	void set_epsilon (CR<Flt64> threshold) override {
+		self.mEpsilon = Flt64 (threshold) ;
 	}
 
 	Length size () const override {
 		return self.mSize ;
 	}
 
-	Array<Index> solve (CR<Image<Flt64>> love) override {
+	Array<Index> solve_min (CR<Image<Flt64>> cost) override {
+		assert (self.mMatch.size () > 0) ;
+		assert (cost.size () == MathProc::square (self.mSize)) ;
+		self.mDirection = -1 ;
+		self.mLove = Ref<Image<Flt64>>::reference (cost) ;
+		self.mUser.fill (0) ;
+		self.mWork.fill (0) ;
+		self.mUserVisit.clear () ;
+		self.mWorkVisit.clear () ;
+		self.mMatch.fill (NONE) ;
+		self.mLack.fill (0) ;
+		solve () ;
+		return self.mMatch ;
+	}
+
+	Array<Index> solve_max (CR<Image<Flt64>> love) override {
 		assert (self.mMatch.size () > 0) ;
 		assert (love.size () == MathProc::square (self.mSize)) ;
+		self.mDirection = +1 ;
 		self.mLove = Ref<Image<Flt64>>::reference (love) ;
 		self.mUser.fill (0) ;
 		self.mWork.fill (0) ;
@@ -274,7 +406,7 @@ public:
 		for (auto &&i : range (0 ,self.mSize)) {
 			self.mUser[i] = -infinity ;
 			for (auto &&j : range (0 ,self.mSize)) {
-				const auto r1x = self.mLove.ref[i][j] ;
+				const auto r1x = self.mLove.ref[i][j] * self.mDirection ;
 				self.mUser[i] = MathProc::max_of (self.mUser[i] ,r1x) ;
 			}
 		}
@@ -320,14 +452,14 @@ public:
 		for (auto &&i : range (0 ,self.mSize)) {
 			if (self.mWorkVisit[i])
 				continue ;
-			const auto r1x = self.mLove.ref[user][i] ;
+			const auto r1x = self.mLove.ref[user][i] * self.mDirection ;
 			const auto r2x = self.mUser[user] + self.mWork[i] - r1x ;
 			if ifdo (TRUE) {
-				if (r2x < self.mThreshold)
+				if (r2x < self.mEpsilon)
 					discard ;
 				self.mLack[i] = MathProc::min_of (self.mLack[i] ,r2x) ;
 			}
-			if (r2x >= self.mThreshold)
+			if (r2x >= self.mEpsilon)
 				continue ;
 			self.mWorkVisit[i] = TRUE ;
 			const auto r3x = self.mMatch[i] ;
@@ -386,8 +518,8 @@ public:
 
 	void joint (CR<Index> from ,CR<Index> into ,CR<Val64> weight) override {
 		assert (weight >= 0) ;
-		assert (inline_between (from ,0 ,self.mSize)) ;
-		assert (inline_between (into ,0 ,self.mSize)) ;
+		assert (inline_mid (from ,0 ,self.mSize)) ;
+		assert (inline_mid (into ,0 ,self.mSize)) ;
 		assert (!self.mReady) ;
 		if (from == into)
 			return ;

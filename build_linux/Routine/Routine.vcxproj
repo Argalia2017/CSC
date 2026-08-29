@@ -84,6 +84,7 @@
     <None Include="..\..\src\csc\csc_array.inl" />
     <None Include="..\..\src\csc\csc_basic.inl" />
     <None Include="..\..\src\csc\csc_core.inl" />
+    <None Include="..\..\src\csc\csc_file.embedded.inl" />
     <None Include="..\..\src\csc\csc_file.inl" />
     <None Include="..\..\src\csc\csc_file.linux.inl" />
     <None Include="..\..\src\csc\csc_file.windows.inl" />
@@ -95,6 +96,7 @@
     <None Include="..\..\src\csc\csc_matrix.eigen.inl" />
     <None Include="..\..\src\csc\csc_matrix.inl" />
     <None Include="..\..\src\csc\csc_matrix.nanoflann.inl" />
+    <None Include="..\..\src\csc\csc_runtime.embedded.inl" />
     <None Include="..\..\src\csc\csc_runtime.inl" />
     <None Include="..\..\src\csc\csc_runtime.linux.inl" />
     <None Include="..\..\src\csc\csc_runtime.windows.inl" />
@@ -108,13 +110,13 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(RemoteRootDir)/$(SolutionName)/src;$(RemoteRootDir)/$(SolutionName)/src/csc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-g -rdynamic %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-g -rdynamic -Wall -Wextra -Werror -Wreturn-type -Wunused -Wuninitialized -Winit-self -Wformat -Wfloat-equal -Wempty-body -Wswitch -Wparentheses -Wunused-parameter -Wsizeof-pointer-memaccess -Wunused-label -Wunused-variable -Wunused-value -Wunreachable-code -Woverflow -Wredundant-decls %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(RemoteRootDir)/$(SolutionName)/src;$(RemoteRootDir)/$(SolutionName)/src/csc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-g -rdynamic %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-g -rdynamic -Wall -Wextra -Werror -Wreturn-type -Wunused -Wuninitialized -Winit-self -Wformat -Wfloat-equal -Wempty-body -Wswitch -Wparentheses -Wunused-parameter -Wsizeof-pointer-memaccess -Wunused-label -Wunused-variable -Wunused-value -Wunreachable-code -Woverflow -Wredundant-decls %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

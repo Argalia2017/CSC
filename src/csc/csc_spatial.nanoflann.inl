@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#ifndef __CSC_MATRIX__
+#ifndef __CSC_SPATIAL__
 #error "∑(っ°Д° ;)っ : require module"
 #endif
 
@@ -8,7 +8,7 @@
 #pragma system_header
 #endif
 
-#include "csc_matrix.hpp"
+#include "csc_spatial.hpp"
 
 #include "csc_end.h"
 #include <nanoflann.hpp>
@@ -44,7 +44,7 @@ public:
 
 	template <class BBOX>
 	Bool kdtree_get_bbox (DEF<BBOX &> bb) const {
-		return false ;
+		return FALSE ;
 	}
 } ;
 
@@ -67,20 +67,23 @@ public:
 	}
 
 	Bool full () const {
-		return true ;
+		return TRUE ;
 	}
 
 	Bool addPoint (A dist ,Index index) {
 		if (dist >= mL2Dist)
-			return true ;
-		mResult.add ({-dist ,index}) ;
+			return TRUE ;
+		auto rax = IndexPair<A> () ;
+		rax.m1st = -dist ;
+		rax.m2nd = index ;
+		mResult.add (move (rax)) ;
 		if ifdo (TRUE) {
 			if (!mResult.full ())
 				discard ;
 			mResult.take () ;
 			mL2Dist = MathProc::min_of (mL2Dist ,-mResult[0].m1st) ;
 		}
-		return true ;
+		return TRUE ;
 	}
 
 	A worstDist () const {
@@ -126,20 +129,19 @@ public:
 		assert (channel > 0) ;
 		const auto r1x = pointcloud.size () ;
 		const auto r2x = pointcloud.step () ;
-		const auto r3x = r1x % channel ;
 		assert (r1x > 0) ;
-		assert (r3x == 0) ;
+		assert (r1x % channel == 0) ;
 		assert (r2x == SIZE_OF<Flt32>::expr) ;
 		self.mSize = r1x / channel ;
-		self.mStep = r2x ;
+		self.mAlign = r2x ;
 		self.mChannel = channel ;
 		self.mF32 = Ref<KDTreeF32>::make () ;
 		self.mF32->mDataset = Box<KDTreeDataset<Flt32>>::make () ;
 		self.mF32->mDataset->mPointCloud = move (pointcloud) ;
 		self.mF32->mDataset->mSize = self.mSize ;
 		self.mF32->mDataset->mChannel = self.mChannel ;
-		const auto r5x = nanoflann::KDTreeSingleIndexAdaptorParams () ;
-		self.mF32->mKNNSearch = Box<KDTreeKNNAdaptorF32C3>::make (Val32 (3) ,self.mF32->mDataset.ref ,r5x) ;
+		const auto r3x = nanoflann::KDTreeSingleIndexAdaptorParams () ;
+		self.mF32->mKNNSearch = Box<KDTreeKNNAdaptorF32C3>::make (Val32 (3) ,self.mF32->mDataset.ref ,r3x) ;
 		self.mF32->mKNNSearch->buildIndex () ;
 		self.mF32->mResult = Box<KDTreeResult<Flt32>>::make () ;
 	}
@@ -148,30 +150,30 @@ public:
 		assert (channel > 0) ;
 		const auto r1x = pointcloud.size () ;
 		const auto r2x = pointcloud.step () ;
-		const auto r3x = r1x % channel ;
 		assert (r1x > 0) ;
-		assert (r3x == 0) ;
+		assert (r1x % channel == 0) ;
 		assert (r2x == SIZE_OF<Flt64>::expr) ;
 		self.mSize = r1x / channel ;
-		self.mStep = r2x ;
+		self.mAlign = r2x ;
 		self.mChannel = channel ;
 		self.mF64 = Ref<KDTreeF64>::make () ;
 		self.mF64->mDataset = Box<KDTreeDataset<Flt64>>::make () ;
 		self.mF64->mDataset->mPointCloud = move (pointcloud) ;
 		self.mF64->mDataset->mSize = self.mSize ;
 		self.mF64->mDataset->mChannel = self.mChannel ;
-		const auto r5x = nanoflann::KDTreeSingleIndexAdaptorParams () ;
-		self.mF64->mKNNSearch = Box<KDTreeKNNAdaptorF64C3>::make (Val32 (3) ,self.mF64->mDataset.ref ,r5x) ;
+		const auto r3x = nanoflann::KDTreeSingleIndexAdaptorParams () ;
+		self.mF64->mKNNSearch = Box<KDTreeKNNAdaptorF64C3>::make (Val32 (3) ,self.mF64->mDataset.ref ,r3x) ;
 		self.mF64->mKNNSearch->buildIndex () ;
 		self.mF64->mResult = Box<KDTreeResult<Flt64>>::make () ;
 	}
 
 	Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) override {
 		assert (neighbor > 0) ;
+		assert (radius >= 0) ;
 		Array<Index> ret ;
-		const auto r1x = nanoflann::SearchParameters (0 ,false) ;
+		const auto r1x = nanoflann::SearchParameters (0 ,FALSE) ;
 		if ifdo (TRUE) {
-			if (self.mStep != SIZE_OF<Flt32>::expr)
+			if (self.mAlign != SIZE_OF<Flt32>::expr)
 				discard ;
 			self.mF32->mResult->mL2Dist = Flt32 (MathProc::square (radius)) ;
 			self.mF32->mResult->mResult = Priority<IndexPair<Flt32>> (neighbor + 1) ;
@@ -189,7 +191,7 @@ public:
 			}
 		}
 		if ifdo (TRUE) {
-			if (self.mStep != SIZE_OF<Flt64>::expr)
+			if (self.mAlign != SIZE_OF<Flt64>::expr)
 				discard ;
 			self.mF64->mResult->mL2Dist = Flt64 (MathProc::square (radius)) ;
 			self.mF64->mResult->mResult = Priority<IndexPair<Flt64>> (neighbor + 1) ;

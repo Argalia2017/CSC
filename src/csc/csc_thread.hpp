@@ -17,10 +17,10 @@
 namespace CSC {
 struct CoroutineHolder implement Interface {
 	virtual void before () = 0 ;
-	virtual Bool tick (CR<Flt64> deltatime) = 0 ;
+	virtual Bool tick (CR<Flt64> delta_sec) = 0 ;
+	virtual Bool later_tick (CR<Flt64> delta_sec) = 0 ;
 	virtual Bool idle () = 0 ;
 	virtual void after () = 0 ;
-	virtual void execute () = 0 ;
 } ;
 
 class Coroutine implement Proxy {
@@ -37,8 +37,12 @@ public:
 		return mThat->before () ;
 	}
 
-	Bool tick (CR<Flt64> deltatime) const {
-		return mThat->tick (deltatime) ;
+	Bool tick (CR<Flt64> delta_sec) const {
+		return mThat->tick (delta_sec) ;
+	}
+
+	Bool later_tick (CR<Flt64> delta_sec) const {
+		return mThat->later_tick (delta_sec) ;
 	}
 
 	Bool idle () const {
@@ -47,10 +51,6 @@ public:
 
 	void after () const {
 		return mThat->after () ;
-	}
-
-	void execute () const {
-		return mThat->execute () ;
 	}
 } ;
 
@@ -114,7 +114,7 @@ public:
 
 struct CalcSolution {
 	Index mIteration ;
-	NormalError mError ;
+	NormalError mCost ;
 	BitSet mInput ;
 } ;
 

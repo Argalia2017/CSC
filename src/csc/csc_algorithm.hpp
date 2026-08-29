@@ -12,11 +12,13 @@
 #include "csc_array.hpp"
 #include "csc_image.hpp"
 #include "csc_matrix.hpp"
+#include "csc_numeric.hpp"
 #include "csc_stream.hpp"
 #include "csc_string.hpp"
 #include "csc_runtime.hpp"
 #include "csc_file.hpp"
 #include "csc_thread.hpp"
+#include "csc_property.hpp"
 
 namespace CSC {
 struct DisjointNode {
@@ -35,10 +37,10 @@ struct DisjointHolder implement Interface {
 	virtual void initialize (CR<Length> size_) = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Index lead (CR<Index> from) = 0 ;
-	virtual Length width (CR<Index> from) const = 0 ;
+	virtual Length count (CR<Index> from) const = 0 ;
 	virtual void joint (CR<Index> from ,CR<Index> into) = 0 ;
 	virtual Bool is_edge (CR<Index> from ,CR<Index> into) = 0 ;
-	virtual Deque<Index> cluster (CR<Index> from) = 0 ;
+	virtual BitSet cluster (CR<Index> from) = 0 ;
 	virtual Array<Index> closure () = 0 ;
 } ;
 
@@ -61,8 +63,8 @@ public:
 		return DisjointHolder::hold (thiz)->lead (from) ;
 	}
 
-	Length width (CR<Index> from) const {
-		return DisjointHolder::hold (thiz)->width (from) ;
+	Length count (CR<Index> from) const {
+		return DisjointHolder::hold (thiz)->count (from) ;
 	}
 
 	void joint (CR<Index> from ,CR<Index> into) {
@@ -73,7 +75,7 @@ public:
 		return DisjointHolder::hold (thiz)->is_edge (from ,into) ;
 	}
 
-	Deque<Index> cluster (CR<Index> from) {
+	BitSet cluster (CR<Index> from) {
 		return DisjointHolder::hold (thiz)->cluster (from) ;
 	}
 
@@ -189,6 +191,63 @@ public:
 	}
 } ;
 
+struct KMeansLayout {
+	Length mRank ;
+	DataFrame mPool ;
+	Array<Array<Flt64>> mCurrCenter ;
+	Array<BitSet> mCurrCluster ;
+	Array<BitSet> mNextCluster ;
+	NormalError mCost ;
+} ;
+
+struct KMeansHolder implement Interface {
+	imports VFat<KMeansHolder> hold (VR<KMeansLayout> that) ;
+	imports CFat<KMeansHolder> hold (CR<KMeansLayout> that) ;
+
+	virtual void initialize (CR<Length> rank_ ,CR<DataFrame> pool) = 0 ;
+	virtual Length rank () const = 0 ;
+	virtual Bool good () const = 0 ;
+	virtual void next () = 0 ;
+	virtual BitSet cluster (CR<Index> from) const = 0 ;
+} ;
+
+class KMeans implement KMeansLayout {
+public:
+	implicit KMeans () = default ;
+
+	explicit KMeans (CR<Length> rank_ ,CR<DataFrame> pool) {
+		KMeansHolder::hold (thiz)->initialize (rank_ ,pool) ;
+	}
+
+	Length rank () const {
+		return KMeansHolder::hold (thiz)->rank () ;
+	}
+
+	Bool good () const {
+		return KMeansHolder::hold (thiz)->good () ;
+	}
+
+	forceinline Bool operator== (CR<KMeans>) const {
+		return (!good ()) ;
+	}
+
+	forceinline Bool operator!= (CR<KMeans>) const {
+		return good () ;
+	}
+
+	void next () {
+		return KMeansHolder::hold (thiz)->next () ;
+	}
+
+	forceinline void operator++ () {
+		next () ;
+	}
+
+	BitSet cluster (CR<Index> from) const {
+		return KMeansHolder::hold (thiz)->cluster (from) ;
+	}
+} ;
+
 struct MinCutEdge {
 	Index mFrom ;
 	Index mInto ;
@@ -271,7 +330,8 @@ public:
 
 struct KMMatchLayout {
 	Length mSize ;
-	Flt64 mThreshold ;
+	Flt64 mEpsilon ;
+	Flt64 mDirection ;
 	Ref<Image<Flt64>> mLove ;
 	Array<Flt64> mUser ;
 	Array<Flt64> mWork ;
@@ -286,15 +346,16 @@ struct KMMatchHolder implement Interface {
 	imports CFat<KMMatchHolder> hold (CR<KMMatchLayout> that) ;
 
 	virtual void initialize (CR<Length> size_) = 0 ;
-	virtual void set_threshold (CR<Flt64> threshold) = 0 ;
+	virtual void set_epsilon (CR<Flt64> threshold) = 0 ;
 	virtual Length size () const = 0 ;
-	virtual Array<Index> solve (CR<Image<Flt64>> love) = 0 ;
+	virtual Array<Index> solve_min (CR<Image<Flt64>> cost) = 0 ;
+	virtual Array<Index> solve_max (CR<Image<Flt64>> love) = 0 ;
 } ;
 
 class KMMatch implement KMMatchLayout {
 protected:
 	using KMMatchLayout::mSize ;
-	using KMMatchLayout::mThreshold ;
+	using KMMatchLayout::mEpsilon ;
 	using KMMatchLayout::mLove ;
 	using KMMatchLayout::mUser ;
 	using KMMatchLayout::mWork ;
@@ -310,16 +371,20 @@ public:
 		KMMatchHolder::hold (thiz)->initialize (size_) ;
 	}
 
-	void set_threshold (CR<Flt64> threshold) {
-		return KMMatchHolder::hold (thiz)->set_threshold (threshold) ;
+	void set_epsilon (CR<Flt64> threshold) {
+		return KMMatchHolder::hold (thiz)->set_epsilon (threshold) ;
 	}
 
 	Length size () const {
 		return KMMatchHolder::hold (thiz)->size () ;
 	}
 
-	Array<Index> solve (CR<Image<Flt64>> love) {
-		return KMMatchHolder::hold (thiz)->solve (love) ;
+	Array<Index> solve_min (CR<Image<Flt64>> cost) {
+		return KMMatchHolder::hold (thiz)->solve_min (cost) ;
+	}
+
+	Array<Index> solve_max (CR<Image<Flt64>> love) {
+		return KMMatchHolder::hold (thiz)->solve_max (love) ;
 	}
 } ;
 

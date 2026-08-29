@@ -140,7 +140,7 @@ public:
 } ;
 
 static constexpr auto BOM = RANK1 () ;
-static constexpr auto CAT = RANK2 () ;
+static constexpr auto TAB = RANK2 () ;
 static constexpr auto GAP = RANK3 () ;
 static constexpr auto EOS = RANK4 () ;
 
@@ -169,7 +169,7 @@ public:
 struct ReaderHolder implement Interface {
 	virtual void initialize (RR<Ref<RefBuffer<Byte>>> stream) = 0 ;
 	virtual void use_overflow (CR<Function<CR<Pointer>>> overflow) = 0 ;
-	virtual void set_cats (CR<Array<Slice>> cats) = 0 ;
+	virtual void set_tab (CR<Length> tab_align) = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Length length () const = 0 ;
 	virtual StreamShape shape () const = 0 ;
@@ -189,7 +189,7 @@ struct ReaderHolder implement Interface {
 	virtual void read (CR<Slice> item) = 0 ;
 	virtual void read (VR<StringLayout> item) = 0 ;
 	virtual void read (CR<typeof (BOM)> item) = 0 ;
-	virtual void read (CR<typeof (CAT)> item) = 0 ;
+	virtual void read (CR<typeof (TAB)> item) = 0 ;
 	virtual void read (CR<typeof (GAP)> item) = 0 ;
 	virtual void read (CR<typeof (EOS)> item) = 0 ;
 } ;
@@ -208,8 +208,8 @@ public:
 		return mThat->use_overflow (Pointer::from (overflow)) ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) const {
-		return mThat->set_cats (cats) ;
+	void set_tab (CR<Length> tab_align) const {
+		return mThat->set_tab (tab_align) ;
 	}
 
 	Length size () const {
@@ -360,11 +360,11 @@ public:
 		return thiz ;
 	}
 
-	void read (CR<typeof (CAT)> item) const {
+	void read (CR<typeof (TAB)> item) const {
 		return mThat->read (item) ;
 	}
 
-	forceinline CR<Reader> operator>> (CR<typeof (CAT)> item) const {
+	forceinline CR<Reader> operator>> (CR<typeof (TAB)> item) const {
 		read (item) ;
 		return thiz ;
 	}
@@ -403,8 +403,8 @@ struct ByteReaderLayout {
 	Index mWrite ;
 	Bool mDiffEndian ;
 	Function<CR<Pointer>> mOverflow ;
-	Array<Slice> mCats ;
-	Index mCatIndex ;
+	Index mTabIndex ;
+	Index mTabAlign ;
 } ;
 
 struct ByteReaderHolder implement ReaderHolder {
@@ -428,8 +428,8 @@ public:
 		return ByteReaderHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) {
-		return ByteReaderHolder::hold (thiz)->set_cats (cats) ;
+	void set_tab (CR<Length> tab_align) {
+		return ByteReaderHolder::hold (thiz)->set_tab (tab_align) ;
 	}
 
 	Length size () const {
@@ -580,11 +580,11 @@ public:
 		return thiz ;
 	}
 
-	void read (CR<typeof (CAT)> item) {
+	void read (CR<typeof (TAB)> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<ByteReader> operator>> (CR<typeof (CAT)> item) {
+	forceinline VR<ByteReader> operator>> (CR<typeof (TAB)> item) {
 		read (item) ;
 		return thiz ;
 	}
@@ -623,8 +623,8 @@ struct TextReaderLayout {
 	Index mWrite ;
 	Bool mDiffEndian ;
 	Function<CR<Pointer>> mOverflow ;
-	Array<Slice> mCats ;
-	Index mCatIndex ;
+	Index mTabIndex ;
+	Index mTabAlign ;
 } ;
 
 struct TextReaderHolder implement ReaderHolder {
@@ -648,8 +648,8 @@ public:
 		return TextReaderHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) {
-		return TextReaderHolder::hold (thiz)->set_cats (cats) ;
+	void set_tab (CR<Length> tab_align) {
+		return TextReaderHolder::hold (thiz)->set_tab (tab_align) ;
 	}
 
 	Length size () const {
@@ -800,11 +800,11 @@ public:
 		return thiz ;
 	}
 
-	void read (CR<typeof (CAT)> item) {
+	void read (CR<typeof (TAB)> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<TextReader> operator>> (CR<typeof (CAT)> item) {
+	forceinline VR<TextReader> operator>> (CR<typeof (TAB)> item) {
 		read (item) ;
 		return thiz ;
 	}
@@ -859,7 +859,7 @@ public:
 struct WriterHolder implement Interface {
 	virtual void initialize (RR<Ref<RefBuffer<Byte>>> stream) = 0 ;
 	virtual void use_overflow (CR<Function<CR<Pointer>>> overflow) = 0 ;
-	virtual void set_cats (CR<Array<Slice>> cats) = 0 ;
+	virtual void set_tab (CR<Length> tab_align) = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Length length () const = 0 ;
 	virtual StreamShape shape () const = 0 ;
@@ -879,7 +879,7 @@ struct WriterHolder implement Interface {
 	virtual void write (CR<Slice> item) = 0 ;
 	virtual void write (CR<StringLayout> item) = 0 ;
 	virtual void write (CR<typeof (BOM)> item) = 0 ;
-	virtual void write (CR<typeof (CAT)> item) = 0 ;
+	virtual void write (CR<typeof (TAB)> item) = 0 ;
 	virtual void write (CR<typeof (GAP)> item) = 0 ;
 	virtual void write (CR<typeof (EOS)> item) = 0 ;
 } ;
@@ -898,8 +898,8 @@ public:
 		return mThat->use_overflow (Pointer::from (overflow)) ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) const {
-		return mThat->set_cats (cats) ;
+	void set_tab (CR<Length> tab_align) const {
+		return mThat->set_tab (tab_align) ;
 	}
 
 	Length size () const {
@@ -1043,11 +1043,11 @@ public:
 		return thiz ;
 	}
 
-	void write (CR<typeof (CAT)> item) const {
+	void write (CR<typeof (TAB)> item) const {
 		return mThat->write (item) ;
 	}
 
-	forceinline CR<Writer> operator<< (CR<typeof (CAT)> item) const {
+	forceinline CR<Writer> operator<< (CR<typeof (TAB)> item) const {
 		write (item) ;
 		return thiz ;
 	}
@@ -1086,8 +1086,8 @@ struct ByteWriterLayout {
 	Index mWrite ;
 	Bool mDiffEndian ;
 	Function<CR<Pointer>> mOverflow ;
-	Array<Slice> mCats ;
-	Index mCatIndex ;
+	Index mTabIndex ;
+	Index mTabAlign ;
 } ;
 
 struct ByteWriterHolder implement WriterHolder {
@@ -1111,8 +1111,8 @@ public:
 		return ByteWriterHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) {
-		return ByteWriterHolder::hold (thiz)->set_cats (cats) ;
+	void set_tab (CR<Length> tab_align) {
+		return ByteWriterHolder::hold (thiz)->set_tab (tab_align) ;
 	}
 
 	Length size () const {
@@ -1256,11 +1256,11 @@ public:
 		return thiz ;
 	}
 
-	void write (CR<typeof (CAT)> item) {
+	void write (CR<typeof (TAB)> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VR<ByteWriter> operator<< (CR<typeof (CAT)> item) {
+	forceinline VR<ByteWriter> operator<< (CR<typeof (TAB)> item) {
 		write (item) ;
 		return thiz ;
 	}
@@ -1299,8 +1299,8 @@ struct TextWriterLayout {
 	Index mWrite ;
 	Bool mDiffEndian ;
 	Function<CR<Pointer>> mOverflow ;
-	Array<Slice> mCats ;
-	Index mCatIndex ;
+	Index mTabIndex ;
+	Index mTabAlign ;
 } ;
 
 struct TextWriterHolder implement WriterHolder {
@@ -1324,8 +1324,8 @@ public:
 		return TextWriterHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
-	void set_cats (CR<Array<Slice>> cats) {
-		return TextWriterHolder::hold (thiz)->set_cats (cats) ;
+	void set_tab (CR<Length> tab_align) {
+		return TextWriterHolder::hold (thiz)->set_tab (tab_align) ;
 	}
 
 	Length size () const {
@@ -1469,11 +1469,11 @@ public:
 		return thiz ;
 	}
 
-	void write (CR<typeof (CAT)> item) {
+	void write (CR<typeof (TAB)> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VR<TextWriter> operator<< (CR<typeof (CAT)> item) {
+	forceinline VR<TextWriter> operator<< (CR<typeof (TAB)> item) {
 		write (item) ;
 		return thiz ;
 	}

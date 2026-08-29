@@ -30,10 +30,9 @@ struct PathHolder implement Interface {
 	virtual void initialize (CR<PathLayout> that) = 0 ;
 	virtual String<Str> fetch () const = 0 ;
 	virtual PathLayout parent () const = 0 ;
-	virtual PathLayout child (CR<Slice> name) const = 0 ;
 	virtual PathLayout child (CR<Format> name) const = 0 ;
 	virtual PathLayout child (CR<String<Str>> name) const = 0 ;
-	virtual Array<PathLayout> list () const = 0 ;
+	virtual Deque<PathLayout> list () const = 0 ;
 	virtual Array<PathLayout> list (CR<Length> size_) const = 0 ;
 	virtual Bool equal (CR<PathLayout> that) const = 0 ;
 	virtual Bool is_file () const = 0 ;
@@ -91,11 +90,6 @@ public:
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
-	Path child (CR<Slice> name) const {
-		PathLayout ret = PathHolder::hold (thiz)->child (name) ;
-		return move (keep[TYPE<Path>::expr] (ret)) ;
-	}
-
 	Path child (CR<Format> name) const {
 		PathLayout ret = PathHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
@@ -106,9 +100,9 @@ public:
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
-	Array<Path> list () const {
-		ArrayLayout ret = PathHolder::hold (thiz)->list () ;
-		return move (keep[TYPE<Array<Path>>::expr] (Pointer::from (ret))) ;
+	Deque<Path> list () const {
+		DequeLayout ret = PathHolder::hold (thiz)->list () ;
+		return move (keep[TYPE<Deque<Path>>::expr] (Pointer::from (ret))) ;
 	}
 
 	Array<Path> list (CR<Length> size_) const {
@@ -473,11 +467,11 @@ public:
 	}
 
 	void read (VR<RefBuffer<Byte>> buffer) {
-		return UartFileHolder::hold (thiz)->read (buffer ,0 ,buffer.size ()) ;
+		return read (buffer ,0 ,buffer.size ()) ;
 	}
 
 	void read (VR<RefBuffer<Byte>> buffer ,CR<Index> offset) {
-		return UartFileHolder::hold (thiz)->read (buffer ,offset ,buffer.size ()) ;
+		return read (buffer ,offset ,buffer.size ()) ;
 	}
 
 	void read (VR<RefBuffer<Byte>> buffer ,CR<Index> offset ,CR<Length> size_) {

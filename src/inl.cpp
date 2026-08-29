@@ -21,16 +21,20 @@
 #include <csc_array.inl>
 #include <csc_image.inl>
 #include <csc_matrix.inl>
+#include <csc_numeric.inl>
 #include <csc_stream.inl>
 #include <csc_string.inl>
 #include <csc_runtime.inl>
 #include <csc_file.inl>
 #include <csc_thread.inl>
+#include <csc_property.inl>
 #include <csc_algorithm.inl>
+#include <csc_spatial.inl>
 
 #ifdef __CSC_COMPILER_MSVC__
 #ifdef __CSC_PLATFORM_X64__
 #define LIB_WITH_EIGEN
+#define LIB_WITH_CERES
 #define LIB_WITH_NANOFLANN
 
 #ifdef __CSC_VER_DEBUG__
@@ -55,12 +59,24 @@
 #include <csc_file.linux.inl>
 #endif
 
+#ifdef __CSC_SYSTEM_EMBEDDED__
+#include <csc_runtime.embedded.inl>
+#include <csc_file.embedded.inl>
+#endif
+
 #ifdef LIB_WITH_EIGEN
 #include <csc_matrix.eigen.inl>
 #endif
 
+#ifdef LIB_WITH_CERES
+#include <csc_numeric.ceres.inl>
+#ifdef __CSC_COMPILER_MSVC__
+#pragma comment (lib ,"ceres.lib")
+#endif
+#endif
+
 #ifdef LIB_WITH_NANOFLANN
-#include <csc_matrix.nanoflann.inl>
+#include <csc_spatial.nanoflann.inl>
 #endif
 
 #ifdef LIB_WITH_OPENCV

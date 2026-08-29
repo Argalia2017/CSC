@@ -131,6 +131,12 @@
     <None Include="..\..\src\csc\csc_algorithm.inl">
       <Filter>csc</Filter>
     </None>
+    <None Include="..\..\src\csc\csc_runtime.embedded.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_file.embedded.inl">
+      <Filter>csc</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\csc\cpp.natvis">

@@ -269,11 +269,11 @@ public:
 	}
 
 	Index search (RR<Ref<String<Str>>> text) {
-		return RegexHolder::hold (thiz)->search (move (text) ,0 ,text->size ()) ;
+		return search (move (text) ,0 ,text->size ()) ;
 	}
 
 	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset) {
-		return RegexHolder::hold (thiz)->search (move (text) ,offset ,text->size ()) ;
+		return search (move (text) ,offset ,text->size ()) ;
 	}
 
 	Index search (RR<Ref<String<Str>>> text ,CR<Index> offset ,CR<Length> size_) {
@@ -305,7 +305,7 @@ struct XmlParserHolder implement Interface {
 	virtual XmlParserLayout child (CR<Index> index) const = 0 ;
 	virtual XmlParserLayout child (CR<Slice> name) const = 0 ;
 	virtual XmlParserLayout child (CR<String<Stru>> name) const = 0 ;
-	virtual Array<XmlParserLayout> list () const = 0 ;
+	virtual Deque<XmlParserLayout> list () const = 0 ;
 	virtual Array<XmlParserLayout> list (CR<Length> size_) const = 0 ;
 	virtual Bool equal (CR<XmlParserLayout> that) const = 0 ;
 	virtual CR<String<Stru>> name () const leftvalue = 0 ;
@@ -378,9 +378,9 @@ public:
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
-	Array<XmlParser> list () const {
-		ArrayLayout ret = XmlParserHolder::hold (thiz)->list () ;
-		return move (keep[TYPE<Array<XmlParser>>::expr] (Pointer::from (ret))) ;
+	Deque<XmlParser> list () const {
+		DequeLayout ret = XmlParserHolder::hold (thiz)->list () ;
+		return move (keep[TYPE<Deque<XmlParser>>::expr] (Pointer::from (ret))) ;
 	}
 
 	Array<XmlParser> list (CR<Length> size_) const {
@@ -489,7 +489,7 @@ struct JsonParserHolder implement Interface {
 	virtual JsonParserLayout child (CR<Index> index) const = 0 ;
 	virtual JsonParserLayout child (CR<Slice> name) const = 0 ;
 	virtual JsonParserLayout child (CR<String<Stru>> name) const = 0 ;
-	virtual Array<JsonParserLayout> list () const = 0 ;
+	virtual Deque<JsonParserLayout> list () const = 0 ;
 	virtual Array<JsonParserLayout> list (CR<Length> size_) const = 0 ;
 	virtual Bool equal (CR<JsonParserLayout> that) const = 0 ;
 	virtual CR<String<Stru>> name () const leftvalue = 0 ;
@@ -562,9 +562,9 @@ public:
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
-	Array<JsonParser> list () const {
-		ArrayLayout ret = JsonParserHolder::hold (thiz)->list () ;
-		return move (keep[TYPE<Array<JsonParser>>::expr] (Pointer::from (ret))) ;
+	Deque<JsonParser> list () const {
+		DequeLayout ret = JsonParserHolder::hold (thiz)->list () ;
+		return move (keep[TYPE<Deque<JsonParser>>::expr] (Pointer::from (ret))) ;
 	}
 
 	Array<JsonParser> list (CR<Length> size_) const {

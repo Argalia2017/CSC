@@ -35,20 +35,24 @@
 
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (push)
-#define NOISY_CODE_ANALYSIS_WARNINGS 4661 4819 6201 6255 6269 6294 26439 26450 26495 26813 26820
-#pragma warning (disable : NOISY_CODE_ANALYSIS_WARNINGS)
+#define NOISY_WARNINGS 4263 4264 4355 4661 4819 4946 5204 5214 5054 5219 5220 5266 5267 6201 6255 6269 6294 26439 26450 26495 26813 26820
+#pragma warning (disable : NOISY_WARNINGS)
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra"
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wall"
+#pragma clang diagnostic ignored "-Wextra"
 #pragma clang diagnostic ignored "-Wshadow"
 #pragma clang diagnostic ignored "-Wdeprecated"
+#pragma clang diagnostic ignored "-Wsuggest-override"
 #endif

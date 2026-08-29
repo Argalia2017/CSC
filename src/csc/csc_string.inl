@@ -17,7 +17,7 @@ namespace CSC {
 using csc_locale_t = _locale_t ;
 #endif
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_SYSTEM_POSIX__
 using csc_locale_t = locale_t ;
 #endif
 
@@ -37,7 +37,7 @@ public:
 	}
 #endif
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_SYSTEM_POSIX__
 	void initialize () override {
 		self.mStringLocale = UniqueRef<csc_locale_t> ([&] (VR<csc_locale_t> me) {
 			me = newlocale (LC_CTYPE_MASK ,String<Stra>::zero () ,NULL) ;
@@ -50,9 +50,10 @@ public:
 	Bool is_encode (CR<StringLayout> a ,CR<Just<StringEncode>> encode_) const override {
 		auto &&rax = keep[TYPE<String<Byte>>::expr] (a) ;
 		const auto r1x = encode_step (encode_) ;
-		if (r1x != 0)
-			if (rax.step () != r1x)
-				return FALSE ;
+		if (r1x == 0)
+			return TRUE ;
+		if (rax.step () != r1x)
+			return FALSE ;
 		if ifdo (TRUE) {
 			if (encode_ != StringEncode::ASCII)
 				discard ;
@@ -119,7 +120,7 @@ public:
 	}
 #endif
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_SYSTEM_POSIX__
 	String<Stra> stra_from_strw (CR<String<Strw>> a) const override {
 		const auto r1x = a.length () ;
 		String<Stra> ret = String<Stra> (r1x * 4 + 1) ;
@@ -407,7 +408,7 @@ public:
 					rax = Flag (10) ;
 				}
 				if ifdo (act) {
-					if (!inline_between (rax ,2 ,6))
+					if (!inline_mid (rax ,2 ,6))
 						discard ;
 					if (r1x > Char (0XBF))
 						discard ;
@@ -586,7 +587,7 @@ public:
 				rax = Flag (0) ;
 			}
 			if ifdo (act) {
-				if (!inline_between (rax ,2 ,6))
+				if (!inline_mid (rax ,2 ,6))
 					discard ;
 				if (r1x > Char (0XBF))
 					discard ;
@@ -716,6 +717,8 @@ public:
 	}
 
 	String<Stra> stra_from (CR<String<Stru>> a) const override {
+		if (is_encode (a ,StringEncode::ASCII))
+			return keep[TYPE<String<Stra>>::expr] (Pointer::from (a)) ;
 		return stra_from_strw (strw_from (a)) ;
 	}
 
@@ -799,6 +802,8 @@ public:
 	}
 
 	String<Stru> stru8_from (CR<String<Stra>> a) const override {
+		if (is_encode (a ,StringEncode::ASCII))
+			return keep[TYPE<String<Stru>>::expr] (Pointer::from (a)) ;
 		return stru8_from (strw_from_stra (a)) ;
 	}
 
@@ -927,7 +932,7 @@ public:
 
 	Slice match (CR<Index> index) const override {
 		assert (!self.mMatch.empty ()) ;
-		assert (inline_between (index ,0 ,self.mMatch.size ())) ;
+		assert (inline_mid (index ,0 ,self.mMatch.size ())) ;
 		const auto r1x = Flag (self.mMatch[index].first) ;
 		const auto r2x = Flag (self.mMatch[index].second) ;
 		const auto r3x = (r2x - r1x) / SIZE_OF<Str>::expr ;
@@ -1513,16 +1518,18 @@ public:
 		return move (ret) ;
 	}
 
-	Array<XmlParserLayout> list () const override {
-		Array<XmlParserLayout> ret ;
+	Deque<XmlParserLayout> list () const override {
+		Deque<XmlParserLayout> ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
 			const auto r1x = self.mThis->mTree[self.mIndex].mArrayMap.length () ;
-			ret = Array<XmlParserLayout> (r1x) ;
+			ret = Deque<XmlParserLayout> (r1x) ;
+			auto rax = XmlParserLayout () ;
 			for (auto &&i : range (0 ,r1x)) {
-				ret[i].mThis = self.mThis ;
-				ret[i].mIndex = self.mThis->mTree[self.mIndex].mArrayMap[i] ;
+				rax.mThis = self.mThis ;
+				rax.mIndex = self.mThis->mTree[self.mIndex].mArrayMap[i] ;
+				ret.add (move (rax)) ;
 			}
 		}
 		return move (ret) ;
@@ -2142,16 +2149,18 @@ public:
 		return move (ret) ;
 	}
 
-	Array<JsonParserLayout> list () const override {
-		Array<JsonParserLayout> ret ;
+	Deque<JsonParserLayout> list () const override {
+		Deque<JsonParserLayout> ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
 			const auto r1x = self.mThis->mTree[self.mIndex].mArrayMap.length () ;
-			ret = Array<JsonParserLayout> (r1x) ;
+			ret = Deque<JsonParserLayout> (r1x) ;
+			auto rax = JsonParserLayout () ;
 			for (auto &&i : range (0 ,r1x)) {
-				ret[i].mThis = self.mThis ;
-				ret[i].mIndex = self.mThis->mTree[self.mIndex].mArrayMap[i] ;
+				rax.mThis = self.mThis ;
+				rax.mIndex = self.mThis->mTree[self.mIndex].mArrayMap[i] ;
+				ret.add (move (rax)) ;
 			}
 		}
 		return move (ret) ;

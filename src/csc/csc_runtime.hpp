@@ -168,7 +168,7 @@ struct RuntimeProcHolder implement Interface {
 	virtual void thread_yield () const = 0 ;
 	virtual Flag process_uid () const = 0 ;
 	virtual void process_exit () const = 0 ;
-	virtual String<Str> library_file (CR<csc_handle_t> addr) const = 0 ;
+	virtual String<Str> library_file (CR<Flag> addr) const = 0 ;
 	virtual String<Str> library_main () const = 0 ;
 } ;
 
@@ -210,7 +210,7 @@ public:
 		return RuntimeProcHolder::hold (expr)->process_exit () ;
 	}
 
-	static String<Str> library_file (CR<csc_handle_t> addr) {
+	static String<Str> library_file (CR<Flag> addr) {
 		return RuntimeProcHolder::hold (expr)->library_file (addr) ;
 	}
 
@@ -790,26 +790,6 @@ public:
 } ;
 
 template <class A>
-class GlobalUnknownBinder final implement Fat<UnknownHolder ,void> {
-public:
-	Flag reflect (CR<Flag> uuid) const override {
-		if (uuid == ReflectSizeBinder<A>::expr)
-			return inline_vptr (ReflectSizeBinder<A> ()) ;
-		if (uuid == ReflectCreateBinder<A>::expr)
-			return inline_vptr (ReflectCreateBinder<A> ()) ;
-		if (uuid == ReflectDestroyBinder<A>::expr)
-			return inline_vptr (ReflectDestroyBinder<A> ()) ;
-		if (uuid == ReflectGuidBinder<A>::expr)
-			return inline_vptr (ReflectGuidBinder<A> ()) ;
-		if (uuid == ReflectNameBinder<A>::expr)
-			return inline_vptr (ReflectNameBinder<A> ()) ;
-		if (uuid == ReflectCloneBinder<A>::expr)
-			return inline_vptr (ReflectCloneBinder<A> ()) ;
-		return ZERO ;
-	}
-} ;
-
-template <class A>
 class Global implement GlobalLayout {
 protected:
 	using GlobalLayout::mThis ;
@@ -820,7 +800,7 @@ public:
 	implicit Global () = default ;
 
 	explicit Global (CR<Slice> name) {
-		GlobalHolder::hold (thiz)->initialize (name ,GlobalUnknownBinder<A> ()) ;
+		GlobalHolder::hold (thiz)->initialize (name ,AutoRefUnknownBinder<A> ()) ;
 	}
 
 	Bool exist () const {

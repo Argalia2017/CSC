@@ -270,7 +270,7 @@ static constexpr auto swap = FUNCTION_swap () ;
 
 struct FUNCTION_assign {
 	template <class ARG1>
-	forceinline VR<ARG1> operator() (VR<ARG1> a ,VR<ARG1> b) const noexcept {
+	forceinline VR<ARG1> operator() (VR<ARG1> a ,VR<ARG1> b) const {
 		if (address (a) == address (b))
 			return a ;
 		a.~ARG1 () ;
@@ -279,7 +279,7 @@ struct FUNCTION_assign {
 	}
 
 	template <class ARG1>
-	forceinline VR<ARG1> operator() (VR<ARG1> a ,CR<ARG1> b) const noexcept {
+	forceinline VR<ARG1> operator() (VR<ARG1> a ,CR<ARG1> b) const {
 		if (address (a) == address (b))
 			return a ;
 		a.~ARG1 () ;
@@ -288,14 +288,14 @@ struct FUNCTION_assign {
 	}
 
 	template <class ARG1>
-	forceinline VR<ARG1> operator() (VR<ARG1> a ,RR<ARG1> b) const noexcept = delete ;
+	forceinline VR<ARG1> operator() (VR<ARG1> a ,RR<ARG1> b) const = delete ;
 } ;
 
 static constexpr auto assign = FUNCTION_assign () ;
 
 struct FUNCTION_replace {
 	template <class ARG1 ,class ARG2>
-	forceinline void operator() (VR<ARG1> a ,CR<ARG1> from ,CR<ARG2> into) const noexcept {
+	forceinline void operator() (VR<ARG1> a ,CR<ARG1> from ,CR<ARG2> into) const {
 		if (a != from)
 			return ;
 		a = ARG1 (into) ;
@@ -447,7 +447,7 @@ struct FUNCTION_inline_max {
 
 static constexpr auto inline_max = FUNCTION_inline_max () ;
 
-struct FUNCTION_inline_between {
+struct FUNCTION_inline_mid {
 	forceinline Bool operator() (CR<Val> val ,CR<Val> begin_ ,CR<Val> end_) const noexcept {
 		if (val < begin_)
 			return FALSE ;
@@ -457,15 +457,13 @@ struct FUNCTION_inline_between {
 	}
 } ;
 
-static constexpr auto inline_between = FUNCTION_inline_between () ;
+static constexpr auto inline_mid = FUNCTION_inline_mid () ;
 
 struct FUNCTION_inline_alignas {
 	forceinline Val operator() (CR<Val> val ,CR<Val> align) const noexcept {
 		assert (align > 0) ;
 		const auto r1x = val / align * align ;
-		if (r1x == val)
-			return r1x ;
-		return r1x + align ;
+		return r1x + align * Val (r1x < val) ;
 	}
 } ;
 
@@ -473,18 +471,18 @@ static constexpr auto inline_alignas = FUNCTION_inline_alignas () ;
 
 struct FUNCTION_inline_clone {
 	template <class ARG1>
-	forceinline void operator() (VR<ARG1> a ,CR<ARG1> b) const noexcept {
+	forceinline void operator() (VR<ARG1> a ,CR<ARG1> b) const {
 		return clone_impl (PHX ,a ,b) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<IS_CLONEABLE<ARG1>>>
+	template <class ARG1 ,class = REQUIRE<HAS_CLONE<ARG1>>>
 	forceinline void clone_impl (CR<typeof (PH3)> ,VR<ARG1> a ,CR<ARG1> b) const {
-		assign (a ,b) ;
+		a = b.clone () ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<HAS_CLONE<ARG1>>>
+	template <class ARG1 ,class = REQUIRE<IS_CLONEABLE<ARG1>>>
 	forceinline void clone_impl (CR<typeof (PH2)> ,VR<ARG1> a ,CR<ARG1> b) const {
-		a = b.clone () ;
+		assign (a ,b) ;
 	}
 
 	template <class ARG1>
@@ -497,18 +495,18 @@ static constexpr auto inline_clone = FUNCTION_inline_clone () ;
 
 struct FUNCTION_inline_equal {
 	template <class ARG1>
-	forceinline Bool operator() (CR<ARG1> a ,CR<ARG1> b) const noexcept {
+	forceinline Bool operator() (CR<ARG1> a ,CR<ARG1> b) const {
 		return equal_impl (PHX ,a ,b) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<IS_EQUALABLE<ARG1>>>
+	template <class ARG1 ,class = REQUIRE<HAS_EQUAL<ARG1>>>
 	forceinline Bool equal_impl (CR<typeof (PH4)> ,CR<ARG1> a ,CR<ARG1> b) const {
-		return a == b ;
+		return a.equal (b) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<HAS_EQUAL<ARG1>>>
+	template <class ARG1 ,class = REQUIRE<IS_EQUALABLE<ARG1>>>
 	forceinline Bool equal_impl (CR<typeof (PH3)> ,CR<ARG1> a ,CR<ARG1> b) const {
-		return a.equal (b) ;
+		return a == b ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
@@ -527,22 +525,22 @@ static constexpr auto inline_equal = FUNCTION_inline_equal () ;
 
 struct FUNCTION_inline_compr {
 	template <class ARG1>
-	forceinline Flag operator() (CR<ARG1> a ,CR<ARG1> b) const noexcept {
+	forceinline Flag operator() (CR<ARG1> a ,CR<ARG1> b) const {
 		return compr_impl (PHX ,a ,b) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<IS_COMPRABLE<ARG1>>>
+	template <class ARG1 ,class = REQUIRE<HAS_COMPR<ARG1>>>
 	forceinline Flag compr_impl (CR<typeof (PH4)> ,CR<ARG1> a ,CR<ARG1> b) const {
+		return a.compr (b) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_COMPRABLE<ARG1>>>
+	forceinline Flag compr_impl (CR<typeof (PH3)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		if (a < b)
 			return NONE ;
 		if (a > b)
 			return IDEN ;
 		return ZERO ;
-	}
-
-	template <class ARG1 ,class = REQUIRE<HAS_COMPR<ARG1>>>
-	forceinline Flag compr_impl (CR<typeof (PH3)> ,CR<ARG1> a ,CR<ARG1> b) const {
-		return a.compr (b) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
@@ -558,26 +556,6 @@ struct FUNCTION_inline_compr {
 } ;
 
 static constexpr auto inline_compr = FUNCTION_inline_compr () ;
-
-struct FUNCTION_inline_expr {
-	template <class ARG1>
-	forceinline Flag operator() (TYPE<ARG1>) const noexcept {
-		return expr_impl (PHX ,TYPE<ARG1>::expr) ;
-	}
-
-	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (ARG1::expr)>>>
-	forceinline Flag expr_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
-		return address (ARG1::expr) ;
-	}
-
-	template <class ARG1>
-	forceinline Flag expr_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
-		assert (FALSE) ;
-		return ZERO ;
-	}
-} ;
-
-static constexpr auto inline_expr = FUNCTION_inline_expr () ;
 
 struct VisitorHolder implement Interface {
 	virtual void reset () = 0 ;
@@ -635,19 +613,19 @@ public:
 
 struct FUNCTION_inline_visit {
 	template <class ARG1>
-	forceinline void operator() (CR<Visitor> visitor ,CR<ARG1> a) const noexcept {
+	forceinline void operator() (CR<Visitor> visitor ,CR<ARG1> a) const {
 		return visit_impl (PHX ,visitor ,a) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<IS_BASIC<ARG1>>>
+	template <class ARG1 ,class = REQUIRE<HAS_VISIT<ARG1>>>
 	forceinline void visit_impl (CR<typeof (PH3)> ,CR<Visitor> visitor ,CR<ARG1> a) const {
-		const auto r1x = BYTE_BASE<ARG1> (bitwise (a)) ;
-		visitor.push (r1x) ;
+		return a.visit (visitor) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<HAS_VISIT<ARG1>>>
+	template <class ARG1 ,class = REQUIRE<IS_BASIC<ARG1>>>
 	forceinline void visit_impl (CR<typeof (PH2)> ,CR<Visitor> visitor ,CR<ARG1> a) const {
-		return a.visit (visitor) ;
+		const auto r1x = BYTE_BASE<ARG1> (bitwise (a)) ;
+		visitor.push (r1x) ;
 	}
 
 	template <class ARG1>
@@ -657,6 +635,26 @@ struct FUNCTION_inline_visit {
 } ;
 
 static constexpr auto inline_visit = FUNCTION_inline_visit () ;
+
+struct FUNCTION_inline_expr {
+	template <class ARG1>
+	forceinline Flag operator() (TYPE<ARG1>) const {
+		return expr_impl (PHX ,TYPE<ARG1>::expr) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (ARG1::expr)>>>
+	forceinline Flag expr_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
+		return address (ARG1::expr) ;
+	}
+
+	template <class ARG1>
+	forceinline Flag expr_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
+		assert (FALSE) ;
+		return ZERO ;
+	}
+} ;
+
+static constexpr auto inline_expr = FUNCTION_inline_expr () ;
 
 struct IndexIteratorLayout {
 	Index mBegin ;
@@ -1361,6 +1359,7 @@ struct HeapHolder implement Interface {
 	virtual void enter () const = 0 ;
 	virtual void leave () const = 0 ;
 	virtual Length size () const = 0 ;
+	virtual Length depth () const = 0 ;
 	virtual Length length () const = 0 ;
 	virtual Flag stack (CR<Length> size_) const = 0 ;
 	virtual Flag alloc (CR<Length> size_) const = 0 ;
@@ -1387,6 +1386,10 @@ public:
 
 	Length size () const {
 		return HeapHolder::hold (thiz)->size () ;
+	}
+
+	Length depth () const {
+		return HeapHolder::hold (thiz)->depth () ;
 	}
 
 	Length length () const {
@@ -1660,6 +1663,7 @@ public:
 } ;
 
 struct ReflectClone implement Interface {
+	virtual Bool is_noexcept () const = 0 ;
 	virtual void clone (VR<Pointer> a ,CR<Pointer> b) const = 0 ;
 
 	forceinline static consteval Flag expr_m () noexcept {
@@ -1670,12 +1674,21 @@ struct ReflectClone implement Interface {
 template <class A>
 class ReflectCloneBinder final implement Fat<ReflectClone ,void> {
 public:
+	Bool is_noexcept () const override {
+		if (HAS_CLONE<A>::expr)
+			return TRUE ;
+		if (IS_CLONEABLE<A>::expr)
+			return TRUE ;
+		return FALSE ;
+	}
+
 	void clone (VR<Pointer> a ,CR<Pointer> b) const override {
 		return inline_clone (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
 	}
 } ;
 
 struct ReflectEqual implement Interface {
+	virtual Bool is_noexcept () const = 0 ;
 	virtual Bool equal (CR<Pointer> a ,CR<Pointer> b) const = 0 ;
 
 	forceinline static consteval Flag expr_m () noexcept {
@@ -1686,12 +1699,23 @@ struct ReflectEqual implement Interface {
 template <class A>
 class ReflectEqualBinder final implement Fat<ReflectEqual ,void> {
 public:
+	Bool is_noexcept () const override {
+		if (HAS_EQUAL<A>::expr)
+			return TRUE ;
+		if (IS_EQUALABLE<A>::expr)
+			return TRUE ;
+		if (IS_TRIVIAL<A>::expr)
+			return TRUE ;
+		return FALSE ;
+	}
+
 	Bool equal (CR<Pointer> a ,CR<Pointer> b) const override {
 		return inline_equal (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
 	}
 } ;
 
 struct ReflectCompr implement Interface {
+	virtual Bool is_noexcept () const = 0 ;
 	virtual Flag compr (CR<Pointer> a ,CR<Pointer> b) const = 0 ;
 
 	forceinline static consteval Flag expr_m () noexcept {
@@ -1702,12 +1726,23 @@ struct ReflectCompr implement Interface {
 template <class A>
 class ReflectComprBinder final implement Fat<ReflectCompr ,void> {
 public:
+	Bool is_noexcept () const override {
+		if (HAS_COMPR<A>::expr)
+			return TRUE ;
+		if (IS_COMPRABLE<A>::expr)
+			return TRUE ;
+		if (IS_TRIVIAL<A>::expr)
+			return TRUE ;
+		return FALSE ;
+	}
+
 	Flag compr (CR<Pointer> a ,CR<Pointer> b) const override {
 		return inline_compr (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
 	}
 } ;
 
 struct ReflectVisit implement Interface {
+	virtual Bool is_noexcept () const = 0 ;
 	virtual void visit (CR<Visitor> visitor ,CR<Pointer> a) const = 0 ;
 
 	forceinline static consteval Flag expr_m () noexcept {
@@ -1718,6 +1753,14 @@ struct ReflectVisit implement Interface {
 template <class A>
 class ReflectVisitBinder final implement Fat<ReflectVisit ,void> {
 public:
+	Bool is_noexcept () const override {
+		if (HAS_VISIT<A>::expr)
+			return TRUE ;
+		if (IS_BASIC<A>::expr)
+			return TRUE ;
+		return FALSE ;
+	}
+
 	void visit (CR<Visitor> visitor ,CR<Pointer> a) const override {
 		return inline_visit (visitor ,keep[TYPE<A>::expr] (a)) ;
 	}
@@ -1736,6 +1779,10 @@ template <class A>
 class ReflectGuidBinder final implement Fat<ReflectGuid ,void> {
 public:
 	Flag type_guid () const override {
+		using R1X = TYPE<Bool ,Val32 ,Val64 ,Flt32 ,Flt64 ,Byte ,Word ,Char ,Quad ,Stra ,Strw ,Stru ,Stru16 ,Stru32 ,typeof (NULL)> ;
+		using R2X = TYPE_FIND<R1X ,A> ;
+		if (R2X::expr >= 0)
+			return R2X::expr + 1 ;
 		return inline_vptr (thiz) ;
 	}
 

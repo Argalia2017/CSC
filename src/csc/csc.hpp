@@ -12,10 +12,10 @@
 #define __CSC_VER_UNITTEST__
 #endif
 
-#if defined __GNUC__
-#define __CSC_COMPILER_GNUC__
-#elif defined __clang__
+#if defined __clang__
 #define __CSC_COMPILER_CLANG__
+#elif defined __GNUC__
+#define __CSC_COMPILER_GNUC__
 #elif defined _MSC_VER
 #define __CSC_COMPILER_MSVC__
 #else
@@ -26,12 +26,22 @@
 #define __CSC_COMPILER_NVCC__
 #endif
 
-#if defined (linux) || defined (__linux) || defined (__linux__)
+#if defined (__QNX__) || defined (__QNXNTO__)
+#define __CSC_SYSTEM_EMBEDDED__
+#elif defined (ANDROID) || defined (__ANDROID__)
+#define __CSC_SYSTEM_EMBEDDED__
+#elif defined (linux) || defined (__linux) || defined (__linux__)
 #define __CSC_SYSTEM_LINUX__
 #elif defined (WIN32) || defined (_WIN32) || defined (__WIN32__)
 #define __CSC_SYSTEM_WINDOWS__
 #else
 #error "∑(っ°Д° ;)っ : unsupported"
+#endif
+
+#ifdef __CSC_SYSTEM_EMBEDDED__
+#define __CSC_SYSTEM_POSIX__
+#elif defined __CSC_SYSTEM_LINUX__
+#define __CSC_SYSTEM_POSIX__
 #endif
 
 #if defined (_M_IX86) || defined (__i386__) || defined (__i386)
@@ -87,53 +97,55 @@
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-#pragma warning (disable :4068) //@info: warning C4068: reflect pragma
-#pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
-#pragma warning (disable :4127) //@info: warning C4127: conditional expression is constant
-#pragma warning (disable :4266) //@info: warning C4266: 'xxx'; function is hidden
-#pragma warning (disable :4297) //@info: warning C4297: 'xxx': function assumed not to throw an exception but does
-#pragma warning (disable :4324) //@info: warning C4324: 'xxx': structure was padded due to alignment specifier
-#pragma warning (disable :4365) //@info: warning C4365: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
-#pragma warning (disable :4459) //@info: warning C4459: declaration of 'xxx' hides global declaration
-#pragma warning (disable :4464) //@info: warning C4464: relative include dire contains '..'
-#pragma warning (disable :4505) //@info: warning C4505: 'xxx': unreferenced local function has been removed
-#pragma warning (disable :4514) //@info: warning C4514: 'xxx': unreferenced inline function has been removed
-#pragma warning (disable :4571) //@info: warning C4571: Reflectrmational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
-#pragma warning (disable :4574) //@info: warning C4574: 'xxx' is defined to be '0': did you mean to use '#if xxx'?
-#pragma warning (disable :4584) //@info: warning C4584: 'xxx': base-class 'xxx' is already a base-class of 'xxx'
-#pragma warning (disable :4619) //@info: warning C4619: #pragma warning: there is no warning number 'xxx'
-#pragma warning (disable :4623) //@info: warning C4623: 'xxx': default constructor was implicitly defined as deleted
-#pragma warning (disable :4624) //@info: warning C4624: 'xxx': destructor was implicitly defined as deleted
-#pragma warning (disable :4625) //@info: warning C4625: 'xxx': copy constructor was implicitly defined as deleted
-#pragma warning (disable :4626) //@info: warning C4626: 'xxx': assignment operator was implicitly defined as deleted
-#pragma warning (disable :4643) //@info: warning C4643: Forward declaring 'initializer_list' in namespace std is not permitted by the C++ Standard.
-#pragma warning (disable :4645) //@info: warning C4645: function declared with 'noreturn' has a return statement
+#pragma warning (disable :4068) //@info: reflect pragma
+#pragma warning (disable :4100) //@info: 'xxx': unreferenced formal parameter
+#pragma warning (disable :4127) //@info: conditional expression is constant
+#pragma warning (disable :4266) //@info: 'xxx'; function is hidden
+#pragma warning (disable :4297) //@info: 'xxx': function assumed not to throw an exception but does
+#pragma warning (disable :4324) //@info: 'xxx': structure was padded due to alignment specifier
+#pragma warning (disable :4365) //@info: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
+#pragma warning (disable :4459) //@info: declaration of 'xxx' hides global declaration
+#pragma warning (disable :4464) //@info: relative include dire contains '..'
+#pragma warning (disable :4505) //@info: 'xxx': unreferenced local function has been removed
+#pragma warning (disable :4514) //@info: 'xxx': unreferenced inline function has been removed
+#pragma warning (disable :4571) //@info: Reflectrmational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
+#pragma warning (disable :4574) //@info: 'xxx' is defined to be '0': did you mean to use '#if xxx'?
+#pragma warning (disable :4584) //@info: 'xxx': base-class 'xxx' is already a base-class of 'xxx'
+#pragma warning (disable :4619) //@info: #pragma warning: there is no warning number 'xxx'
+#pragma warning (disable :4623) //@info: 'xxx': default constructor was implicitly defined as deleted
+#pragma warning (disable :4624) //@info: 'xxx': destructor was implicitly defined as deleted
+#pragma warning (disable :4625) //@info: 'xxx': copy constructor was implicitly defined as deleted
+#pragma warning (disable :4626) //@info: 'xxx': assignment operator was implicitly defined as deleted
+#pragma warning (disable :4643) //@info: Forward declaring 'initializer_list' in namespace std is not permitted by the C++ Standard.
+#pragma warning (disable :4645) //@info: function declared with 'noreturn' has a return statement
 #pragma warning (disable :4661) //@info: 'xxx': no suitable definition provided for explicit template instantiation request
-#pragma warning (disable :4668) //@info: warning C4668: 'xxx' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-#pragma warning (disable :4686) //@info: warning C4686: 'xxx': possible change in behavior, change in UDT return calling convention
-#pragma warning (disable :4702) //@info: warning C4702: unreachable code
-#pragma warning (disable :4710) //@info: warning C4710: 'xxx': function not inlined
-#pragma warning (disable :4711) //@info: warning C4711: function 'xxx' selected for automatic inline expansion
-#pragma warning (disable :4714) //@info: warning C4714: function 'xxx' marked as __forceinline not inlined
-#pragma warning (disable :4717) //@info: warning C4717: 'xxx': recursive on all control paths, function will cause runtime stack overflow
-#pragma warning (disable :4774) //@info: warning C4774: 'xxx' : format string expected in argument xxx is not a string literal
-#pragma warning (disable :4820) //@info: warning C4820: 'xxx': 'xxx' bytes padding added after data member 'xxx'
-#pragma warning (disable :5026) //@info: warning C5026: 'xxx': move constructor was implicitly defined as deleted
-#pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
-#pragma warning (disable :5045) //@info: warning C5045: 'xxx': move assignment operator was implicitly defined as deleted
-#pragma warning (disable :5246) //@info: warning C5246: 'xxx': the initialization of a subobject should be wrapped in braces
-#pragma warning (disable :5039) //@info: warning C5039: 'xxx': pointer or reference to potentially throwing function passed to 'xxx' function under -EHc. Undefined behavior may occur if this function throws an exception.
-#pragma warning (disable :26440) //@info: warning C26440: Function 'xxx' can be declared 'noexcept' (f.6).
-#pragma warning (disable :26447) //@info: warning C26447: The function is declared 'noexcept' but calls function 'xxx' which may throw exceptions (f.6).
-#pragma warning (disable :26475) //@info: warning C26475: Do not use function style casts (es.49). Prefer 'Type{value}' over 'Type(value)'..
-#pragma warning (disable :26485) //@info: warning C26485: Expression 'xxx': No array to pointer decay (bounds.3).
-#pragma warning (disable :26490) //@info: warning C26490: Don't use reinterpret_cast (type.1).
-#pragma warning (disable :26493) //@info: warning C26494: Don't use C-style casts (type.4).
-#pragma warning (disable :26495) //@info: warning C26495: Variable 'xxx' is uninitialized. Always initialize a member variable (type.6).
-#pragma warning (disable :26497) //@info: warning C26497: You can attempt to make 'xxx' constexpr unless it contains any undefined behavior (f.4).
-#pragma warning (disable :26496) //@info: warning C26496: The variable 'xxx' does not change after construction, mark it as const (con.4).
-#pragma warning (disable :26814) //@info: warning C26814: The const variable 'xxx' can be computed at compile-time. Consider using constexpr (con.5).
-#pragma warning (disable :26820) //@info: warning C26820: This is a potentially expensive copy operation. Consider using a reference unless a copy is required (p.9).
+#pragma warning (disable :4668) //@info: 'xxx' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+#pragma warning (disable :4686) //@info: 'xxx': possible change in behavior, change in UDT return calling convention
+#pragma warning (disable :4702) //@info: unreachable code
+#pragma warning (disable :4710) //@info: 'xxx': function not inlined
+#pragma warning (disable :4711) //@info: function 'xxx' selected for automatic inline expansion
+#pragma warning (disable :4714) //@info: function 'xxx' marked as __forceinline not inlined
+#pragma warning (disable :4717) //@info: 'xxx': recursive on all control paths, function will cause runtime stack overflow
+#pragma warning (disable :4774) //@info: 'xxx' : format string expected in argument xxx is not a string literal
+#pragma warning (disable :4800) //@info: Implicit conversion from 'xxx' to bool. Possible information loss
+#pragma warning (disable :4820) //@info: 'xxx': 'xxx' bytes padding added after data member 'xxx'
+#pragma warning (disable :5026) //@info: 'xxx': move constructor was implicitly defined as deleted
+#pragma warning (disable :5027) //@info: 'xxx': move assignment operator was implicitly defined as deleted
+#pragma warning (disable :5031) //@info: likely mismatch, popping warning state pushed in different file
+#pragma warning (disable :5045) //@info: 'xxx': move assignment operator was implicitly defined as deleted
+#pragma warning (disable :5246) //@info: 'xxx': the initialization of a subobject should be wrapped in braces
+#pragma warning (disable :5039) //@info: 'xxx': pointer or reference to potentially throwing function passed to 'xxx' function under -EHc. Undefined behavior may occur if this function throws an exception.
+#pragma warning (disable :26440) //@info: Function 'xxx' can be declared 'noexcept' (f.6).
+#pragma warning (disable :26447) //@info: The function is declared 'noexcept' but calls function 'xxx' which may throw exceptions (f.6).
+#pragma warning (disable :26475) //@info: Do not use function style casts (es.49). Prefer 'Type{value}' over 'Type(value)'..
+#pragma warning (disable :26485) //@info: Expression 'xxx': No array to pointer decay (bounds.3).
+#pragma warning (disable :26490) //@info: Don't use reinterpret_cast (type.1).
+#pragma warning (disable :26493) //@info: Don't use C-style casts (type.4).
+#pragma warning (disable :26495) //@info: Variable 'xxx' is uninitialized. Always initialize a member variable (type.6).
+#pragma warning (disable :26497) //@info: You can attempt to make 'xxx' constexpr unless it contains any undefined behavior (f.4).
+#pragma warning (disable :26496) //@info: The variable 'xxx' does not change after construction, mark it as const (con.4).
+#pragma warning (disable :26814) //@info: The const variable 'xxx' can be computed at compile-time. Consider using constexpr (con.5).
+#pragma warning (disable :26820) //@info: This is a potentially expensive copy operation. Consider using a reference unless a copy is required (p.9).
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
@@ -146,6 +158,7 @@
 #pragma GCC diagnostic warning "-Wsuggest-override"
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #pragma GCC diagnostic ignored "-Wpessimizing-move"
+#pragma GCC diagnostic ignored "-Wextra"
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
@@ -157,6 +170,8 @@
 #pragma clang diagnostic ignored "-Wabstract-final-class"
 #pragma clang diagnostic warning "-Wsuggest-override"
 #pragma clang diagnostic ignored "-Wfloat-equal"
+#pragma clang diagnostic ignored "-Wpessimizing-move"
+#pragma clang diagnostic ignored "-Wextra"
 #endif
 
 #include "csc_end.h"
@@ -283,7 +298,11 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
+#ifdef __CSC_SYSTEM_LINUX__
 #define __macro_break(...) do { __asm__ __volatile__("int $3") ; } while (false)
+#else
+#define __macro_break(...) do {} while (false)
+#endif
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
@@ -456,7 +475,7 @@ using csc_pipe_t = DEF<void *> ;
 #endif
 #endif
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_SYSTEM_POSIX__
 using csc_diff_t = DEF<long int> ;
 using csc_size_t = DEF<long unsigned int> ;
 using csc_enum_t = int ;

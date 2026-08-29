@@ -15,6 +15,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)lib\$(Configuration)\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

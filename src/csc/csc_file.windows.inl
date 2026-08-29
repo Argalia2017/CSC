@@ -134,10 +134,6 @@ public:
 		return Path (self.mThis->mPathName.segment (ix ,iy)) ;
 	}
 
-	PathLayout child (CR<Slice> name) const override {
-		return Path (String<Str>::make (fetch () ,slice ("\\") ,name)) ;
-	}
-
 	PathLayout child (CR<Format> name) const override {
 		return Path (String<Str>::make (fetch () ,slice ("\\") ,name)) ;
 	}
@@ -146,7 +142,8 @@ public:
 		return Path (String<Str>::make (fetch () ,slice ("\\") ,name)) ;
 	}
 
-	Array<PathLayout> list () const override {
+	Deque<PathLayout> list () const override {
+		Deque<PathLayout> ret ;
 		auto rax = WIN32_FIND_DATA () ;
 		const auto r1x = String<Str>::make (self.mThis->mPathName ,slice ("\\") ,slice ("*.*")) ;
 		const auto r2x = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
@@ -157,25 +154,23 @@ public:
 				return ;
 			FindClose (me) ;
 		}) ;
-		auto rbx = Deque<String<Str>> () ;
 		if ifdo (TRUE) {
 			if (r2x == NULL)
 				discard ;
-			const auto r3x = Slice (address (rax.cFileName) ,3 ,SIZE_OF<Str>::expr) ;
-			noop (r3x) ;
-			assert (r3x.eos () == slice (".")) ;
-			FindNextFile (r2x ,(&rax)) ;
-			assert (r3x.eos () == slice ("..")) ;
 			while (TRUE) {
+				if ifdo (TRUE) {
+					const auto r3x = Slice (address (rax.cFileName) ,SLICE_MAX_SIZE::expr ,SIZE_OF<Str>::expr).eos () ;
+					if (r3x == slice ("."))
+						discard ;
+					if (r3x == slice (".."))
+						discard ;
+					ret.add (child (r3x)) ;
+				}
 				const auto r4x = FindNextFile (r2x ,(&rax)) ;
 				if (!r4x)
 					break ;
-				rbx.add (Slice (rax.cFileName)) ;
 			}
 		}
-		Array<PathLayout> ret = Array<PathLayout> (rbx.length ()) ;
-		for (auto &&i : ret.iter ())
-			ret[i] = child (rbx[i]) ;
 		return move (ret) ;
 	}
 
@@ -190,28 +185,28 @@ public:
 				return ;
 			FindClose (me) ;
 		}) ;
-		auto rbx = Deque<String<Str>> () ;
+		Array<PathLayout> ret = Array<PathLayout> (size_) ;
+		Index ix = 0 ;
 		if ifdo (TRUE) {
 			if (r2x == NULL)
 				discard ;
-			const auto r3x = Slice (address (rax.cFileName) ,3 ,SIZE_OF<Str>::expr) ;
-			noop (r3x) ;
-			assert (r3x.eos () == slice (".")) ;
-			FindNextFile (r2x ,(&rax)) ;
-			assert (r3x.eos () == slice ("..")) ;
 			while (TRUE) {
+				if ifdo (TRUE) {
+					if (ix >= size_)
+						discard ;
+					const auto r3x = Slice (address (rax.cFileName) ,SLICE_MAX_SIZE::expr ,SIZE_OF<Str>::expr).eos () ;
+					if (r3x == slice ("."))
+						discard ;
+					if (r3x == slice (".."))
+						discard ;
+					ret[ix] = child (r3x) ;
+					ix++ ;
+				}
 				const auto r4x = FindNextFile (r2x ,(&rax)) ;
 				if (!r4x)
 					break ;
-				if (rbx.length () >= size_)
-					break ;
-				rbx.add (Slice (rax.cFileName)) ;
 			}
 		}
-		assume (rbx.length () == size_) ;
-		Array<PathLayout> ret = Array<PathLayout> (size_) ;
-		for (auto &&i : range (0 ,size_))
-			ret[i] = child (rbx[i]) ;
 		return move (ret) ;
 	}
 
@@ -956,7 +951,7 @@ public:
 
 	void read (CR<Index> index ,VR<RefBuffer<Byte>> item) override {
 		assert (self.mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,Length (self.mHeader->mBlockSize))) ;
+		assert (inline_mid (index ,0 ,Length (self.mHeader->mBlockSize))) ;
 		assert (item.size () == self.mHeader->mBlockStep) ;
 		const auto r1x = index / self.mHeader->mBlockSize ;
 		const auto r2x = index % self.mHeader->mBlockSize * self.mHeader->mBlockStep ;
@@ -968,7 +963,7 @@ public:
 
 	void write (CR<Index> index ,CR<RefBuffer<Byte>> item) override {
 		assert (self.mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,Length (self.mHeader->mBlockSize))) ;
+		assert (inline_mid (index ,0 ,Length (self.mHeader->mBlockSize))) ;
 		assert (item.size () == self.mHeader->mBlockStep) ;
 		const auto r1x = index / self.mHeader->mBlockSize ;
 		const auto r2x = index % self.mHeader->mBlockSize * self.mHeader->mBlockStep ;
@@ -1062,6 +1057,7 @@ public:
 	void set_port_rate (CR<Length> rate) override {
 		assert (!self.mPipe.exist ()) ;
 		self.mPortRate = rate ;
+		self.mPortSpeed = rate ;
 	}
 
 	void set_ring_step (CR<Length> step_) override {
@@ -1157,8 +1153,10 @@ public:
 		self.mLogWriter << slice ("][") ;
 		self.mLogWriter << tag ;
 		self.mLogWriter << slice ("] : ") ;
+		self.mLogOffset = self.mLogWriter.length () ;
 		self.mLogWriter << msg ;
 		self.mLogWriter << GAP ;
+		self.mLogLength = self.mLogWriter.length () - self.mLogOffset ;
 		self.mLogWriter << EOS ;
 	}
 
@@ -1167,15 +1165,17 @@ public:
 		if (self.mOption[ConsoleOption::NoPrint])
 			return ;
 		self.mLogWriter.reset () ;
+		self.mLogOffset = self.mLogWriter.length () ;
 		self.mLogWriter << msg ;
+		self.mLogLength = self.mLogWriter.length () - self.mLogOffset ;
 		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
 			if (!self.mConsole.exist ())
 				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
-			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
-			WriteConsole (self.mConsole ,self.mLogBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (self.mLogLength) ;
+			WriteConsole (self.mConsole ,(&self.mLogBuffer[self.mLogOffset]) ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1190,8 +1190,8 @@ public:
 				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
-			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
-			WriteConsole (self.mConsole ,self.mLogBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (self.mLogLength) ;
+			WriteConsole (self.mConsole ,(&self.mLogBuffer[self.mLogOffset]) ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1206,8 +1206,8 @@ public:
 				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
-			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
-			WriteConsole (self.mConsole ,self.mLogBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (self.mLogLength) ;
+			WriteConsole (self.mConsole ,(&self.mLogBuffer[self.mLogOffset]) ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1222,8 +1222,8 @@ public:
 				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
-			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
-			WriteConsole (self.mConsole ,self.mLogBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (self.mLogLength) ;
+			WriteConsole (self.mConsole ,(&self.mLogBuffer[self.mLogOffset]) ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1238,8 +1238,8 @@ public:
 				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
-			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
-			WriteConsole (self.mConsole ,self.mLogBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (self.mLogLength) ;
+			WriteConsole (self.mConsole ,(&self.mLogBuffer[self.mLogOffset]) ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1254,8 +1254,8 @@ public:
 				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
-			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
-			WriteConsole (self.mConsole ,self.mLogBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (self.mLogLength) ;
+			WriteConsole (self.mConsole ,(&self.mLogBuffer[self.mLogOffset]) ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1270,8 +1270,8 @@ public:
 				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
-			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
-			WriteConsole (self.mConsole ,self.mLogBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (self.mLogLength) ;
+			WriteConsole (self.mConsole ,(&self.mLogBuffer[self.mLogOffset]) ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1289,6 +1289,11 @@ public:
 
 	void log_open () {
 		self.mLogWriter.reset () ;
+		if ifdo (TRUE) {
+			if (SIZE_OF<Str>::expr == 1)
+				discard ;
+			self.mLogWriter << BOM ;
+		}
 		self.mLogWriter << slice ("----------------------------------------------------------------") ;
 		self.mLogWriter << GAP ;
 		if ifdo (TRUE) {

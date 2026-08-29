@@ -19,13 +19,13 @@
 #include <csignal>
 #include <exception>
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_SYSTEM_POSIX__
 #include <fcntl.h>
 #endif
 #include "csc_begin.h"
 
-#ifdef __CSC_SYSTEM_LINUX__
-namespace std {
+#ifdef __CSC_SYSTEM_POSIX__
+namespace posix {
 inline namespace {
 using ::open ;
 using ::close ;
@@ -44,24 +44,26 @@ exports Bool CoreProc::inline_debug () {
 }
 #endif
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_SYSTEM_POSIX__
 exports Bool CoreProc::inline_debug () {
 	return memorize ([&] () {
 		auto rax = Buffer<char ,ENUM<4096>> () ;
+		const auto r1x = Slice ("/proc/self/status") ;
+		const auto r2x = Slice ("TracerPid:") ;
 		if ifdo (TRUE) {
-			const auto r1x = std::open ("/proc/self/status" ,O_RDONLY) ;
-			if (r1x < 0)
+			const auto r3x = posix::open (csc_string_t (r1x.offset (0)) ,O_RDONLY) ;
+			if (r3x < 0)
 				discard ;
-			const auto r2x = Length (std::read (r1x ,rax ,csc_size_t (rax.size () - 1))) ;
-			std::close (r1x) ;
-			if (r2x <= 0)
+			const auto r4x = Length (posix::read (r3x ,rax ,csc_size_t (rax.size ()))) ;
+			posix::close (r3x) ;
+			if (r4x <= 0)
 				discard ;
-			rax[r2x] = 0 ;
-			const auto r3x = std::strstr (rax ,"TracerPid:") ;
-			if (r3x == NULL)
+			rax[r4x] = 0 ;
+			const auto r5x = std::strstr (rax ,csc_string_t (r2x.offset (0))) ;
+			if (r5x == NULL)
 				discard ;
-			const auto r4x = std::atoi (r3x + sizeof ("TracerPid:") - 1) ;
-			if (r4x == 0)
+			const auto r6x = std::atoi (r5x + r2x.size ()) ;
+			if (r6x == 0)
 				discard ;
 			return TRUE ;
 		}
@@ -71,33 +73,25 @@ exports Bool CoreProc::inline_debug () {
 #endif
 
 exports void CoreProc::inline_crash () {
-	std::raise (SIGABRT) ;
+	static auto mInstance = TRUE ;
+	if ifdo (TRUE) {
+		if (!mInstance)
+			discard ;
+		mInstance = FALSE ;
+		std::raise (SIGABRT) ;
+	}
 	std::quick_exit (-1) ;
 }
 
-#ifdef __CSC_SYSTEM_WINDOWS__
 exports void CoreProc::inline_notice (CR<Flag> name ,CR<Flag> addr) {
 	if ifdo (TRUE) {
 		const auto r1x = csc_string_t (name) ;
-		const auto r2x = csc_handle_t (addr) ;
+		const auto r2x = csc_uint64_t (addr) ;
 		const auto r3x = Index (bitwise (Pointer::make (addr))) ;
 		const auto r4x = Val64 (r3x) ;
-		std::printf ("%s [0X%p] : %lld\n" ,r1x ,r2x ,r4x) ;
+		std::printf ("%s [0X%llX] : %lld\n" ,r1x ,r2x ,r4x) ;
 	}
 }
-#endif
-
-#ifdef __CSC_SYSTEM_LINUX__
-exports void CoreProc::inline_notice (CR<Flag> name ,CR<Flag> addr) {
-	if ifdo (TRUE) {
-		const auto r1x = csc_string_t (name) ;
-		const auto r2x = csc_handle_t (addr) ;
-		const auto r3x = Index (bitwise (Pointer::make (addr))) ;
-		const auto r4x = Val64 (r3x) ;
-		std::printf ("%s [%p] : %lld\n" ,r1x ,r2x ,r4x) ;
-	}
-}
-#endif
 
 #ifdef __CSC_CXX_RTTI__
 exports Flag CoreProc::inline_type_name (CR<Interface> squalor ,CR<Flag> func_) {
@@ -410,6 +404,7 @@ struct HeapImplLayout {
 	Pin<HeapImplLayout> mPin ;
 	Box<std::recursive_mutex> mMutex ;
 	Box<std::atomic<Val>> mWidth ;
+	Box<std::atomic<Val>> mDepth ;
 	Box<std::atomic<Val>> mLength ;
 	Flag mStackRoot ;
 	Flag mStackRest ;
@@ -431,6 +426,7 @@ public:
 	void initialize () override {
 		self.mMutex.remake () ;
 		self.mWidth.remake () ;
+		self.mDepth.remake () ;
 		self.mLength.remake () ;
 		self.mStackRoot = 0 ;
 		self.mStackRest = 0 ;
@@ -468,6 +464,10 @@ public:
 		return self.mWidth.ref ;
 	}
 
+	Length depth () const override {
+		return self.mDepth.ref ;
+	}
+
 	Length length () const override {
 		return self.mLength.ref ;
 	}
@@ -484,8 +484,8 @@ public:
 			self.mPin->mStackRoot = alloc (self.mStackRest) ;
 			self.mPin->mStackTop = NULL ;
 		}
-		const auto r3x = SIZE_OF<HeapNode>::expr + size_ ;
-		assume (self.mStackRest >= r3x) ;
+		const auto r2x = SIZE_OF<HeapNode>::expr + size_ ;
+		assume (self.mStackRest >= r2x) ;
 		rax = self.mStackTop ;
 		while (TRUE) {
 			if (rax == NULL)
@@ -508,9 +508,9 @@ public:
 		rax->mHeader = HEAP_HEADER ;
 		rax->mStackPtr = r1x ;
 		rax->mPrev = self.mStackTop ;
-		rax->mNext = HeapNodePtr (Flag (rax) + r3x) ;
+		rax->mNext = HeapNodePtr (Flag (rax) + r2x) ;
 		self.mPin->mStackTop = rax ;
-		self.mPin->mStackRest -= r3x ;
+		self.mPin->mStackRest -= r2x ;
 		return Flag (rax) + SIZE_OF<HeapNode>::expr ;
 	}
 
@@ -518,6 +518,7 @@ public:
 		assert (size_ > 0) ;
 		Flag ret = Flag (operator new (size_ ,std::nothrow)) ;
 		assume (ret != ZERO) ;
+		self.mPin->mDepth.ref++ ;
 		self.mPin->mLength.ref += size_ ;
 		self.mPin->mWidth.ref = inline_max (self.mWidth.ref ,self.mLength.ref) ;
 		return move (ret) ;
@@ -528,6 +529,7 @@ public:
 		assert (size_ > 0) ;
 		Flag ret = Flag (operator new (size_ ,std::align_val_t (align_) ,std::nothrow)) ;
 		assume (ret != ZERO) ;
+		self.mPin->mDepth.ref++ ;
 		self.mPin->mLength.ref += size_ ;
 		self.mPin->mWidth.ref = inline_max (self.mWidth.ref ,self.mLength.ref) ;
 		return move (ret) ;
@@ -544,6 +546,7 @@ public:
 	void free (CR<Flag> layout ,CR<Length> size_) const override {
 		assert (size_ > 0) ;
 		const auto r1x = csc_handle_t (layout) ;
+		self.mPin->mDepth.ref-- ;
 		self.mPin->mLength.ref -= size_ ;
 		operator delete (r1x ,std::nothrow) ;
 	}
@@ -614,7 +617,7 @@ public:
 
 	CR<Pointer> at (CR<Index> index) const leftvalue {
 		assert (self.mBuffer != ZERO) ;
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		const auto r1x = self.mBuffer + index * self.mStep ;
 		return Pointer::make (r1x) ;
 	}

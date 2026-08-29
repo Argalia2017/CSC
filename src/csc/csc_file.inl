@@ -21,8 +21,6 @@ exports CFat<PathHolder> PathHolder::hold (CR<PathLayout> that) {
 	return CFat<PathHolder> (External<PathHolder ,PathLayout>::expr ,that) ;
 }
 
-template class External<FileProcHolder ,FileProcLayout> ;
-
 struct FileProcLayout {
 	Pin<FileProcLayout> mPin ;
 	Mutex mMutex ;
@@ -39,6 +37,8 @@ exports CR<Super<UniqueRef<FileProcLayout>>> FileProcHolder::expr_m () {
 	}) ;
 }
 
+template class External<FileProcHolder ,FileProcLayout> ;
+
 exports VFat<FileProcHolder> FileProcHolder::hold (VR<FileProcLayout> that) {
 	return VFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::expr ,that) ;
 }
@@ -46,8 +46,6 @@ exports VFat<FileProcHolder> FileProcHolder::hold (VR<FileProcLayout> that) {
 exports CFat<FileProcHolder> FileProcHolder::hold (CR<FileProcLayout> that) {
 	return CFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::expr ,that) ;
 }
-
-template class External<StreamFileHolder ,StreamFileLayout> ;
 
 struct StreamFileLayout {
 	String<Str> mFile ;
@@ -63,6 +61,8 @@ struct StreamFileLayout {
 exports Ref<StreamFileLayout> StreamFileHolder::create () {
 	return Ref<StreamFileLayout>::make () ;
 }
+
+template class External<StreamFileHolder ,StreamFileLayout> ;
 
 exports VFat<StreamFileHolder> StreamFileHolder::hold (VR<StreamFileLayout> that) {
 	return VFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::expr ,that) ;
@@ -148,8 +148,6 @@ exports CFat<StreamFileWriterHolder> StreamFileWriterHolder::hold (CR<StreamFile
 	return CFat<StreamFileWriterHolder> (StreamFileWriterImplHolder () ,that) ;
 }
 
-template class External<BufferFileHolder ,BufferFileLayout> ;
-
 struct BufferFileHeader {
 	Quad mFileEndian ;
 	Val64 mFileSize ;
@@ -185,6 +183,8 @@ exports Ref<BufferFileLayout> BufferFileHolder::create () {
 	return Ref<BufferFileLayout>::make () ;
 }
 
+template class External<BufferFileHolder ,BufferFileLayout> ;
+
 exports VFat<BufferFileHolder> BufferFileHolder::hold (VR<BufferFileLayout> that) {
 	return VFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::expr ,that) ;
 }
@@ -193,14 +193,13 @@ exports CFat<BufferFileHolder> BufferFileHolder::hold (CR<BufferFileLayout> that
 	return CFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::expr ,that) ;
 }
 
-template class External<UartFileHolder ,UartFileLayout> ;
-
 struct UartFileCOMParams ;
 struct UartFileCOMStatus ;
 
 struct UartFileLayout {
 	String<Str> mPortName ;
 	Length mPortRate ;
+	Length mPortSpeed ;
 	UniqueRef<csc_pipe_t> mPipe ;
 	Ref<UartFileCOMParams> mCOMParams ;
 	Ref<UartFileCOMStatus> mCOMStatus ;
@@ -213,6 +212,8 @@ exports Ref<UartFileLayout> UartFileHolder::create () {
 	return Ref<UartFileLayout>::make () ;
 }
 
+template class External<UartFileHolder ,UartFileLayout> ;
+
 exports VFat<UartFileHolder> UartFileHolder::hold (VR<UartFileLayout> that) {
 	return VFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::expr ,that) ;
 }
@@ -221,14 +222,14 @@ exports CFat<UartFileHolder> UartFileHolder::hold (CR<UartFileLayout> that) {
 	return CFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::expr ,that) ;
 }
 
-template class External<ConsoleHolder ,ConsoleLayout> ;
-
 struct ConsoleLayout {
 	Mutex mMutex ;
 	BitSet mOption ;
 	UniqueRef<csc_handle_t> mConsole ;
 	String<Str> mLogBuffer ;
 	TextWriter mLogWriter ;
+	Length mLogOffset ;
+	Length mLogLength ;
 	String<Str> mLogFile ;
 	String<Str> mOldLogFile ;
 	StreamFile mLogStreamFile ;
@@ -244,6 +245,8 @@ exports CR<Super<SharedRef<ConsoleLayout>>> ConsoleHolder::expr_m () {
 		return move (ret) ;
 	}) ;
 }
+
+template class External<ConsoleHolder ,ConsoleLayout> ;
 
 exports VFat<ConsoleHolder> ConsoleHolder::hold (VR<ConsoleLayout> that) {
 	return VFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::expr ,that) ;

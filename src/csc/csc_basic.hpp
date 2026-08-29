@@ -137,7 +137,7 @@ public:
 	forceinline Bool operator!= (CR<Buffer> that) = delete ;
 
 	VR<A> at (CR<Index> index) leftvalue {
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		return ref[index] ;
 	}
 
@@ -146,7 +146,7 @@ public:
 	}
 
 	CR<A> at (CR<Index> index) const leftvalue {
-		assert (inline_between (index ,0 ,size ())) ;
+		assert (inline_mid (index ,0 ,size ())) ;
 		return ref[index] ;
 	}
 
@@ -200,7 +200,7 @@ public:
 	}
 
 	CR<A> at (CR<Index> index) const leftvalue {
-		assert (inline_between (index ,0 ,mRank)) ;
+		assert (inline_mid (index ,0 ,mRank)) ;
 		return Pointer::make (mWrapper.ref[index]) ;
 	}
 
@@ -217,7 +217,7 @@ template <class ARG1 ,class...ARG2>
 inline Wrapper<ARG1 ,RANK_OF<TYPE<ARG1 ,ARG2...>>> MakeWrapper (CR<ARG1> params1 ,CR<ARG2>...params2) {
 	using R1X = RANK_OF<TYPE<ARG1 ,ARG2...>> ;
 	//@fatal: GCC is so stupid
-	return Wrapper<ARG1 ,R1X> (Buffer<Flag ,R1X> ({address (params1) ,address (params2)...})) ;
+	return Wrapper<ARG1 ,R1X> (Buffer<Flag ,R1X> (address (params1) ,address (params2)...)) ;
 }
 
 struct ReflectInvoke implement Interface {
@@ -446,7 +446,7 @@ struct AutoRefHolder implement Interface {
 	imports CFat<AutoRefHolder> hold (CR<AutoRefLayout> that) ;
 
 	virtual void initialize (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<Clazz> clazz_) = 0 ;
+	virtual void initialize (CR<AutoRefLayout> that) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual Bool exist () const = 0 ;
 	virtual VR<BoxLayout> raw () leftvalue = 0 ;
@@ -462,6 +462,24 @@ struct AutoRefHolder implement Interface {
 inline AutoRefLayout::~AutoRefLayout () noexcept {
 	AutoRefHolder::hold (thiz)->destroy () ;
 }
+
+template <class A>
+class AutoRefUnknownBinder final implement Fat<UnknownHolder ,void> {
+public:
+	Flag reflect (CR<Flag> uuid) const override {
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_vptr (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_vptr (ReflectDestroyBinder<A> ()) ;
+		if (uuid == ReflectGuidBinder<A>::expr)
+			return inline_vptr (ReflectGuidBinder<A> ()) ;
+		if (uuid == ReflectNameBinder<A>::expr)
+			return inline_vptr (ReflectNameBinder<A> ()) ;
+		if (uuid == ReflectCloneBinder<A>::expr)
+			return inline_vptr (ReflectCloneBinder<A> ()) ;
+		return ZERO ;
+	}
+} ;
 
 template <class A>
 class AutoRef implement AutoRefLayout {
@@ -482,10 +500,26 @@ public:
 	template <class...ARG1>
 	static AutoRef make (XR<ARG1>...initval) {
 		AutoRef ret ;
-		AutoRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> () ,Clazz (TYPE<A>::expr)) ;
+		AutoRefHolder::hold (ret)->initialize (AutoRefUnknownBinder<A> ()) ;
 		auto &&rax = keep[TYPE<Box<A>>::expr] (ret.raw ()) ;
 		rax.remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
+	}
+
+	implicit AutoRef (CR<AutoRef> that) {
+		AutoRefHolder::hold (thiz)->initialize (that) ;
+	}
+
+	forceinline VR<AutoRef> operator= (CR<AutoRef> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit AutoRef (RR<AutoRef> that) = default ;
+
+	forceinline VR<AutoRef> operator= (RR<AutoRef> that) = default ;
+
+	AutoRef clone () const {
+		return move (thiz) ;
 	}
 
 	Bool exist () const {
@@ -878,6 +912,8 @@ struct RefBufferHolder implement Interface {
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
 	virtual VR<Pointer> at (CR<Index> index) leftvalue = 0 ;
 	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
+	virtual Length min_resize () const = 0 ;
+	virtual Length max_resize () const = 0 ;
 	virtual void resize (CR<Length> size_) = 0 ;
 } ;
 
@@ -994,6 +1030,14 @@ public:
 
 	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
+	}
+
+	Length min_resize () const {
+		return RefBufferHolder::hold (thiz)->min_resize () ;
+	}
+
+	Length max_resize () const {
+		return RefBufferHolder::hold (thiz)->max_resize () ;
 	}
 
 	void resize (CR<Length> size_) {
@@ -1175,6 +1219,8 @@ struct AllocatorHolder implement Interface {
 	virtual Index alloc (RR<BoxLayout> item) = 0 ;
 	virtual void free (CR<Index> index) = 0 ;
 	virtual Bool used (CR<Index> index) const = 0 ;
+	virtual Length min_resize () const = 0 ;
+	virtual Length max_resize () const = 0 ;
 	virtual void resize (CR<Length> size_) = 0 ;
 } ;
 
@@ -1209,7 +1255,10 @@ public:
 } ;
 
 template <class B>
-struct AllocatorImplLayout<Pointer ,B> implement AllocatorLayout {} ;
+struct AllocatorImplLayout<Pointer ,B> implement AllocatorLayout {
+private:
+	using Node = Pointer ;
+} ;
 
 template <class A ,class B>
 inline AllocatorImplLayout<A ,B>::AllocatorImplLayout () noexcept {
@@ -1307,6 +1356,14 @@ public:
 
 	Bool used (CR<Index> index) const {
 		return AllocatorHolder::hold (thiz)->used (index) ;
+	}
+
+	Length min_resize () const {
+		return AllocatorHolder::hold (thiz)->min_resize () ;
+	}
+
+	Length max_resize () const {
+		return AllocatorHolder::hold (thiz)->max_resize () ;
 	}
 
 	void resize (CR<Length> size_) {

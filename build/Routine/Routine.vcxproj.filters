@@ -55,6 +55,15 @@
     <ClInclude Include="..\..\src\csc\csc_algorithm.hpp">
       <Filter>csc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_spatial.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_numeric.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_property.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\csc\cpp.hint">
@@ -117,10 +126,28 @@
     <None Include="..\..\src\csc\csc_file.windows.inl">
       <Filter>csc</Filter>
     </None>
-    <None Include="..\..\src\csc\csc_matrix.nanoflann.inl">
+    <None Include="..\..\src\csc\csc_algorithm.inl">
       <Filter>csc</Filter>
     </None>
-    <None Include="..\..\src\csc\csc_algorithm.inl">
+    <None Include="..\..\src\csc\csc_runtime.embedded.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_file.embedded.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_spatial.nanoflann.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_spatial.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_numeric.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_numeric.ceres.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_property.inl">
       <Filter>csc</Filter>
     </None>
   </ItemGroup>
