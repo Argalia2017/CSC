@@ -55,22 +55,20 @@ public:
 	}
 
 	void joint (CR<Index> from ,CR<Index> into) override {
+		if ifdo (TRUE) {
+			if (self.mTable[from].mUp != NONE)
+				discard ;
+			self.mTable[from].mUp = from ;
+			self.mTable[from].mWidth = 1 ;
+		}
+		if ifdo (TRUE) {
+			if (self.mTable[into].mUp != NONE)
+				discard ;
+			self.mTable[into].mUp = into ;
+			self.mTable[into].mWidth = 1 ;
+		}
 		Index ix = lead (from) ;
 		Index iy = lead (into) ;
-		if ifdo (TRUE) {
-			if (ix != NONE)
-				discard ;
-			ix = from ;
-			self.mTable[ix].mUp = ix ;
-			self.mTable[ix].mWidth = 1 ;
-		}
-		if ifdo (TRUE) {
-			if (iy != NONE)
-				discard ;
-			iy = into ;
-			self.mTable[iy].mUp = iy ;
-			self.mTable[iy].mWidth = 1 ;
-		}
 		if (ix == iy)
 			return ;
 		if ifdo (TRUE) {
@@ -426,6 +424,7 @@ public:
 					}
 					return move (ret) ;
 				}) ;
+				assume (r2x != infinity) ;
 				for (auto &&j : range (0 ,self.mSize)) {
 					if ifdo (TRUE) {
 						if (!self.mUserVisit[j])

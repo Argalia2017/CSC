@@ -71,7 +71,10 @@
     <ClInclude Include="..\..\src\csc\csc_math.hpp" />
     <ClInclude Include="..\..\src\csc\csc_matrix.eigen.fix.h" />
     <ClInclude Include="..\..\src\csc\csc_matrix.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_numeric.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_property.hpp" />
     <ClInclude Include="..\..\src\csc\csc_runtime.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_spatial.hpp" />
     <ClInclude Include="..\..\src\csc\csc_stream.hpp" />
     <ClInclude Include="..\..\src\csc\csc_string.hpp" />
     <ClInclude Include="..\..\src\csc\csc_thread.hpp" />
@@ -95,11 +98,15 @@
     <None Include="..\..\src\csc\csc_math.inl" />
     <None Include="..\..\src\csc\csc_matrix.eigen.inl" />
     <None Include="..\..\src\csc\csc_matrix.inl" />
-    <None Include="..\..\src\csc\csc_matrix.nanoflann.inl" />
+    <None Include="..\..\src\csc\csc_numeric.ceres.inl" />
+    <None Include="..\..\src\csc\csc_numeric.inl" />
+    <None Include="..\..\src\csc\csc_property.inl" />
     <None Include="..\..\src\csc\csc_runtime.embedded.inl" />
     <None Include="..\..\src\csc\csc_runtime.inl" />
     <None Include="..\..\src\csc\csc_runtime.linux.inl" />
     <None Include="..\..\src\csc\csc_runtime.windows.inl" />
+    <None Include="..\..\src\csc\csc_spatial.inl" />
+    <None Include="..\..\src\csc\csc_spatial.nanoflann.inl" />
     <None Include="..\..\src\csc\csc_stream.inl" />
     <None Include="..\..\src\csc\csc_string.inl" />
     <None Include="..\..\src\csc\csc_thread.inl" />

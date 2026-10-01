@@ -21,7 +21,6 @@ struct StringProcHolder implement Interface {
 	imports CFat<StringProcHolder> hold (CR<StringProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual Bool is_encode (CR<StringLayout> a ,CR<Just<StringEncode>> encode_) const = 0 ;
 	virtual String<Stra> stra_from_strw (CR<String<Strw>> a) const = 0 ;
 	virtual String<Strw> strw_from_stra (CR<String<Stra>> a) const = 0 ;
 	virtual String<Stru> stru8_from_stru16 (CR<String<Stru16>> a) const = 0 ;
@@ -66,10 +65,6 @@ class StringProc implement Super<UniqueRef<StringProcLayout>> {
 public:
 	static CR<StringProc> expr_m () {
 		return keep[TYPE<StringProc>::expr] (StringProcHolder::expr) ;
-	}
-
-	static Bool is_encode (CR<StringLayout> a ,CR<Just<StringEncode>> encode_) {
-		return StringProcHolder::hold (expr)->is_encode (a ,encode_) ;
 	}
 
 	static String<Stra> stra_from_strw (CR<String<Strw>> a) {

@@ -731,8 +731,9 @@ public:
 		const auto r1x = MathProc::sqrt (Flt64 (a.length ())) ;
 		const auto r2x = Length (MathProc::round (r1x)) ;
 		const auto r3x = MathProc::square (r2x) ;
+		noop (r3x) ;
 		assert (r3x == a.length ()) ;
-		for (auto &&i : range (0 ,r3x ,0 ,r3x)) {
+		for (auto &&i : range (0 ,r2x ,0 ,r2x)) {
 			Index ix = i.mX + i.mY * 4 ;
 			ret[i] = a[ix] ;
 		}
@@ -821,7 +822,7 @@ public:
 				break ;
 		}
 		ret.mT = ret.mR.transpose () * ret.mT ;
-		ret.mN = Vector::zero () ;
+		ret.mN = -Vector::axis_z () ;
 		ret.mC = Vector::zero () ;
 		return move (ret) ;
 	}
@@ -1148,12 +1149,38 @@ public:
 		visitor.leave () ;
 	}
 
-	QuaternionLayout sadd (CR<QuaternionLayout> that) const override {
-		QuaternionLayout ret ;
-		ret.mQuaternion[0] = self.mQuaternion[0] + that.mQuaternion[0] ;
-		ret.mQuaternion[1] = self.mQuaternion[1] + that.mQuaternion[1] ;
-		ret.mQuaternion[2] = self.mQuaternion[2] + that.mQuaternion[2] ;
-		ret.mQuaternion[3] = self.mQuaternion[3] + that.mQuaternion[3] ;
+	QuaternionLayout rotate (CR<Flt64> pitch ,CR<Flt64> yaw ,CR<Flt64> roll) const override {
+		QuaternionLayout ret = self ;
+		if ifdo (TRUE) {
+			if (pitch == 0)
+				discard ;
+			const auto r1x = MathProc::cos (pitch / 2) ;
+			const auto r2x = MathProc::sin (pitch / 2) ;
+			ret.mQuaternion[0] = self.mQuaternion[0] * r1x - self.mQuaternion[1] * r2x ;
+			ret.mQuaternion[1] = self.mQuaternion[0] * r2x + self.mQuaternion[1] * r1x ;
+			ret.mQuaternion[2] = self.mQuaternion[2] * r1x + self.mQuaternion[3] * r2x ;
+			ret.mQuaternion[3] = self.mQuaternion[3] * r1x - self.mQuaternion[2] * r2x ;
+		}
+		if ifdo (TRUE) {
+			if (yaw == 0)
+				discard ;
+			const auto r3x = MathProc::cos (yaw / 2) ;
+			const auto r4x = MathProc::sin (yaw / 2) ;
+			ret.mQuaternion[0] = self.mQuaternion[0] * r3x - self.mQuaternion[2] * r4x ;
+			ret.mQuaternion[1] = self.mQuaternion[1] * r3x - self.mQuaternion[3] * r4x ;
+			ret.mQuaternion[2] = self.mQuaternion[0] * r4x + self.mQuaternion[2] * r3x ;
+			ret.mQuaternion[3] = self.mQuaternion[3] * r3x + self.mQuaternion[1] * r4x ;
+		}
+		if ifdo (TRUE) {
+			if (roll == 0)
+				discard ;
+			const auto r5x = MathProc::cos (roll / 2) ;
+			const auto r6x = MathProc::sin (roll / 2) ;
+			ret.mQuaternion[0] = self.mQuaternion[0] * r5x - self.mQuaternion[3] * r6x ;
+			ret.mQuaternion[1] = self.mQuaternion[1] * r5x + self.mQuaternion[2] * r6x ;
+			ret.mQuaternion[2] = self.mQuaternion[2] * r5x - self.mQuaternion[1] * r6x ;
+			ret.mQuaternion[3] = self.mQuaternion[0] * r6x + self.mQuaternion[3] * r5x ;
+		}
 		normalized (ret) ;
 		return move (ret) ;
 	}
@@ -1181,6 +1208,22 @@ public:
 		ret.mQuaternion[2] = -self.mQuaternion[2] ;
 		ret.mQuaternion[3] = -self.mQuaternion[3] ;
 		return move (ret) ;
+	}
+
+	QuaternionLayout clip (CR<Flt64> abs_pitch) const override {
+		const auto r1x = self.mQuaternion[0] ;
+		const auto r2x = self.mQuaternion[1] ;
+		const auto r3x = self.mQuaternion[2] ;
+		const auto r4x = self.mQuaternion[3] ;
+		const auto r5x = 2 * (r2x * r4x + r1x * r3x) ;
+		const auto r6x = 2 * (r3x * r4x - r1x * r2x) ;
+		const auto r7x = 1 - 2 * (MathProc::square (r2x) + MathProc::square (r3x)) ;
+		//@info: 限制 |pitch| <= abs_pitch 即 |z_y| <= sin(abs_pitch)
+		const auto r8x = MathProc::clamp (r6x ,-MathProc::sin (abs_pitch) ,MathProc::sin (abs_pitch)) ;
+		const auto r9x = Vector (r5x ,0 ,r7x ,0).normalize () * MathProc::sqrt (1 - MathProc::square (r8x)) ;
+		const auto r10x = Vector (r9x[0] ,r8x ,r9x[2] ,0) ;
+		const auto r11x = ViewMatrixZYX (r10x ,Vector::axis_y ()) ;
+		return Quaternion (r11x) ;
 	}
 
 	Flt64 angle () const {
@@ -1484,18 +1527,33 @@ public:
 		const auto r1x = angular () * dt ;
 		const auto r2x = linear () * dt ;
 		const auto r3x = Quaternion (r1x).vector () ;
-		const auto r4x = r3x.magnitude () ;
-		const auto r5x = CrossProductMatrix (r3x) ;
-		const auto r6x = (1 - MathProc::cos (r4x)) * MathProc::inverse (MathProc::square (r4x)) ;
-		const auto r7x = (r4x - MathProc::sin (r4x)) * MathProc::inverse (MathProc::cubic (r4x)) ;
-		const auto r8x = Matrix::iden () + r5x * r6x + r5x * r5x * r7x ;
-		const auto r9x = r8x * r2x ;
 		ret.mSE3[0] = r3x[0] ;
 		ret.mSE3[1] = r3x[1] ;
 		ret.mSE3[2] = r3x[2] ;
-		ret.mSE3[3] = r9x[0] ;
-		ret.mSE3[4] = r9x[1] ;
-		ret.mSE3[5] = r9x[2] ;
+		const auto r4x = r3x.magnitude () ;
+		const auto r5x = CrossProductMatrix (r3x) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			//@info: taylor at r4x→0 : (1-cosθ)/θ² = 1/2-θ²/24+O(θ⁴) , (θ-sinθ)/θ³ = 1/6-θ²/120+O(θ⁴)
+			if (r4x >= 1E-4)
+				discard ;
+			const auto r6x = Flt64 (0.5) - MathProc::square (r4x) / 24 ;
+			const auto r7x = Flt64 (1) / 6 - MathProc::square (r4x) / 120 ;
+			const auto r8x = Matrix::iden () + r5x * r6x + r5x * r5x * r7x ;
+			const auto r9x = r8x * r2x ;
+			ret.mSE3[3] = r9x[0] ;
+			ret.mSE3[4] = r9x[1] ;
+			ret.mSE3[5] = r9x[2] ;
+		}
+		if ifdo (act) {
+			const auto r10x = (1 - MathProc::cos (r4x)) * MathProc::inverse (MathProc::square (r4x)) ;
+			const auto r11x = (r4x - MathProc::sin (r4x)) * MathProc::inverse (MathProc::cubic (r4x)) ;
+			const auto r12x = Matrix::iden () + r5x * r10x + r5x * r5x * r11x ;
+			const auto r13x = r12x * r2x ;
+			ret.mSE3[3] = r13x[0] ;
+			ret.mSE3[4] = r13x[1] ;
+			ret.mSE3[5] = r13x[2] ;
+		}
 		return move (ret) ;
 	}
 

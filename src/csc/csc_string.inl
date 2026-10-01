@@ -47,49 +47,6 @@ public:
 	}
 #endif
 
-	Bool is_encode (CR<StringLayout> a ,CR<Just<StringEncode>> encode_) const override {
-		auto &&rax = keep[TYPE<String<Byte>>::expr] (a) ;
-		const auto r1x = encode_step (encode_) ;
-		if (r1x == 0)
-			return TRUE ;
-		if (rax.step () != r1x)
-			return FALSE ;
-		if ifdo (TRUE) {
-			if (encode_ != StringEncode::ASCII)
-				discard ;
-			for (auto &&i : rax) {
-				const auto r2x = Stru (bitwise (i)) ;
-				if (r2x >= 128)
-					return FALSE ;
-			}
-			return TRUE ;
-		}
-		if ifdo (TRUE) {
-			if (encode_ != StringEncode::LOCAL)
-				discard ;
-			unimplemented () ;
-		}
-		return TRUE ;
-	}
-
-	Flag encode_step (CR<Just<StringEncode>> encode_) const {
-		if (encode_ == StringEncode::ASCII)
-			return 1 ;
-		if (encode_ == StringEncode::LOCAL)
-			return SIZE_OF<Str>::expr ;
-		if (encode_ == StringEncode::UTF8)
-			return 1 ;
-		if (encode_ == StringEncode::UTF16LE)
-			return 2 ;
-		if (encode_ == StringEncode::UTF16BE)
-			return 2 ;
-		if (encode_ == StringEncode::UTF32LE)
-			return 4 ;
-		if (encode_ == StringEncode::UTF32BE)
-			return 4 ;
-		return 0 ;
-	}
-
 #ifdef __CSC_SYSTEM_WINDOWS__
 	String<Stra> stra_from_strw (CR<String<Strw>> a) const override {
 		const auto r1x = a.length () ;
@@ -717,7 +674,7 @@ public:
 	}
 
 	String<Stra> stra_from (CR<String<Stru>> a) const override {
-		if (is_encode (a ,StringEncode::ASCII))
+		if (a.is_encode (StringEncode::ASCII))
 			return keep[TYPE<String<Stra>>::expr] (Pointer::from (a)) ;
 		return stra_from_strw (strw_from (a)) ;
 	}
@@ -802,7 +759,7 @@ public:
 	}
 
 	String<Stru> stru8_from (CR<String<Stra>> a) const override {
-		if (is_encode (a ,StringEncode::ASCII))
+		if (a.is_encode (StringEncode::ASCII))
 			return keep[TYPE<String<Stru>>::expr] (Pointer::from (a)) ;
 		return stru8_from (strw_from_stra (a)) ;
 	}

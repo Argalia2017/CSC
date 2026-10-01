@@ -582,16 +582,32 @@ public:
 		const auto r5x = MathProc::min_of (r3x[0] ,r4x[0]) * MathProc::inverse (sx) ;
 		const auto r6x = MathProc::min_of (r3x[1] ,r4x[1]) * MathProc::inverse (sy) ;
 		const auto r7x = MathProc::min_of (r3x[2] ,r4x[2]) * MathProc::inverse (sz) ;
-		const auto r8x = MathProc::delta (r5x) * infinity + r5x ;
-		const auto r9x = MathProc::delta (r6x) * infinity + r6x ;
-		const auto r10x = MathProc::delta (r7x) * infinity + r7x ;
-		const auto r11x = MathProc::min_of (r8x ,r9x ,r10x) ;
-		const auto r12x = TranslationMatrix (r2x) ;
-		const auto r13x = MathProc::square (sx * r11x) ;
-		const auto r14x = MathProc::square (sy * r11x) ;
-		const auto r15x = MathProc::square (sz * r11x) ;
-		const auto r16x = DiagMatrix (sqrt_side (r13x) ,sqrt_side (r14x) ,sqrt_side (r15x)) ;
-		return r12x * r16x ;
+		const auto r8x = r1x.mMax - r1x.mMin ;
+		const auto r9x = cut_length (r5x ,sx ,sy ,sz ,r8x) ;
+		const auto r10x = cut_length (r6x ,sx ,sy ,sz ,r8x) ;
+		const auto r11x = cut_length (r7x ,sx ,sy ,sz ,r8x) ;
+		const auto r12x = invoke ([&] () {
+			if (r9x <= MathProc::min_of (r10x ,r11x))
+				return r5x ;
+			if (r10x <= MathProc::min_of (r9x ,r11x))
+				return r6x ;
+			if (r11x <= MathProc::min_of (r9x ,r10x))
+				return r7x ;
+			return Flt64 (1) ;
+		}) ;
+		const auto r13x = TranslationMatrix (r2x) ;
+		const auto r14x = MathProc::square (sx * r12x) ;
+		const auto r15x = MathProc::square (sy * r12x) ;
+		const auto r16x = MathProc::square (sz * r12x) ;
+		const auto r17x = DiagMatrix (sqrt_side (r14x) ,sqrt_side (r15x) ,sqrt_side (r16x)) ;
+		return r13x * r17x ;
+	}
+
+	Flt64 cut_length (CR<Flt64> s ,CR<Flt64> sx ,CR<Flt64> sy ,CR<Flt64> sz ,CR<Vector> d) const {
+		const auto r1x = sx * s * 2 - d[0] ;
+		const auto r2x = sy * s * 2 - d[1] ;
+		const auto r3x = sz * s * 2 - d[2] ;
+		return MathProc::abs (r1x) + MathProc::abs (r2x) + MathProc::abs (r3x) ;
 	}
 
 	Flt64 sqrt_side (CR<Flt64> a) const {

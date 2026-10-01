@@ -11,8 +11,6 @@ int test () ;
 
 int main () {
 	CLOG.show () ;
-	CLOG.open (slice (".")) ;
-	const auto r1x = ArrayList<int> ({1 ,3 ,5 ,7 ,9}) ;
-	noop (r1x) ;
+
 	return 0 ;
 }

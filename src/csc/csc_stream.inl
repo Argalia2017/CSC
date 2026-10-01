@@ -347,7 +347,6 @@ public:
 	void read (CR<Slice> item) override {
 		auto rax = Stru32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_mid (Index (item[i]) ,0 ,128)) ;
 			read (rax) ;
 			assume (rax == item[i]) ;
 		}
@@ -758,7 +757,6 @@ public:
 	void read (CR<Slice> item) override {
 		auto rax = Stru32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_mid (Index (item[i]) ,0 ,128)) ;
 			read (rax) ;
 			assume (rax == item[i]) ;
 		}
@@ -770,18 +768,33 @@ public:
 			auto &&rax = keep[TYPE<String<Stru>>::expr] (item) ;
 			if (rax.step () != 1)
 				discard ;
+			if ifdo (TRUE) {
+				if (self.mStream->step () == rax.step ())
+					discard ;
+				assume (FALSE) ;
+			}
 			read_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru16>>::expr] (item) ;
 			if (rax.step () != 2)
 				discard ;
+			if ifdo (TRUE) {
+				if (self.mStream->step () == rax.step ())
+					discard ;
+				assume (FALSE) ;
+			}
 			read_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru32>>::expr] (item) ;
 			if (rax.step () != 4)
 				discard ;
+			if ifdo (TRUE) {
+				if (self.mStream->step () == rax.step ())
+					discard ;
+				assume (FALSE) ;
+			}
 			read_string_impl (rax) ;
 		}
 	}
@@ -1008,7 +1021,6 @@ public:
 
 	void write (CR<Slice> item) override {
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_mid (Index (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
 	}
@@ -1513,7 +1525,6 @@ public:
 
 	void write (CR<Slice> item) override {
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_mid (Index (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
 	}
@@ -1524,18 +1535,39 @@ public:
 			auto &&rax = keep[TYPE<String<Stru>>::expr] (item) ;
 			if (rax.step () != 1)
 				discard ;
+			if ifdo (TRUE) {
+				if (self.mStream->step () == rax.step ())
+					discard ;
+				if (rax.is_encode (StringEncode::ASCII))
+					discard ;
+				assume (FALSE) ;
+			}
 			write_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru16>>::expr] (item) ;
 			if (rax.step () != 2)
 				discard ;
+			if ifdo (TRUE) {
+				if (self.mStream->step () == rax.step ())
+					discard ;
+				if (rax.is_encode (StringEncode::ASCII))
+					discard ;
+				assume (FALSE) ;
+			}
 			write_string_impl (rax) ;
 		}
 		if ifdo (act) {
 			auto &&rax = keep[TYPE<String<Stru32>>::expr] (item) ;
 			if (rax.step () != 4)
 				discard ;
+			if ifdo (TRUE) {
+				if (self.mStream->step () == rax.step ())
+					discard ;
+				if (rax.is_encode (StringEncode::ASCII))
+					discard ;
+				assume (FALSE) ;
+			}
 			write_string_impl (rax) ;
 		}
 	}

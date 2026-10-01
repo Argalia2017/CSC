@@ -400,11 +400,11 @@ struct StringHolder implement Interface {
 	imports CFat<StringHolder> hold (CR<StringLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Slice> that ,CR<Length> step_) = 0 ;
-	virtual void initialize (CR<Length> size_ ,CR<Length> step_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Slice> that) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
 	virtual void initialize (CR<StringLayout> that) = 0 ;
 	virtual void clear () = 0 ;
-	virtual Flag encode () const = 0 ;
+	virtual Bool is_encode (CR<Just<StringEncode>> flag) const = 0 ;
 	virtual Length size () const = 0 ;
 	virtual Length step () const = 0 ;
 	virtual Length length () const = 0 ;
@@ -444,6 +444,8 @@ public:
 			return inline_vptr (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectElementBinder<A>::expr)
 			return inline_vptr (ReflectElementBinder<A> ()) ;
+		if (uuid == ReflectGuidBinder<A>::expr)
+			return inline_vptr (ReflectGuidBinder<A> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -473,11 +475,11 @@ public:
 	implicit String () = default ;
 
 	implicit String (CR<Slice> that) {
-		StringHolder::hold (thiz)->initialize (that ,SIZE_OF<A>::expr) ;
+		StringHolder::hold (thiz)->initialize (StringUnknownBinder<A> () ,that) ;
 	}
 
 	explicit String (CR<SizeProxy> size_) {
-		StringHolder::hold (thiz)->initialize (size_ ,SIZE_OF<A>::expr) ;
+		StringHolder::hold (thiz)->initialize (StringUnknownBinder<A> () ,size_) ;
 	}
 
 	template <class...ARG1>
@@ -512,8 +514,8 @@ public:
 		return StringHolder::hold (thiz)->clear () ;
 	}
 
-	Flag encode () const {
-		return StringHolder::hold (thiz)->encode () ;
+	Bool is_encode (CR<Just<StringEncode>> flag) const {
+		return StringHolder::hold (thiz)->is_encode (flag) ;
 	}
 
 	Length size () const {

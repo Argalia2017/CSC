@@ -971,20 +971,20 @@ template <class A ,class SIZE = RANK0>
 using ARR = typename ARR_HELP<A ,SIZE ,ALWAYS>::RET ;
 
 template <class...>
-trait REFLECT_INVOKE_HELP ;
+trait REMOVE_INVOKE_HELP ;
 
 template <class A ,class OTHERWISE>
-trait REFLECT_INVOKE_HELP<A ,OTHERWISE> {
+trait REMOVE_INVOKE_HELP<A ,OTHERWISE> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REFLECT_INVOKE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (&A::operator())>>> {
+trait REMOVE_INVOKE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (&A::operator())>>> {
 	using RET = typeof (&A::operator()) ;
 } ;
 
 template <class A>
-using REFLECT_INVOKE = typename REFLECT_INVOKE_HELP<A ,ALWAYS>::RET ;
+using REMOVE_INVOKE = typename REMOVE_INVOKE_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
 trait REFLECT_FUNCTION_HELP ;
@@ -1009,13 +1009,13 @@ trait REFLECT_FUNCTION_HELP<DEF<A (C:: *) (B...) const>> {
 } ;
 
 template <class A>
-using IS_FUNCTION = typename REFLECT_FUNCTION_HELP<REFLECT_INVOKE<A>>::RET ;
+using IS_FUNCTION = typename REFLECT_FUNCTION_HELP<REMOVE_INVOKE<A>>::RET ;
 
 template <class A>
-using FUNCTION_RETURN = typename REFLECT_FUNCTION_HELP<REFLECT_INVOKE<A>>::RETURN ;
+using FUNCTION_RETURN = typename REFLECT_FUNCTION_HELP<REMOVE_INVOKE<A>>::RETURN ;
 
 template <class A>
-using FUNCTION_PARAMS = typename REFLECT_FUNCTION_HELP<REFLECT_INVOKE<A>>::PARAMS ;
+using FUNCTION_PARAMS = typename REFLECT_FUNCTION_HELP<REMOVE_INVOKE<A>>::PARAMS ;
 
 template <class...>
 trait IS_UNDER_HELP ;
@@ -1118,20 +1118,32 @@ template <class A>
 using IS_EQUALABLE = typename IS_EQUALABLE_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
-trait IS_COMPRABLE_HELP ;
+trait IS_COMPARABLE_HELP ;
 
 template <class A ,class OTHERWISE>
-trait IS_COMPRABLE_HELP<A ,OTHERWISE> {
+trait IS_COMPARABLE_HELP<A ,OTHERWISE> {
 	using RET = ENUM_FALSE ;
 } ;
 
+#ifdef __CSC_COMPILER_GNUC__
+//@fatal: GCC is so stupid
+#pragma GCC diagnostic push
+#if __GNUC__ >= 12
+#pragma GCC diagnostic ignored "-Warray-compare"
+#endif
+#endif
+
 template <class A>
-trait IS_COMPRABLE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A) < nullof (A))>>> {
+trait IS_COMPARABLE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A) < nullof (A))>>> {
 	using RET = ENUM_NOT<IS_CLASS<A>> ;
 } ;
 
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic pop
+#endif
+
 template <class A>
-using IS_COMPRABLE = typename IS_COMPRABLE_HELP<A ,ALWAYS>::RET ;
+using IS_COMPARABLE = typename IS_COMPARABLE_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
 trait HAS_CLONE_HELP ;

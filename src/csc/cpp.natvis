@@ -148,7 +148,7 @@
 	</Type>
 
 	<Type Name="CSC::Buffer&lt;*&gt;">
-		<Intrinsic Name="at" Expression="(($T1*)((__int64)this+i))" >
+		<Intrinsic Name="at" Expression="(($T1*)((__int64)this+i*sizeof($T1)))" >
 			<Parameter Name="i" Type="__int32"/>
 		</Intrinsic>
 		<Expand HideRawView="true">
@@ -394,7 +394,7 @@
 				<Size>mWrite&lt;10?mWrite:10</Size>
 				<ValueNode>bt($i)->mMap</ValueNode>
 			</IndexListItems>
-			<ExpandedItem>as()</ExpandedItem>
+			<Item Name="[+]">*as()</Item>
 		</Expand>
 	</Type>
 

@@ -181,60 +181,91 @@ public:
 		RefBufferHolder::hold (self.mString)->prepare (holder) ;
 	}
 
-	void initialize (CR<Slice> that ,CR<Length> step_) override {
+	void initialize (CR<Unknown> holder ,CR<Slice> that) override {
 		const auto r1x = SliceHolder::hold (that)->size () ;
-		initialize (r1x ,step_) ;
+		initialize (holder ,r1x) ;
 		for (auto &&i : range (0 ,r1x)) {
 			set (i ,that[i]) ;
 		}
 		trunc (r1x) ;
 	}
 
-	void initialize (CR<Length> size_ ,CR<Length> step_) override {
+	void initialize (CR<Unknown> holder ,CR<Length> size_) override {
 		if (size_ <= 0)
 			return ;
-		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mString) ;
 		const auto r1x = size_ + 2 ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (step_ != 1)
-				discard ;
-			rax = RefBuffer<Stru> (r1x) ;
-		}
-		if ifdo (act) {
-			if (step_ != 2)
-				discard ;
-			rax = RefBuffer<Stru16> (r1x) ;
-		}
-		if ifdo (act) {
-			if (step_ != 4)
-				discard ;
-			rax = RefBuffer<Stru32> (r1x) ;
-		}
-		if ifdo (act) {
-			assert (FALSE) ;
-		}
+		RefBufferHolder::hold (self.mString)->initialize (holder ,r1x) ;
+		self.mEncode = StringEncode::ASCII ;
 		clear () ;
 	}
 
 	void initialize (CR<StringLayout> that) override {
 		const auto r1x = StringHolder::hold (that)->length () ;
-		const auto r2x = StringHolder::hold (that)->step () ;
 		if (r1x == 0)
 			return ;
-		initialize (r1x ,r2x) ;
+		initialize (that.mString.unknown () ,r1x) ;
+		self.mEncode = that.mEncode ;
 		splice (0 ,that) ;
 	}
 
 	void clear () override {
 		trunc (0) ;
 		trunc (size ()) ;
+		trunc (size () + 1) ;
 	}
 
-	Flag encode () const override {
+	Bool is_encode (CR<Just<StringEncode>> flag) const override {
 		if (!self.mString.exist ())
-			return 0 ;
-		return self.mEncode ;
+			return TRUE ;
+		if ifdo (TRUE) {
+			if (flag != StringEncode::ASCII)
+				discard ;
+			auto rax = Stru32 () ;
+			for (auto &&i : range (0 ,size ())) {
+				get (i ,rax) ;
+				if (rax == 0)
+					break ;
+				if (rax >= 128)
+					return FALSE ;
+			}
+			return TRUE ;
+		}
+		const auto r1x = RFat<ReflectGuid> (self.mString.unknown ()) ;
+		if ifdo (TRUE) {
+			if (flag != StringEncode::LOCAL)
+				discard ;
+			if (self.mEncode != flag)
+				if (r1x->type_guid () != inline_guid (TYPE<Str>::expr))
+					discard ;
+			return TRUE ;
+		}
+		if ifdo (TRUE) {
+			if (flag != StringEncode::UTF8)
+				discard ;
+			if (self.mEncode != flag)
+				if (r1x->type_guid () != inline_guid (TYPE<Stru>::expr))
+					discard ;
+			return TRUE ;
+		}
+		if ifdo (TRUE) {
+			if (flag != StringEncode::UTF16LE)
+				if (flag != StringEncode::UTF16BE)
+					discard ;
+			if (self.mEncode != flag)
+				if (r1x->type_guid () != inline_guid (TYPE<Stru16>::expr))
+					discard ;
+			return TRUE ;
+		}
+		if ifdo (TRUE) {
+			if (flag != StringEncode::UTF32LE)
+				if (flag != StringEncode::UTF32BE)
+					discard ;
+			if (self.mEncode != flag)
+				if (r1x->type_guid () != inline_guid (TYPE<Stru32>::expr))
+					discard ;
+			return TRUE ;
+		}
+		return FALSE ;
 	}
 
 	Length size () const override {
@@ -423,10 +454,10 @@ public:
 	}
 
 	void trunc (CR<Index> index) override {
-		for (auto &&i : range (index ,index + 2)) {
-			if (!inline_mid (i ,0 ,self.mString.size ()))
-				continue ;
-			set (i ,Stru32 (0X00)) ;
+		if ifdo (TRUE) {
+			if (!inline_mid (index ,0 ,self.mString.size ()))
+				discard ;
+			set (index ,Stru32 (0X00)) ;
 		}
 	}
 
@@ -687,14 +718,12 @@ public:
 	}
 
 	void take () override {
-		const auto r1x = self.mDeque.size () ;
-		noop (r1x) ;
-		assert (r1x > 0) ;
+		assert (!empty ()) ;
 		Index ix = self.mRead ;
-		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		const auto r3x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
-		r3x->destroy (self.mDeque[ix] ,1) ;
-		r2x->drop (self.mDeque[ix]) ;
+		const auto r1x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
+		const auto r2x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
+		r2x->destroy (self.mDeque[ix] ,1) ;
+		r1x->drop (self.mDeque[ix]) ;
 		self.mRead++ ;
 		check_bound () ;
 	}
@@ -711,14 +740,12 @@ public:
 	}
 
 	void pop () override {
-		const auto r1x = self.mDeque.size () ;
-		noop (r1x) ;
-		assert (r1x > 0) ;
+		assert (!empty ()) ;
 		Index ix = self.mWrite - 1 ;
-		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		const auto r3x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
-		r3x->destroy (self.mDeque[ix] ,1) ;
-		r2x->drop (self.mDeque[ix]) ;
+		const auto r1x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
+		const auto r2x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
+		r2x->destroy (self.mDeque[ix] ,1) ;
+		r1x->drop (self.mDeque[ix]) ;
 		self.mWrite-- ;
 	}
 
@@ -1294,6 +1321,7 @@ public:
 	}
 
 	void remove (CR<Index> index) override {
+		assert (self.mRange[index] != NONE) ;
 		Index ix = self.mRange[index] ;
 		self.mRange[index] = NONE ;
 		self.mList.free (ix) ;
@@ -2354,8 +2382,7 @@ public:
 		const auto r1x = self.mSet.bt (index).mHash ;
 		Index ix = r1x % self.mRange.size () ;
 		while (TRUE) {
-			if (self.mRange[ix] == NONE)
-				break ;
+			assert (self.mRange[ix] != NONE) ;
 			if (self.mRange[ix] == index)
 				break ;
 			ix++ ;

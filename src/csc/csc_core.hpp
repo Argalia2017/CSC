@@ -534,7 +534,7 @@ struct FUNCTION_inline_compr {
 		return a.compr (b) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<IS_COMPRABLE<ARG1>>>
+	template <class ARG1 ,class = REQUIRE<IS_COMPARABLE<ARG1>>>
 	forceinline Flag compr_impl (CR<typeof (PH3)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		if (a < b)
 			return NONE ;
@@ -635,6 +635,16 @@ struct FUNCTION_inline_visit {
 } ;
 
 static constexpr auto inline_visit = FUNCTION_inline_visit () ;
+
+struct FUNCTION_inline_guid {
+	template <class ARG1>
+	forceinline Flag operator() (TYPE<ARG1>) const {
+		using R1X = TYPE<Bool ,Val32 ,Val64 ,Flt32 ,Flt64 ,Byte ,Word ,Char ,Quad ,Stra ,Strw ,Stru ,Stru16 ,Stru32 ,typeof (NULL)> ;
+		return TYPE_FIND<R1X ,ARG1>::expr ;
+	}
+} ;
+
+static constexpr auto inline_guid = FUNCTION_inline_guid () ;
 
 struct FUNCTION_inline_expr {
 	template <class ARG1>
@@ -1729,7 +1739,7 @@ public:
 	Bool is_noexcept () const override {
 		if (HAS_COMPR<A>::expr)
 			return TRUE ;
-		if (IS_COMPRABLE<A>::expr)
+		if (IS_COMPARABLE<A>::expr)
 			return TRUE ;
 		if (IS_TRIVIAL<A>::expr)
 			return TRUE ;
@@ -1779,10 +1789,9 @@ template <class A>
 class ReflectGuidBinder final implement Fat<ReflectGuid ,void> {
 public:
 	Flag type_guid () const override {
-		using R1X = TYPE<Bool ,Val32 ,Val64 ,Flt32 ,Flt64 ,Byte ,Word ,Char ,Quad ,Stra ,Strw ,Stru ,Stru16 ,Stru32 ,typeof (NULL)> ;
-		using R2X = TYPE_FIND<R1X ,A> ;
-		if (R2X::expr >= 0)
-			return R2X::expr + 1 ;
+		const auto r1x = inline_guid (TYPE<A>::expr) ;
+		if (r1x >= 0)
+			return r1x + 1 ;
 		return inline_vptr (thiz) ;
 	}
 

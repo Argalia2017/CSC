@@ -149,6 +149,7 @@
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -398,6 +399,18 @@ class initializer_list ;
 #endif
 #endif
 
+#ifndef __macro_is_same
+#ifdef __CSC_COMPILER_GNUC__
+#if __GNUC__ >= 12
+#define __macro_is_same(a ,b) __is_same (a ,b)
+#endif
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#define __macro_is_same(a ,b) __is_same (a ,b)
+#endif
+#endif
+
 #ifndef __macro_type_rtti
 #ifdef __CSC_CXX_RTTI__
 #define __macro_type_rtti ""
@@ -549,7 +562,6 @@ trait KILL_HELP<A ,B> {
 template <class A ,class B>
 using KILL = typename KILL_HELP<A ,B>::RET ;
 
-#ifdef __CSC_COMPILER_MSVC__
 template <class...>
 trait IS_SAME_HELP ;
 
@@ -563,18 +575,12 @@ trait IS_SAME_HELP<A ,B> {
 	using RET = ENUM_FALSE ;
 } ;
 
+#ifdef __macro_is_same
+template <class A ,class B>
+using IS_SAME = ENUM<(__macro_is_same (A ,B))> ;
+#else
 template <class A ,class B>
 using IS_SAME = typename IS_SAME_HELP<A ,B>::RET ;
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-template <class A ,class B>
-using IS_SAME = ENUM<(__is_same (A ,B))> ;
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-template <class A ,class B>
-using IS_SAME = ENUM<(__is_same (A ,B))> ;
 #endif
 
 template <class...>
