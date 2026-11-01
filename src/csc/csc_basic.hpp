@@ -74,6 +74,12 @@ public:
 		return pull () ;
 	}
 
+	A pull (CR<A> def) const {
+		auto rax = Box<A>::make (move (def)) ;
+		OptionalHolder::hold (thiz)->pull (rax) ;
+		return move (rax.ref) ;
+	}
+
 	void once (CR<A> item) const {
 		once (move (item)) ;
 	}

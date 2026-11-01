@@ -1555,7 +1555,7 @@ public:
 } ;
 
 template <class ARG1>
-inline FatLayout PrintWriting (CR<ARG1> param) {
+inline Writing PrintWriting (CR<ARG1> param) {
 	return CFat<WritingHolder> (PrintWritingBinder<ARG1> () ,param) ;
 }
 
@@ -1572,7 +1572,7 @@ struct FormatHolder implement Interface {
 
 	virtual void initialize (CR<Slice> format) = 0 ;
 	virtual void friend_write (CR<Writer> writer) const = 0 ;
-	virtual void once (CR<Wrapper<FatLayout>> params) const = 0 ;
+	virtual void once (CR<Wrapper<Writing>> params) const = 0 ;
 } ;
 
 class FormatWritingBinder final implement Fat<WritingHolder ,FormatLayout> {
@@ -1597,10 +1597,6 @@ public:
 
 	forceinline operator Writing () const leftvalue {
 		return CFat<WritingHolder> (FormatWritingBinder () ,thiz) ;
-	}
-
-	void friend_write (CR<Writer> writer) const {
-		return FormatHolder::hold (thiz)->friend_write (writer) ;
 	}
 
 	template <class...ARG1>
@@ -1658,10 +1654,6 @@ public:
 
 	forceinline operator Writing () const leftvalue {
 		return CFat<WritingHolder> (CommaWritingBinder () ,thiz) ;
-	}
-
-	void friend_write (CR<Writer> writer) const {
-		return CommaHolder::hold (thiz)->friend_write (writer) ;
 	}
 
 	void increase () const {

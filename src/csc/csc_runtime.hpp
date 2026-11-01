@@ -450,22 +450,22 @@ public:
 	}
 } ;
 
-struct ExecutingHolder implement Interface {
-	virtual void friend_execute (CR<Index> slot) = 0 ;
+struct ThreadProcHolder implement Interface {
+	virtual void friend_proc (CR<Index> slot) = 0 ;
 } ;
 
-class Executing implement Proxy {
+class ThreadProc implement Proxy {
 protected:
-	VFat<ExecutingHolder> mThat ;
+	VFat<ThreadProcHolder> mThat ;
 
 public:
-	implicit Executing () = delete ;
+	implicit ThreadProc () = delete ;
 
-	template <class ARG1 ,class = REQUIRE<IS_EXTEND<ExecutingHolder ,ARG1>>>
-	implicit Executing (CR<VFat<ARG1>> that) :mThat (that) {}
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<ThreadProcHolder ,ARG1>>>
+	implicit ThreadProc (CR<VFat<ARG1>> that) :mThat (that) {}
 
-	void friend_execute (CR<Index> slot) const {
-		return mThat->friend_execute (slot) ;
+	void friend_proc (CR<Index> slot) const {
+		return mThat->friend_proc (slot) ;
 	}
 } ;
 
@@ -476,7 +476,7 @@ struct ThreadHolder implement Interface {
 	imports VFat<ThreadHolder> hold (VR<ThreadLayout> that) ;
 	imports CFat<ThreadHolder> hold (CR<ThreadLayout> that) ;
 
-	virtual void initialize (RR<Ref<Executing>> executing ,CR<Index> slot) = 0 ;
+	virtual void initialize (RR<Ref<ThreadProc>> thread_proc ,CR<Index> slot) = 0 ;
 	virtual Flag thread_uid () const = 0 ;
 	virtual void start () = 0 ;
 	virtual void stop () = 0 ;
@@ -486,9 +486,9 @@ class Thread implement Super<Ref<ThreadLayout>> {
 public:
 	implicit Thread () = default ;
 
-	explicit Thread (RR<Ref<Executing>> executing ,CR<Index> slot) {
+	explicit Thread (RR<Ref<ThreadProc>> thread_proc ,CR<Index> slot) {
 		mThis = ThreadHolder::create () ;
-		ThreadHolder::hold (thiz)->initialize (move (executing) ,slot) ;
+		ThreadHolder::hold (thiz)->initialize (move (thread_proc) ,slot) ;
 	}
 
 	Flag thread_uid () const {
@@ -766,7 +766,7 @@ struct GlobalHolder implement Interface {
 	imports CFat<GlobalHolder> hold (CR<GlobalLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void initialize (CR<Slice> name ,CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<String<Str>> name ,CR<Unknown> holder) = 0 ;
 	virtual void startup () const = 0 ;
 	virtual void shutdown () const = 0 ;
 	virtual Bool exist () const = 0 ;
@@ -799,7 +799,7 @@ protected:
 public:
 	implicit Global () = default ;
 
-	explicit Global (CR<Slice> name) {
+	explicit Global (CR<String<Str>> name) {
 		GlobalHolder::hold (thiz)->initialize (name ,AutoRefUnknownBinder<A> ()) ;
 	}
 

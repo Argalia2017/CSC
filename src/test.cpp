@@ -11,7 +11,6 @@
 using namespace ROUTINE ;
 
 /*
-1. VR<[^\r]+> expr_m
 2. Super<Ref<\w+Layout>>
 3. struct \w+ (implement [^\r]+ )?\{(\r\n(?!\} ;)[^\r]*)*(private|public):(?!\r\n\t+implicit \w+Layout)
 */

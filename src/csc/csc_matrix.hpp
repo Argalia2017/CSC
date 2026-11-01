@@ -984,10 +984,10 @@ struct QuaternionHolder implement Interface {
 	virtual Bool equal (CR<QuaternionLayout> that) const = 0 ;
 	virtual Flag compr (CR<QuaternionLayout> that) const = 0 ;
 	virtual void visit (CR<Visitor> visitor) const = 0 ;
-	virtual QuaternionLayout rotate (CR<Flt64> pitch ,CR<Flt64> yaw ,CR<Flt64> roll) const = 0 ;
+	virtual QuaternionLayout rotate (CR<Flt64> yaw ,CR<Flt64> pitch ,CR<Flt64> roll) const = 0 ;
+	virtual QuaternionLayout rotate (CR<Vector> from ,CR<Vector> into) const = 0 ;
 	virtual QuaternionLayout smul (CR<QuaternionLayout> that) const = 0 ;
 	virtual QuaternionLayout inverse () const = 0 ;
-	virtual QuaternionLayout clip (CR<Flt64> abs_pitch) const = 0 ;
 	virtual Vector vector () const = 0 ;
 	virtual Matrix matrix () const = 0 ;
 	virtual EulerAngle euler (CR<Just<ViewMatrixOption>> type) const = 0 ;
@@ -1066,8 +1066,13 @@ public:
 		return QuaternionHolder::hold (thiz)->visit (visitor) ;
 	}
 
-	Quaternion rotate (CR<Flt64> pitch ,CR<Flt64> yaw ,CR<Flt64> roll) const {
-		QuaternionLayout ret = QuaternionHolder::hold (thiz)->rotate (pitch ,yaw ,roll) ;
+	Quaternion rotate (CR<Flt64> yaw ,CR<Flt64> pitch ,CR<Flt64> roll) const {
+		QuaternionLayout ret = QuaternionHolder::hold (thiz)->rotate (yaw ,pitch ,roll) ;
+		return move (keep[TYPE<Quaternion>::expr] (ret)) ;
+	}
+
+	Quaternion rotate (CR<Vector> from ,CR<Vector> into) const {
+		QuaternionLayout ret = QuaternionHolder::hold (thiz)->rotate (from ,into) ;
 		return move (keep[TYPE<Quaternion>::expr] (ret)) ;
 	}
 
@@ -1086,11 +1091,6 @@ public:
 
 	Quaternion inverse () const {
 		QuaternionLayout ret = QuaternionHolder::hold (thiz)->inverse () ;
-		return move (keep[TYPE<Quaternion>::expr] (ret)) ;
-	}
-
-	Quaternion clip (CR<Flt64> abs_pitch) const {
-		QuaternionLayout ret = QuaternionHolder::hold (thiz)->clip (abs_pitch) ;
 		return move (keep[TYPE<Quaternion>::expr] (ret)) ;
 	}
 

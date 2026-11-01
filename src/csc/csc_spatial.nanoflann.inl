@@ -111,13 +111,13 @@ using KDTreeDistanceF64 = nanoflann::L2_Simple_Adaptor<Flt64 ,KDTreeDataset<Flt6
 using KDTreeKNNAdaptorF32C3 = nanoflann::KDTreeSingleIndexAdaptor<KDTreeDistanceF32 ,KDTreeDataset<Flt32> ,3 ,Index> ;
 using KDTreeKNNAdaptorF64C3 = nanoflann::KDTreeSingleIndexAdaptor<KDTreeDistanceF64 ,KDTreeDataset<Flt64> ,3 ,Index> ;
 
-struct KDTreeF32 {
+struct KDTreeF32Param {
 	Box<KDTreeDataset<Flt32>> mDataset ;
 	Box<KDTreeKNNAdaptorF32C3> mKNNSearch ;
 	Box<KDTreeResult<Flt32>> mResult ;
 } ;
 
-struct KDTreeF64 {
+struct KDTreeF64Param {
 	Box<KDTreeDataset<Flt64>> mDataset ;
 	Box<KDTreeKNNAdaptorF64C3> mKNNSearch ;
 	Box<KDTreeResult<Flt64>> mResult ;
@@ -126,7 +126,7 @@ struct KDTreeF64 {
 class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> {
 public:
 	void initialize (RR<RefBuffer<Flt32>> pointcloud ,CR<Length> channel) override {
-		assert (channel > 0) ;
+		assert (channel >= 1) ;
 		const auto r1x = pointcloud.size () ;
 		const auto r2x = pointcloud.step () ;
 		assert (r1x > 0) ;
@@ -135,7 +135,7 @@ public:
 		self.mSize = r1x / channel ;
 		self.mAlign = r2x ;
 		self.mChannel = channel ;
-		self.mF32 = Ref<KDTreeF32>::make () ;
+		self.mF32 = Ref<KDTreeF32Param>::make () ;
 		self.mF32->mDataset = Box<KDTreeDataset<Flt32>>::make () ;
 		self.mF32->mDataset->mPointCloud = move (pointcloud) ;
 		self.mF32->mDataset->mSize = self.mSize ;
@@ -147,7 +147,7 @@ public:
 	}
 
 	void initialize (RR<RefBuffer<Flt64>> pointcloud ,CR<Length> channel) override {
-		assert (channel > 0) ;
+		assert (channel >= 1) ;
 		const auto r1x = pointcloud.size () ;
 		const auto r2x = pointcloud.step () ;
 		assert (r1x > 0) ;
@@ -156,7 +156,7 @@ public:
 		self.mSize = r1x / channel ;
 		self.mAlign = r2x ;
 		self.mChannel = channel ;
-		self.mF64 = Ref<KDTreeF64>::make () ;
+		self.mF64 = Ref<KDTreeF64Param>::make () ;
 		self.mF64->mDataset = Box<KDTreeDataset<Flt64>>::make () ;
 		self.mF64->mDataset->mPointCloud = move (pointcloud) ;
 		self.mF64->mDataset->mSize = self.mSize ;

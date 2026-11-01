@@ -317,7 +317,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_debug ()) __macro_break () ;  inline_crash () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_debug ()) __macro_break () ; else  inline_crash () ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -376,7 +376,7 @@ class initializer_list ;
 #endif
 
 #ifndef __macro_nullof
-#define __macro_nullof(...) CSC::FUNCTION_nullof<__VA_ARGS__>::invoke ()
+#define __macro_nullof(...) CSC::FUNCTION_nullof<__VA_ARGS__>::expr
 #endif
 
 #ifndef __macro_memcpy
@@ -533,7 +533,7 @@ struct TYPE {
 
 template <class A>
 struct FUNCTION_nullof {
-	forceinline static DEF<A &> invoke () noexcept {
+	forceinline static DEF<A &> expr_m () noexcept {
 		return (*DEF<A *> (1024)) ;
 	}
 } ;

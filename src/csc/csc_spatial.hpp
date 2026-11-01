@@ -272,17 +272,69 @@ public:
 	implicit VoxelGridRTree () = default ;
 } ;
 
-struct VoxelGridLayout {} ;
+struct VoxelIndex {
+	Index mX ;
+	Index mY ;
+	Index mZ ;
+
+	void visit (CR<Visitor> visitor) const {
+		inline_visit (visitor ,mX) ;
+		inline_visit (visitor ,mY) ;
+		inline_visit (visitor ,mZ) ;
+	}
+} ;
+
+struct VoxelGridChunk {
+	Length mWidth ;
+	Buffer<Byte ,ENUM<64>> mMask ;
+} ;
+
+struct VoxelGridLayout {
+	Allocator<VoxelGridChunk ,AllocatorNode> mChunk ;
+	HashSet<VoxelIndex> mVoxelSet ;
+	Flt64 mEpsilonInv ;
+	Length mSize ;
+	Length mLength ;
+} ;
 
 struct VoxelGridHolder implement Interface {
 	imports VFat<VoxelGridHolder> hold (VR<VoxelGridLayout> that) ;
 	imports CFat<VoxelGridHolder> hold (CR<VoxelGridLayout> that) ;
 
-	virtual void initialize () = 0 ;
+	virtual void initialize (CR<Length> size_ ,CR<Flt64> epsilon) = 0 ;
+	virtual void clear () = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual void add (CR<Vector> item) = 0 ;
+	virtual void add (CR<Array<Vector>> item) = 0 ;
 } ;
 
 class VoxelGrid implement VoxelGridLayout {
 public:
 	implicit VoxelGrid () = default ;
+
+	explicit VoxelGrid (CR<Length> size_ ,CR<Flt64> epsilon) {
+		VoxelGridHolder::hold (thiz)->initialize (size_ ,epsilon) ;
+	}
+
+	void clear () {
+		return VoxelGridHolder::hold (thiz)->clear () ;
+	}
+
+	Length size () const {
+		return VoxelGridHolder::hold (thiz)->size () ;
+	}
+
+	Length length () const {
+		return VoxelGridHolder::hold (thiz)->length () ;
+	}
+
+	void add (CR<Vector> item) {
+		return VoxelGridHolder::hold (thiz)->add (item) ;
+	}
+
+	void add (CR<Array<Vector>> item) {
+		return VoxelGridHolder::hold (thiz)->add (item) ;
+	}
 } ;
 } ;

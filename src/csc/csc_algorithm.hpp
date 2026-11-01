@@ -89,7 +89,6 @@ struct RansacLayout {
 	Random mRandom ;
 	Length mIteration ;
 	Length mMaxIteration ;
-	Flt64 mProbability ;
 	Flt64 mProbFactor ;
 	Array<Index> mSample ;
 	BitSet mCurrInlier ;
@@ -192,8 +191,12 @@ public:
 } ;
 
 struct KMeansLayout {
-	Length mRank ;
-	DataFrame mPool ;
+	DataFrame mPoint ;
+	Length mClusterSize ;
+	Length mPointSize ;
+	Length mPointChannel ;
+	Array<Property<Flt64>> mPointXYZ ;
+	Flt64 mDistanceVariance ;
 	Array<Array<Flt64>> mCurrCenter ;
 	Array<BitSet> mCurrCluster ;
 	Array<BitSet> mNextCluster ;
@@ -204,7 +207,8 @@ struct KMeansHolder implement Interface {
 	imports VFat<KMeansHolder> hold (VR<KMeansLayout> that) ;
 	imports CFat<KMeansHolder> hold (CR<KMeansLayout> that) ;
 
-	virtual void initialize (CR<Length> rank_ ,CR<DataFrame> pool) = 0 ;
+	virtual void initialize (CR<Length> cluster ,CR<DataFrame> point) = 0 ;
+	virtual void set_variance (CR<Flt64> threshold) = 0 ;
 	virtual Length rank () const = 0 ;
 	virtual Bool good () const = 0 ;
 	virtual void next () = 0 ;
@@ -215,8 +219,12 @@ class KMeans implement KMeansLayout {
 public:
 	implicit KMeans () = default ;
 
-	explicit KMeans (CR<Length> rank_ ,CR<DataFrame> pool) {
-		KMeansHolder::hold (thiz)->initialize (rank_ ,pool) ;
+	explicit KMeans (CR<Length> cluster ,CR<DataFrame> point) {
+		KMeansHolder::hold (thiz)->initialize (cluster ,point) ;
+	}
+
+	void set_variance (CR<Flt64> threshold) {
+		return KMeansHolder::hold (thiz)->set_variance (threshold) ;
 	}
 
 	Length rank () const {
@@ -538,6 +546,61 @@ public:
 	FFTransform inverse () const {
 		FFTransformLayout ret = FFTransformHolder::hold (thiz)->inverse () ;
 		return move (keep[TYPE<FFTransform>::expr] (ret)) ;
+	}
+} ;
+
+struct KalmanFilterLayout {
+	Vector mVecX ;
+	Vector mVecY ;
+	Vector mVecZ ;
+	Matrix mMatXVar ;
+	Matrix mMatYVar ;
+	Flt64 mLastTime ;
+	Matrix mMatI ;
+	Matrix mMatF ;
+	Matrix mMatP ;
+	Matrix mMatK ;
+	Matrix mMatH ;
+	Matrix mMatJ ;
+} ;
+
+struct KalmanFilterHolder implement Interface {
+	imports VFat<KalmanFilterHolder> hold (VR<KalmanFilterLayout> that) ;
+	imports CFat<KalmanFilterHolder> hold (CR<KalmanFilterLayout> that) ;
+
+	virtual void initialize (CR<Flt64> x_var ,CR<Flt64> y_var) = 0 ;
+	virtual Vector predict (CR<Flt64> timestamp) = 0 ;
+	virtual void update (CR<Vector> y ,CR<Flt64> timestamp) = 0 ;
+} ;
+
+class KalmanFilter implement KalmanFilterLayout {
+protected:
+	using KalmanFilterLayout::mVecX ;
+	using KalmanFilterLayout::mVecY ;
+	using KalmanFilterLayout::mVecZ ;
+	using KalmanFilterLayout::mMatXVar ;
+	using KalmanFilterLayout::mMatYVar ;
+	using KalmanFilterLayout::mLastTime ;
+	using KalmanFilterLayout::mMatI ;
+	using KalmanFilterLayout::mMatF ;
+	using KalmanFilterLayout::mMatP ;
+	using KalmanFilterLayout::mMatK ;
+	using KalmanFilterLayout::mMatH ;
+	using KalmanFilterLayout::mMatJ ;
+
+public:
+	implicit KalmanFilter () = default ;
+
+	explicit KalmanFilter (CR<Flt64> x_var ,CR<Flt64> y_var) {
+		KalmanFilterHolder::hold (thiz)->initialize (x_var ,y_var) ;
+	}
+
+	Vector predict (CR<Flt64> timestamp) {
+		return KalmanFilterHolder::hold (thiz)->predict (timestamp) ;
+	}
+
+	void update (CR<Vector> y ,CR<Flt64> timestamp) {
+		return KalmanFilterHolder::hold (thiz)->update (y ,timestamp) ;
 	}
 } ;
 } ;

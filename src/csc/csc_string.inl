@@ -359,6 +359,8 @@ public:
 				if ifdo (act) {
 					if (rax != Flag (1))
 						discard ;
+					if (r1x < Char (0X80))
+						discard ;
 					if (r1x > Char (0XBF))
 						discard ;
 					rbx = Char ((rbx << 6) | (r1x & Char (0X3F))) ;
@@ -366,6 +368,8 @@ public:
 				}
 				if ifdo (act) {
 					if (!inline_mid (rax ,2 ,6))
+						discard ;
+					if (r1x < Char (0X80))
 						discard ;
 					if (r1x > Char (0XBF))
 						discard ;
@@ -536,6 +540,8 @@ public:
 			if ifdo (act) {
 				if (rax != Flag (1))
 					discard ;
+				if (r1x < Char (0X80))
+					discard ;
 				if (r1x > Char (0XBF))
 					discard ;
 				rbx = Char ((rbx << 6) | (r1x & Char (0X3F))) ;
@@ -545,6 +551,8 @@ public:
 			}
 			if ifdo (act) {
 				if (!inline_mid (rax ,2 ,6))
+					discard ;
+				if (r1x < Char (0X80))
 					discard ;
 				if (r1x > Char (0XBF))
 					discard ;
@@ -1453,13 +1461,13 @@ public:
 		return move (ret) ;
 	}
 
-	XmlParserLayout child (CR<Slice> name) const override {
+	XmlParserLayout child (CR<Format> name) const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mTree[self.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mObjectMap.map (String<Stru>::make (name)) ;
 		}
 		return move (ret) ;
 	}
@@ -1508,16 +1516,16 @@ public:
 	}
 
 	Bool equal (CR<XmlParserLayout> that) const override {
-		const auto r1x = inline_compr (self.mThis.exist () ,that.mThis.exist ()) ;
-		if (r1x != ZERO)
-			return FALSE ;
+		const auto r1x = inline_equal (self.mThis.exist () ,that.mThis.exist ()) ;
+		if (!r1x)
+			return r1x ;
 		if (!self.mThis.exist ())
 			return TRUE ;
 		if (address (self.mThis->mTree) != address (that.mThis->mTree))
 			return FALSE ;
 		if (self.mIndex != that.mIndex)
 			return FALSE ;
-		return FALSE ;
+		return TRUE ;
 	}
 
 	CR<String<Stru>> name () const leftvalue override {
@@ -2084,13 +2092,13 @@ public:
 		return move (ret) ;
 	}
 
-	JsonParserLayout child (CR<Slice> name) const override {
+	JsonParserLayout child (CR<Format> name) const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
 			ret.mThis = self.mThis ;
-			ret.mIndex = self.mThis->mTree[self.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = self.mThis->mTree[self.mIndex].mObjectMap.map (String<Stru>::make (name)) ;
 		}
 		return move (ret) ;
 	}
@@ -2139,16 +2147,16 @@ public:
 	}
 
 	Bool equal (CR<JsonParserLayout> that) const override {
-		const auto r1x = inline_compr (self.mThis.exist () ,that.mThis.exist ()) ;
-		if (r1x != ZERO)
-			return FALSE ;
+		const auto r1x = inline_equal (self.mThis.exist () ,that.mThis.exist ()) ;
+		if (!r1x)
+			return r1x ;
 		if (!self.mThis.exist ())
 			return TRUE ;
 		if (address (self.mThis->mTree) != address (that.mThis->mTree))
 			return FALSE ;
 		if (self.mIndex != that.mIndex)
 			return FALSE ;
-		return FALSE ;
+		return TRUE ;
 	}
 
 	CR<String<Stru>> name () const leftvalue override {
@@ -2331,7 +2339,7 @@ struct PlyParserElement {
 	Length mLineStep ;
 	Length mLineLength ;
 	ArrayList<PlyParserProperty> mPropertyList ;
-	Set<String<Stru>> mPropertySet ;
+	Set<String<Stru>> mPropertyName ;
 	Length mLastSize ;
 	RefBuffer<Byte> mPlyBuffer ;
 	Index mPlyIndex ;
@@ -2342,7 +2350,7 @@ struct PlyParserElement {
 struct PlyParserTree {
 	String<Stru> mFormat ;
 	ArrayList<PlyParserElement> mElementList ;
-	Set<String<Stru>> mElementSet ;
+	Set<String<Stru>> mElementName ;
 } ;
 
 struct MakePlyParserLayout {
@@ -2351,7 +2359,7 @@ struct MakePlyParserLayout {
 	ByteReader mByteReader ;
 	String<Stru> mFormat ;
 	ArrayList<PlyParserElement> mElementList ;
-	Set<String<Stru>> mElementSet ;
+	Set<String<Stru>> mElementName ;
 	Bool mDiffEndianFlag ;
 	StreamShape mBodyBackup ;
 	Index mLastIndex ;
@@ -2368,7 +2376,7 @@ protected:
 	using MakePlyParserLayout::mByteReader ;
 	using MakePlyParserLayout::mFormat ;
 	using MakePlyParserLayout::mElementList ;
-	using MakePlyParserLayout::mElementSet ;
+	using MakePlyParserLayout::mElementName ;
 	using MakePlyParserLayout::mDiffEndianFlag ;
 	using MakePlyParserLayout::mLastIndex ;
 	using MakePlyParserLayout::mLastType ;
@@ -2399,7 +2407,7 @@ public:
 		PlyParserTree ret ;
 		ret.mFormat = move (mFormat) ;
 		ret.mElementList = move (mElementList) ;
-		ret.mElementSet = move (mElementSet) ;
+		ret.mElementName = move (mElementName) ;
 		return move (ret) ;
 	}
 
@@ -2546,15 +2554,15 @@ public:
 		}
 		for (auto &&i : mElementList) {
 			i.mPropertyList.remap () ;
-			i.mPropertySet = Set<String<Stru>> (i.mPropertyList.length ()) ;
+			i.mPropertyName = Set<String<Stru>> (i.mPropertyList.length ()) ;
 			for (auto &&j : i.mPropertyList.iter ())
-				i.mPropertySet.add (i.mPropertyList[j].mName ,j) ;
+				i.mPropertyName.add (i.mPropertyList[j].mName ,j) ;
 		}
 		if ifdo (TRUE) {
 			mElementList.remap () ;
-			mElementSet = Set<String<Stru>> (mElementList.length ()) ;
+			mElementName = Set<String<Stru>> (mElementList.length ()) ;
 			for (auto &&j : mElementList.iter ())
-				mElementSet.add (mElementList[j].mName ,j) ;
+				mElementName.add (mElementList[j].mName ,j) ;
 		}
 		for (auto &&i : mElementList) {
 			const auto r8x = i.mLineSize * i.mLineStep ;
@@ -2908,24 +2916,24 @@ public:
 	}
 
 	Length element_size (CR<Slice> element) const override {
-		Index ix = self.mThis->mElementSet.map (element) ;
+		Index ix = self.mThis->mElementName.map (element) ;
 		if (ix == NONE)
 			return 0 ;
 		return self.mThis->mElementList[ix].mLineSize ;
 	}
 
 	Length property_size (CR<Slice> element ,CR<Slice> property) const override {
-		Index ix = self.mThis->mElementSet.map (element) ;
+		Index ix = self.mThis->mElementName.map (element) ;
 		if (ix == NONE)
 			return 0 ;
-		Index jx = self.mThis->mElementList[ix].mPropertySet.map (property) ;
+		Index jx = self.mThis->mElementList[ix].mPropertyName.map (property) ;
 		if (jx == NONE)
 			return 0 ;
 		return self.mThis->mElementList[ix].mPropertyList[jx].mListSize ;
 	}
 
 	void guide_new (CR<Slice> element) override {
-		Index ix = self.mThis->mElementSet.map (element) ;
+		Index ix = self.mThis->mElementName.map (element) ;
 		assume (ix != NONE) ;
 		self.mGuide.mElement = ix ;
 		self.mGuide.mProperty.clear () ;
@@ -2940,7 +2948,7 @@ public:
 	void guide_put (CR<Slice> property) override {
 		Index ix = self.mGuide.mElement ;
 		assume (ix != NONE) ;
-		Index jx = self.mThis->mElementList[ix].mPropertySet.map (property) ;
+		Index jx = self.mThis->mElementList[ix].mPropertyName.map (property) ;
 		assume (jx != NONE) ;
 		assert (self.mGuide.mRow == NONE) ;
 		self.mGuide.mProperty.add (jx) ;

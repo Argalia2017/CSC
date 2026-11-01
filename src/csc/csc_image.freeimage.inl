@@ -82,6 +82,7 @@ public:
 	}
 
 	ImageLayout make_image (CR<ImageShape> shape ,CR<Clazz> clazz ,CR<Length> channel) const override {
+		assert (channel >= 1) ;
 		auto rax = Box<UniqueRef<HFIBITMAP>>::make () ;
 		const auto r1x = fibitmap_type_of_clazz (clazz) ;
 		const auto r2x = align_of_fibitmap_type (r1x) * channel * 8 ;

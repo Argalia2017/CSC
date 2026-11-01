@@ -7,69 +7,39 @@
 #include "csc_property.hpp"
 
 namespace CSC {
+struct PropertyTree {
+	String<Str> mName ;
+	Clazz mClazz ;
+	FarBuffer<Pointer> mBuffer ;
+} ;
+
 class PropertyImplHolder final implement Fat<PropertyHolder ,PropertyLayout> {
 public:
-	void initialize () override {
-		noop () ;
-	}
-
-	Index sid () const override {
-		if (!self.mThis.exist ())
-			return NONE ;
-		return self.mThis->mSid ;
-	}
-
-	CR<String<Str>> name () const leftvalue override {
-		if (!self.mThis.exist ())
-			return String<Str>::zero () ;
-		return self.mThis->mName ;
+	void initialize (CR<Clazz> clazz ,RR<PropertyLayout> that) override {
+		self.mThis = move (that.mThis) ;
+		self.mChild = move (that.mChild) ;
+		assume (self.mThis.exist ()) ;
+		assume (self.mThis->mClazz == clazz) ;
 	}
 
 	Length size () const override {
-		if (!self.mThis.exist ())
-			return 0 ;
-		return self.mThis->mBuffer.size () ;
+		return self.mChild.size () ;
 	}
 
-	Length align () const override {
-		if (!self.mThis.exist ())
-			return 0 ;
-		return self.mThis->mAlign ;
+	VR<Index> at (CR<Index> index) leftvalue override {
+		return self.mChild[index] ;
 	}
 
-	Length channel () const override {
-		if (!self.mThis.exist ())
-			return 0 ;
-		return self.mThis->mChannel ;
+	CR<Index> at (CR<Index> index) const leftvalue override {
+		return self.mChild[index] ;
 	}
 
-	void load (VR<BoxLayout> item) const override {
-		const auto r1x = align () ;
-		const auto r2x = channel () * r1x ;
-		const auto r3x = RFat<ReflectSize> (BoxHolder::hold (item)->unknown ()) ;
-		if (r2x != r3x->type_size ())
-			return ;
-		if (r1x != r3x->type_align ())
-			return ;
-		inline_memcpy (BoxHolder::hold (item)->ref ,self.mThis->mBuffer[self.mIndex] ,r2x) ;
-		self.mThis->mBuffer.refresh () ;
+	void fetch (VR<Pointer> item) const override {
+		unimplemented () ;
 	}
 
-	void save (CR<BoxLayout> item) const override {
-		const auto r1x = align () ;
-		const auto r2x = channel () * r1x ;
-		const auto r3x = RFat<ReflectSize> (BoxHolder::hold (item)->unknown ()) ;
-		if (r2x != r3x->type_size ())
-			return ;
-		if (r1x != r3x->type_align ())
-			return ;
-		inline_memcpy (self.mThis->mBuffer[self.mIndex] ,BoxHolder::hold (item)->ref ,r2x) ;
-		self.mThis->mBuffer.refresh () ;
-	}
-
-	void target (CR<Index> index) override {
-		assume (inline_mid (index ,0 ,size ())) ;
-		self.mIndex = index ;
+	void store (CR<Pointer> item) const override {
+		unimplemented () ;
 	}
 } ;
 
@@ -81,24 +51,50 @@ exports CFat<PropertyHolder> PropertyHolder::hold (CR<PropertyLayout> that) {
 	return CFat<PropertyHolder> (PropertyImplHolder () ,that) ;
 }
 
+struct BehaviorNode {
+	Index mOrder ;
+	Flag mMessage ;
+	String<Str> mCommand ;
+} ;
+
+struct BehaviorTree {
+	Index mBehaviorCheck ;
+	Index mBehaviorOrder ;
+	List<BehaviorNode> mTree ;
+} ;
+
 class BehaviorImplHolder final implement Fat<BehaviorHolder ,BehaviorLayout> {
 public:
-	void initialize () override {
-		noop () ;
+	void initialize (RR<BehaviorLayout> that) override {
+		self.mThis = move (that.mThis) ;
 	}
 
-	void send (CR<String<Str>> command ,CR<Wrapper<Index>> params) override {
-		if (!self.mThis.exist ())
-			return ;
+	void send (CR<Flag> message ,CR<Format> command) override {
+		assert (self.mThis.exist ()) ;
 		Index ix = self.mThis->mTree.insert () ;
-		self.mThis->mTree[ix].mSid = self.mThis->mBehaviorSid ;
-		self.mThis->mBehaviorSid++ ;
-		self.mThis->mBehaviorSid = inline_max (self.mThis->mBehaviorSid ,0) ;
-		self.mThis->mTree[ix].mCommand = command ;
-		self.mThis->mTree[ix].mParams = Array<Index> (params.rank ()) ;
-		for (auto &&i : range (0 ,params.rank ())) {
-			self.mThis->mTree[ix].mParams[i] = params[i] ;
-		}
+		self.mThis->mTree[ix].mOrder = self.mThis->mBehaviorOrder ;
+		self.mThis->mBehaviorOrder++ ;
+		self.mThis->mBehaviorOrder = inline_max (self.mThis->mBehaviorOrder ,0) ;
+		self.mThis->mTree[ix].mMessage = message ;
+		self.mThis->mTree[ix].mCommand = String<Str>::make (command) ;
+	}
+
+	void awake () override {
+		unimplemented () ;
+	}
+
+	Bool tick (CR<Flt64> delta_sec) override {
+		unimplemented () ;
+		return FALSE ;
+	}
+
+	void idle_tick (CR<Flt64> delta_sec) override {
+		unimplemented () ;
+	}
+
+	Bool alive () override {
+		unimplemented () ;
+		return FALSE ;
 	}
 } ;
 
@@ -111,120 +107,77 @@ exports CFat<BehaviorHolder> BehaviorHolder::hold (CR<BehaviorLayout> that) {
 }
 
 struct DataFrameLayout {
-	BitSet mDataFrame ;
-	Bool mConstructed ;
+	Array<Slice> mShape ;
 	ArrayList<SharedRef<PropertyTree>> mProperty ;
 	Set<String<Str>> mPropertyName ;
 	SharedRef<BehaviorTree> mBehavior ;
-	Index mBehaviorCheck ;
 } ;
 
 class DataFrameImplHolder final implement Fat<DataFrameHolder ,DataFrameLayout> {
 public:
-	void initialize (CR<Length> size_) override {
-		self.mDataFrame = BitSet (size_) ;
-		self.mConstructed = FALSE ;
+	void initialize (CR<Length> rank_) override {
+		self.mShape = Array<Slice> (rank_) ;
 		self.mBehavior = SharedRef<BehaviorTree>::make () ;
-		self.mBehavior->mBehaviorSid = 0 ;
 	}
 
-	Length size () const override {
-		return self.mDataFrame.size () ;
+	Length rank () const override {
+		return self.mShape.size () ;
 	}
 
-	Length length () const override {
-		return self.mDataFrame.length () ;
+	Array<Slice> shape () const override {
+		return self.mShape ;
 	}
 
-	Index ibegin () const override {
-		return self.mDataFrame.ibegin () ;
+	Length shape (CR<Index> index) const override {
+		return self.mShape[index].size () ;
 	}
 
-	Index iend () const override {
-		return self.mDataFrame.iend () ;
-	}
-
-	Index inext (CR<Index> index) const override {
-		return self.mDataFrame.inext (index) ;
-	}
-
-	void claim (CR<String<Str>> name ,CR<Clazz> clazz ,RR<FarBuffer<Pointer>> buffer) override {
-		assert (!self.mConstructed) ;
+	void claim (CR<String<Str>> name ,CR<Clazz> clazz) override {
 		Index ix = self.mPropertyName.map (name) ;
-		assume (ix == NONE) ;
-		ix = self.mProperty.insert () ;
-		self.mProperty[ix] = SharedRef<PropertyTree>::make () ;
-		self.mProperty[ix]->mSid = ix ;
-		self.mProperty[ix]->mName = name ;
-		self.mPropertyName.add (self.mProperty[ix]->mName ,ix) ;
-		const auto r1x = clazz.type_size () ;
-		const auto r2x = clazz.type_align () ;
-		self.mProperty[ix]->mSize = size () ;
-		self.mProperty[ix]->mAlign = r2x ;
-		self.mProperty[ix]->mChannel = r1x / r2x ;
-		self.mProperty[ix]->mBuffer = move (buffer) ;
+		if ifdo (TRUE) {
+			if (ix != NONE)
+				discard ;
+			ix = self.mProperty.insert () ;
+			self.mProperty[ix] = SharedRef<PropertyTree>::make () ;
+			self.mProperty[ix]->mName = name ;
+			self.mPropertyName.add (self.mProperty[ix]->mName ,ix) ;
+			self.mProperty[ix]->mClazz = clazz ;
+		}
 	}
 
-	Property map (CR<Index> sid ,CR<Index> index) const override {
-		Index ix = sid ;
-		assume (contain (ix)) ;
-		assume (self.mDataFrame.contain (index)) ;
-		Property ret ;
-		ret.mThis = self.mProperty[ix] ;
-		ret.mIndex = index ;
+	void spawn (CR<Index> rank_ ,CR<Length> size_) override {
+		self.mShape[rank_] = Slice (0 ,size_ ,1) ;
+	}
+
+	PropertyLayout map (CR<String<Str>> filter) override {
+		PropertyLayout ret ;
+		if ifdo (TRUE) {
+			Index ix = self.mPropertyName.map (filter) ;
+			if (ix == NONE)
+				discard ;
+			ret.mThis = self.mProperty[ix] ;
+			ret.mChild = Array<Index> (rank ()) ;
+		}
 		return move (ret) ;
 	}
 
-	Property map (CR<String<Str>> name ,CR<Index> index) const override {
-		Index ix = self.mPropertyName.map (name) ;
-		assume (ix != NONE) ;
-		assume (self.mDataFrame.contain (index)) ;
-		Property ret ;
-		ret.mThis = self.mProperty[ix] ;
-		ret.mIndex = index ;
-		return move (ret) ;
-	}
-
-	Bool contain (CR<Index> sid) const override {
-		if (!inline_mid (sid ,0 ,self.mProperty.size ()))
-			return FALSE ;
-		if (self.mProperty.is_slot (sid))
-			return FALSE ;
-		return TRUE ;
-	}
-
-	Bool contain (CR<String<Str>> name) const override {
-		return self.mPropertyName.contain (name) ;
-	}
-
-	Behavior record () override {
-		Behavior ret ;
+	BehaviorLayout record () override {
+		BehaviorLayout ret ;
 		ret.mThis = self.mBehavior ;
-		ret.mCheck = self.mBehaviorCheck ;
 		return move (ret) ;
 	}
 
 	void submit () override {
+		auto rax = self.mBehavior ;
+		rax->mBehaviorOrder = 0 ;
+		rax->mBehaviorCheck++ ;
+		rax->mBehaviorCheck = inline_max (rax->mBehaviorCheck ,1) ;
+		rax->mTree.clear () ;
+	}
+
+	RefBuffer<Byte> serialize () override {
 		unimplemented () ;
-	}
-
-	void spawn (CR<Index> begin_ ,CR<Index> end_) override {
-		assert (begin_ >= 0) ;
-		assert (end_ >= 0) ;
-		assert (begin_ <= end_) ;
-		const auto r1x = inline_max (end_ ,self.mDataFrame.size ()) ;
-		self.mDataFrame.resize (r1x) ;
-		for (auto &&i : range (begin_ ,end_))
-			self.mDataFrame.add (i) ;
-	}
-
-	void despawn (CR<Index> begin_ ,CR<Index> end_) override {
-		assert (begin_ >= 0) ;
-		assert (end_ >= 0) ;
-		assert (begin_ <= end_) ;
-		const auto r1x = inline_min (end_ ,self.mDataFrame.size ()) ;
-		for (auto &&i : range (begin_ ,r1x))
-			self.mDataFrame.erase (i) ;
+		return RefBuffer<Byte> () ;
 	}
 } ;
 

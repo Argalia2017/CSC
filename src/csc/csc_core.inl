@@ -411,13 +411,12 @@ struct HeapImplLayout {
 	HeapNodePtr mStackTop ;
 
 public:
-	static VR<HeapImplLayout> expr_m () ;
+	static CR<HeapImplLayout> expr_m () {
+		return memorize ([&] () {
+			return HeapImplLayout () ;
+		}) ;
+	}
 } ;
-
-inline VR<HeapImplLayout> HeapImplLayout::expr_m () {
-	static auto mInstance = HeapImplLayout () ;
-	return mInstance ;
-}
 
 static constexpr auto HEAP_HEADER = Flag (0XF0F0F0F0CCCCCCCC) ;
 
@@ -564,13 +563,13 @@ exports CR<HeapLayout> HeapHolder::expr_m () {
 exports VFat<HeapHolder> HeapHolder::hold (VR<HeapLayout> that) {
 	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return VFat<HeapHolder> (rax ,HeapImplLayout::expr) ;
+	return VFat<HeapHolder> (rax ,HeapImplLayout::expr.mPin.ref) ;
 }
 
 exports CFat<HeapHolder> HeapHolder::hold (CR<HeapLayout> that) {
 	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapImplHolder>::expr] (Pointer::from (that.mHolder)) ;
-	return CFat<HeapHolder> (rax ,HeapImplLayout::expr) ;
+	return CFat<HeapHolder> (rax ,HeapImplLayout::expr.mPin.ref) ;
 }
 
 class SliceImplHolder final implement Fat<SliceHolder ,SliceLayout> {
@@ -652,7 +651,7 @@ public:
 			if (r4x != ZERO)
 				return r4x ;
 		}
-		return ZERO ;
+		return inline_compr (r1x ,r2x) ;
 	}
 
 	void visit (CR<Visitor> visitor) const override {

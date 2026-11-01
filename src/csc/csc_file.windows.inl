@@ -37,7 +37,7 @@ public:
 						discard ;
 					if (!is_separator (self.mThis->mPathName[i]))
 						discard ;
-					self.mThis->mSeparator.add (i) ;
+					self.mThis->mSeparator.add (ix) ;
 					self.mThis->mPathName[ix] = Str ('\\') ;
 					ix++ ;
 					rax = Flag (1) ;
@@ -211,11 +211,11 @@ public:
 	}
 
 	Bool equal (CR<PathLayout> that) const override {
-		const auto r1x = inline_compr (self.mThis.exist () ,that.mThis.exist ()) ;
-		if (r1x != ZERO)
-			return FALSE ;
+		const auto r1x = inline_equal (self.mThis.exist () ,that.mThis.exist ()) ;
+		if (!r1x)
+			return r1x ;
 		if (!self.mThis.exist ())
-			return FALSE ;
+			return TRUE ;
 		return self.mThis->mPathName == that.mThis->mPathName ;
 	}
 
@@ -782,8 +782,8 @@ public:
 	void set_cache_size (CR<Length> size_) override {
 		assert (size_ > 0) ;
 		assert (!self.mPipe.exist ()) ;
-		self.mCacheSet = Set<Val64> (size_) ;
 		self.mCacheList = List<BufferFileChunk> (size_) ;
+		self.mCacheIndex = Set<Val64> (size_) ;
 		self.mCacheTimer = 0 ;
 	}
 
@@ -951,10 +951,10 @@ public:
 
 	void read (CR<Index> index ,VR<RefBuffer<Byte>> item) override {
 		assert (self.mPipe.exist ()) ;
-		assert (inline_mid (index ,0 ,Length (self.mHeader->mBlockSize))) ;
 		assert (item.size () == self.mHeader->mBlockStep) ;
 		const auto r1x = index / self.mHeader->mBlockSize ;
 		const auto r2x = index % self.mHeader->mBlockSize * self.mHeader->mBlockStep ;
+		assert (inline_mid (r1x ,0 ,Length (self.mHeader->mChunkSize))) ;
 		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * self.mHeader->mChunkStep ;
 		Index ix = mmap_cache (r3x ,Length (self.mHeader->mChunkStep)) ;
 		const auto r4x = self.mCacheList[ix].mBlock->m1st + Length (r2x) ;
@@ -963,7 +963,7 @@ public:
 
 	void write (CR<Index> index ,CR<RefBuffer<Byte>> item) override {
 		assert (self.mPipe.exist ()) ;
-		assert (inline_mid (index ,0 ,Length (self.mHeader->mBlockSize))) ;
+		assert (inline_mid (index ,0 ,Length (self.mHeader->mBlockSize * self.mHeader->mChunkSize))) ;
 		assert (item.size () == self.mHeader->mBlockStep) ;
 		const auto r1x = index / self.mHeader->mBlockSize ;
 		const auto r2x = index % self.mHeader->mBlockSize * self.mHeader->mBlockStep ;
@@ -974,14 +974,14 @@ public:
 	}
 
 	Index mmap_cache (CR<Val64> index ,CR<Length> size_) {
-		Index ret = self.mCacheSet.map (index) ;
+		Index ret = self.mCacheIndex.map (index) ;
 		if ifdo (TRUE) {
 			if (ret != NONE)
 				discard ;
 			update_overflow () ;
 			ret = self.mCacheList.insert () ;
-			self.mCacheSet.add (index ,ret) ;
 			self.mCacheList[ret].mIndex = index ;
+			self.mCacheIndex.add (self.mCacheList[ret].mIndex ,ret) ;
 			self.mCacheList[ret].mBlock = UniqueRef<Tuple<Flag ,Flag>> ([&] (VR<Tuple<Flag ,Flag>> me) {
 				const auto r1x = csc_enum_t (ByteProc::split_high (Quad (index))) ;
 				const auto r2x = csc_enum_t (ByteProc::split_low (Quad (index))) ;
@@ -1025,14 +1025,14 @@ public:
 			return move (ret) ;
 		}) ;
 		assert (r1x != NONE) ;
-		self.mCacheSet.erase (self.mCacheList[r1x].mIndex) ;
+		self.mCacheIndex.erase (self.mCacheList[r1x].mIndex) ;
 		self.mCacheList.remove (r1x) ;
 	}
 
 	void flush () override {
 		if (!self.mPipe.exist ())
 			return ;
-		self.mCacheSet.clear () ;
+		self.mCacheIndex.clear () ;
 		self.mCacheList.clear () ;
 		self.mCacheTimer = 0 ;
 		FlushFileBuffers (self.mPipe) ;
@@ -1041,16 +1041,16 @@ public:
 
 static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileLayout> (BufferFileImplHolder ()) ;
 
-struct UartFileCOMParams implement DCB {} ;
-
-struct UartFileCOMStatus implement COMSTAT {} ;
+struct UartFileCOMParam {
+	DCB mA ;
+	COMSTAT mB ;
+} ;
 
 class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileLayout> {
 public:
 	void initialize (CR<String<Str>> name) override {
 		self.mPortName = name ;
-		self.mCOMParams = Ref<UartFileCOMParams>::make () ;
-		self.mCOMStatus = Ref<UartFileCOMStatus>::make () ;
+		self.mCOM = Ref<UartFileCOMParam>::make () ;
 		self.mCOMError = 0 ;
 	}
 
@@ -1063,7 +1063,7 @@ public:
 	void set_ring_step (CR<Length> step_) override {
 		assert (!self.mPipe.exist ()) ;
 		self.mRingBuffer = RefBuffer<Byte> (step_) ;
-		self.mRingRead = 0 ;
+		self.mRingRead = self.mRingBuffer.size () ;
 	}
 
 	void open () override {
@@ -1077,22 +1077,20 @@ public:
 		} ,[&] (VR<csc_pipe_t> me) {
 			CloseHandle (me) ;
 		}) ;
-		inline_memset (self.mCOMParams.ref) ;
-		self.mCOMParams->DCBlength = csc_enum_t (SIZE_OF<DCB>::expr) ;
-		GetCommState (self.mPipe ,(&self.mCOMParams.ref)) ;
-		self.mCOMParams->BaudRate = csc_enum_t (self.mPortRate) ;
-		self.mCOMParams->ByteSize = 8 ;
-		self.mCOMParams->StopBits = ONESTOPBIT ;
-		self.mCOMParams->Parity = NOPARITY ;
-		SetCommState (self.mPipe ,(&self.mCOMParams.ref)) ;
-		ClearCommError (self.mPipe ,(&self.mCOMError) ,(&self.mCOMStatus.ref)) ;
+		inline_memset (self.mCOM.ref) ;
+		self.mCOM->mA.DCBlength = csc_enum_t (SIZE_OF<DCB>::expr) ;
+		GetCommState (self.mPipe ,(&self.mCOM->mA)) ;
+		self.mCOM->mA.BaudRate = csc_enum_t (self.mPortRate) ;
+		self.mCOM->mA.ByteSize = 8 ;
+		self.mCOM->mA.StopBits = ONESTOPBIT ;
+		self.mCOM->mA.Parity = NOPARITY ;
+		SetCommState (self.mPipe ,(&self.mCOM->mA)) ;
+		ClearCommError (self.mPipe ,(&self.mCOMError) ,(&self.mCOM->mB)) ;
 	}
 
 	void read (VR<RefBuffer<Byte>> buffer ,CR<Index> offset ,CR<Length> size_) override {
 		const auto r1x = MathProc::min_of (buffer.size () - offset ,size_) ;
 		for (auto &&i : range (0 ,r1x)) {
-			buffer[offset + i] = self.mRingBuffer[self.mRingRead] ;
-			self.mRingRead++ ;
 			if ifdo (TRUE) {
 				if (self.mRingRead < self.mRingBuffer.size ())
 					discard ;
@@ -1110,6 +1108,8 @@ public:
 				}
 				self.mRingRead = 0 ;
 			}
+			buffer[offset + i] = self.mRingBuffer[self.mRingRead] ;
+			self.mRingRead++ ;
 		}
 	}
 } ;
@@ -1337,7 +1337,7 @@ public:
 		return slice (__DATE__ " " __TIME__) ;
 	}
 
-	TimeCalendar parse_build_time (CR<String<Str>> item) {
+	TimeCalendar parse_build_time (CR<String<Stru>> item) {
 		TimeCalendar ret ;
 		inline_memset (ret) ;
 		try {

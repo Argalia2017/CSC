@@ -234,36 +234,37 @@ public:
 		if ifdo (TRUE) {
 			if (flag != StringEncode::LOCAL)
 				discard ;
-			if (self.mEncode != flag)
-				if (r1x->type_guid () != inline_guid (TYPE<Str>::expr))
+			if (r1x->type_guid () != inline_guid (TYPE<Stra>::expr))
+				if (r1x->type_guid () != inline_guid (TYPE<Strw>::expr))
 					discard ;
-			return TRUE ;
+			if (self.mEncode == flag)
+				return TRUE ;
 		}
 		if ifdo (TRUE) {
 			if (flag != StringEncode::UTF8)
 				discard ;
-			if (self.mEncode != flag)
-				if (r1x->type_guid () != inline_guid (TYPE<Stru>::expr))
-					discard ;
-			return TRUE ;
+			if (r1x->type_guid () != inline_guid (TYPE<Stru>::expr))
+				discard ;
+			if (self.mEncode == flag)
+				return TRUE ;
 		}
 		if ifdo (TRUE) {
 			if (flag != StringEncode::UTF16LE)
 				if (flag != StringEncode::UTF16BE)
 					discard ;
-			if (self.mEncode != flag)
-				if (r1x->type_guid () != inline_guid (TYPE<Stru16>::expr))
-					discard ;
-			return TRUE ;
+			if (r1x->type_guid () != inline_guid (TYPE<Stru16>::expr))
+				discard ;
+			if (self.mEncode == flag)
+				return TRUE ;
 		}
 		if ifdo (TRUE) {
 			if (flag != StringEncode::UTF32LE)
 				if (flag != StringEncode::UTF32BE)
 					discard ;
-			if (self.mEncode != flag)
-				if (r1x->type_guid () != inline_guid (TYPE<Stru32>::expr))
-					discard ;
-			return TRUE ;
+			if (r1x->type_guid () != inline_guid (TYPE<Stru32>::expr))
+				discard ;
+			if (self.mEncode == flag)
+				return TRUE ;
 		}
 		return FALSE ;
 	}
@@ -373,10 +374,11 @@ public:
 	}
 
 	Bool equal (CR<Slice> that) const override {
-		const auto r1x = length () ;
+		const auto r1x = size () ;
 		const auto r2x = that.size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = Stru32 () ;
+		auto rbx = Stru32 () ;
 		for (auto &&i : range (0 ,r3x)) {
 			get (i ,rax) ;
 			const auto r4x = inline_equal (rax ,that[i]) ;
@@ -385,12 +387,24 @@ public:
 			if (rax == 0)
 				return TRUE ;
 		}
-		return inline_equal (r1x ,r2x) ;
+		rax = 0 ;
+		rbx = 0 ;
+		if ifdo (TRUE) {
+			if (r3x >= r1x)
+				discard ;
+			get (r3x ,rax) ;
+		}
+		if ifdo (TRUE) {
+			if (r3x >= r2x)
+				discard ;
+			rbx = that[r3x] ;
+		}
+		return inline_equal (rax ,rbx) ;
 	}
 
 	Bool equal (CR<StringLayout> that) const override {
-		const auto r1x = length () ;
-		const auto r2x = StringHolder::hold (that)->length () ;
+		const auto r1x = size () ;
+		const auto r2x = StringHolder::hold (that)->size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = Stru32 () ;
 		auto rbx = Stru32 () ;
@@ -403,14 +417,27 @@ public:
 			if (rax == 0)
 				return TRUE ;
 		}
-		return inline_equal (r1x ,r2x) ;
+		rax = 0 ;
+		rbx = 0 ;
+		if ifdo (TRUE) {
+			if (r3x >= r1x)
+				discard ;
+			get (r3x ,rax) ;
+		}
+		if ifdo (TRUE) {
+			if (r3x >= r2x)
+				discard ;
+			StringHolder::hold (that)->get (r3x ,rbx) ;
+		}
+		return inline_equal (rax ,rbx) ;
 	}
 
 	Flag compr (CR<Slice> that) const override {
-		const auto r1x = length () ;
+		const auto r1x = size () ;
 		const auto r2x = that.size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = Stru32 () ;
+		auto rbx = Stru32 () ;
 		for (auto &&i : range (0 ,r3x)) {
 			get (i ,rax) ;
 			const auto r4x = inline_compr (rax ,that[i]) ;
@@ -419,12 +446,24 @@ public:
 			if (rax == 0)
 				return ZERO ;
 		}
-		return inline_compr (r1x ,r2x) ;
+		rax = 0 ;
+		rbx = 0 ;
+		if ifdo (TRUE) {
+			if (r3x >= r1x)
+				discard ;
+			get (r3x ,rax) ;
+		}
+		if ifdo (TRUE) {
+			if (r3x >= r2x)
+				discard ;
+			rbx = that[r3x] ;
+		}
+		return inline_compr (rax ,rbx) ;
 	}
 
 	Flag compr (CR<StringLayout> that) const override {
-		const auto r1x = length () ;
-		const auto r2x = StringHolder::hold (that)->length () ;
+		const auto r1x = size () ;
+		const auto r2x = StringHolder::hold (that)->size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = Stru32 () ;
 		auto rbx = Stru32 () ;
@@ -437,7 +476,19 @@ public:
 			if (rax == 0)
 				return ZERO ;
 		}
-		return inline_compr (r1x ,r2x) ;
+		rax = 0 ;
+		rbx = 0 ;
+		if ifdo (TRUE) {
+			if (r3x >= r1x)
+				discard ;
+			get (r3x ,rax) ;
+		}
+		if ifdo (TRUE) {
+			if (r3x >= r2x)
+				discard ;
+			StringHolder::hold (that)->get (r3x ,rbx) ;
+		}
+		return inline_compr (rax ,rbx) ;
 	}
 
 	void visit (CR<Visitor> visitor) const override {
@@ -710,10 +761,9 @@ public:
 	void add (RR<BoxLayout> item) override {
 		check_exist () ;
 		check_resize () ;
-		const auto r1x = self.mDeque.size () ;
-		Index ix = self.mWrite % r1x ;
-		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->swap (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
+		Index ix = MathProc::wrap (self.mWrite ,self.mDeque.size ()) ;
+		const auto r1x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
+		r1x->swap (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
 		self.mWrite++ ;
 	}
 
@@ -731,19 +781,18 @@ public:
 	void push (RR<BoxLayout> item) override {
 		check_exist () ;
 		check_resize () ;
-		const auto r1x = self.mDeque.size () ;
-		Index ix = MathProc::wrap (self.mRead - 1 ,r1x) ;
-		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->swap (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
+		Index ix = MathProc::wrap (self.mRead - 1 ,self.mDeque.size ()) ;
+		const auto r1x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
+		r1x->swap (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
 		self.mRead-- ;
 		check_bound () ;
 	}
 
 	void pop () override {
 		assert (!empty ()) ;
-		Index ix = self.mWrite - 1 ;
 		const auto r1x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
 		const auto r2x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
+		Index ix = MathProc::wrap (self.mWrite - 1 ,self.mDeque.size ()) ;
 		r2x->destroy (self.mDeque[ix] ,1) ;
 		r1x->drop (self.mDeque[ix]) ;
 		self.mWrite-- ;
@@ -2118,20 +2167,8 @@ public:
 				discard ;
 			return self.mTop ;
 		}
-		if ifdo (TRUE) {
-			if (binary)
-				discard ;
-			self.mSet.bt (index).mBin = binary ;
-			return self.mSet.bt (index).mUp ;
-		}
-		if ifdo (TRUE) {
-			if (!binary)
-				discard ;
-			self.mSet.bt (index).mBin = binary ;
-			return self.mSet.bt (index).mUp ;
-		}
-		assert (FALSE) ;
-		return self.mTop ;
+		self.mSet.bt (index).mBin = binary ;
+		return self.mSet.bt (index).mUp ;
 	}
 
 	void check_exist () {
@@ -2379,6 +2416,7 @@ public:
 	}
 
 	void remove (CR<Index> index) override {
+		assert (self.mRange.size () > 0) ;
 		const auto r1x = self.mSet.bt (index).mHash ;
 		Index ix = r1x % self.mRange.size () ;
 		while (TRUE) {
@@ -2566,15 +2604,13 @@ public:
 	Flag compr (CR<BitSetLayout> that) const override {
 		const auto r1x = self.mSet.size () ;
 		const auto r2x = that.mSet.size () ;
-		const auto r3x = inline_compr (r1x ,r2x) ;
-		if (r3x != ZERO)
-			return r3x ;
-		for (auto &&i : range (0 ,r1x)) {
+		const auto r3x = inline_min (r1x ,r2x) ;
+		for (auto &&i : range (0 ,r3x)) {
 			const auto r4x = inline_compr (self.mSet[i] ,that.mSet[i]) ;
 			if (r4x != ZERO)
 				return r4x ;
 		}
-		return ZERO ;
+		return inline_compr (r1x ,r2x) ;
 	}
 
 	void visit (CR<Visitor> visitor) const override {

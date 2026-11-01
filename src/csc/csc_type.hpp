@@ -110,12 +110,16 @@ forceinline constexpr Byte operator~ (CR<Byte> a) noexcept {
 	return Byte (~csc_uint8_t (a)) ;
 }
 
+forceinline constexpr Bool is_shift_val (CR<Length> b ,CR<Length> max_) noexcept {
+	return b >= 0 && b < max_ ;
+}
+
 forceinline constexpr Byte operator<< (CR<Byte> a ,CR<Length> b) noexcept {
-	return Byte (csc_uint8_t (a) << b) ;
+	return is_shift_val (b ,8) ? Byte (csc_uint8_t (a) << b) : Byte (0X00) ;
 }
 
 forceinline constexpr Byte operator>> (CR<Byte> a ,CR<Length> b) noexcept {
-	return Byte (csc_uint8_t (a) >> b) ;
+	return is_shift_val (b ,8) ? Byte (csc_uint8_t (a) >> b) : Byte (0X00) ;
 }
 
 forceinline constexpr Word operator| (CR<Word> a ,CR<Word> b) noexcept {
@@ -155,11 +159,11 @@ forceinline constexpr Word operator~ (CR<Word> a) noexcept {
 }
 
 forceinline constexpr Word operator<< (CR<Word> a ,CR<Length> b) noexcept {
-	return Word (csc_uint16_t (a) << b) ;
+	return is_shift_val (b ,16) ? Word (csc_uint16_t (a) << b) : Word (0X00) ;
 }
 
 forceinline constexpr Word operator>> (CR<Word> a ,CR<Length> b) noexcept {
-	return Word (csc_uint16_t (a) >> b) ;
+	return is_shift_val (b ,16) ? Word (csc_uint16_t (a) >> b) : Word (0X00) ;
 }
 
 forceinline constexpr Char operator| (CR<Char> a ,CR<Char> b) noexcept {
@@ -199,11 +203,11 @@ forceinline constexpr Char operator~ (CR<Char> a) noexcept {
 }
 
 forceinline constexpr Char operator<< (CR<Char> a ,CR<Length> b) noexcept {
-	return Char (csc_uint32_t (a) << b) ;
+	return is_shift_val (b ,32) ? Char (csc_uint32_t (a) << b) : Char (0X00) ;
 }
 
 forceinline constexpr Char operator>> (CR<Char> a ,CR<Length> b) noexcept {
-	return Char (csc_uint32_t (a) >> b) ;
+	return is_shift_val (b ,32) ? Char (csc_uint32_t (a) >> b) : Char (0X00) ;
 }
 
 forceinline constexpr Quad operator| (CR<Quad> a ,CR<Quad> b) noexcept {
@@ -243,11 +247,11 @@ forceinline constexpr Quad operator~ (CR<Quad> a) noexcept {
 }
 
 forceinline constexpr Quad operator<< (CR<Quad> a ,CR<Length> b) noexcept {
-	return Quad (csc_uint64_t (a) << b) ;
+	return is_shift_val (b ,64) ? Quad (csc_uint64_t (a) << b) : Quad (0X00) ;
 }
 
 forceinline constexpr Quad operator>> (CR<Quad> a ,CR<Length> b) noexcept {
-	return Quad (csc_uint64_t (a) >> b) ;
+	return is_shift_val (b ,64) ? Quad (csc_uint64_t (a) >> b) : Quad (0X00) ;
 }
 
 using Stra = csc_char_t ;
@@ -1447,22 +1451,6 @@ trait HAS_M3RD_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).m3rd)>>> {
 template <class A>
 using HAS_M3RD = typename HAS_M3RD_HELP<A ,ALWAYS>::RET ;
 
-template <class...>
-trait HAS_COMPILE_HELP ;
-
-template <class A ,class B ,class OTHERWISE>
-trait HAS_COMPILE_HELP<A ,B ,OTHERWISE> {
-	using RET = ENUM_FALSE ;
-} ;
-
-template <class A ,class B>
-trait HAS_COMPILE_HELP<A ,B ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).compile (nullof (B)))>>> {
-	using RET = ENUM_TRUE ;
-} ;
-
-template <class A ,class B>
-using HAS_COMPILE = typename HAS_COMPILE_HELP<A ,B ,ALWAYS>::RET ;
-
 class Pointer implement Proxy {
 public:
 	implicit Pointer () = delete ;
@@ -1542,13 +1530,13 @@ public:
 } ;
 
 template <class A>
-class VFat implement FatLayout {
+class VFat implement Proxy {
 private:
 	require (IS_INTERFACE<A>) ;
 
 protected:
-	using FatLayout::mHolder ;
-	using FatLayout::mLayout ;
+	Flag mHolder ;
+	Flag mLayout ;
 
 public:
 	implicit VFat () = delete ;
@@ -1571,13 +1559,13 @@ public:
 } ;
 
 template <class A>
-class CFat implement FatLayout {
+class CFat implement Proxy {
 private:
 	require (IS_INTERFACE<A>) ;
 
 protected:
-	using FatLayout::mHolder ;
-	using FatLayout::mLayout ;
+	Flag mHolder ;
+	Flag mLayout ;
 
 public:
 	implicit CFat () = delete ;
@@ -1600,13 +1588,13 @@ public:
 } ;
 
 template <class A>
-class RFat implement FatLayout {
+class RFat implement Proxy {
 private:
 	require (IS_INTERFACE<A>) ;
 
 protected:
-	using FatLayout::mHolder ;
-	using FatLayout::mLayout ;
+	Flag mHolder ;
+	Flag mLayout ;
 
 public:
 	implicit RFat () = delete ;

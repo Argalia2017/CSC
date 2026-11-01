@@ -36,10 +36,10 @@ public:
 	}
 } ;
 
-class WorkThreadExecutingBinder final implement Fat<ExecutingHolder ,WorkThreadLayout> {
+class WorkThreadThreadProcBinder final implement Fat<ThreadProcHolder ,WorkThreadLayout> {
 public:
-	void friend_execute (CR<Index> slot) override {
-		return WorkThreadHolder::hold (self)->friend_execute (slot) ;
+	void friend_proc (CR<Index> slot) override {
+		return WorkThreadHolder::hold (self)->friend_proc (slot) ;
 	}
 } ;
 
@@ -78,14 +78,14 @@ public:
 		self.mItemLoadLength = 0 ;
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mThreadFunc = func ;
-		const auto r1x = VFat<ExecutingHolder> (WorkThreadExecutingBinder () ,self) ;
+		const auto r1x = VFat<ThreadProcHolder> (WorkThreadThreadProcBinder () ,self) ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (Ref<Executing>::make (r1x) ,i) ;
+			self.mThread[i] = Thread (Ref<ThreadProc>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
 
-	void friend_execute (CR<Index> slot) override {
+	void friend_proc (CR<Index> slot) override {
 		try {
 			while (TRUE) {
 				pull (slot) ;
@@ -176,7 +176,7 @@ public:
 		while (TRUE) {
 			if (self.mThreadFlag != ThreadFlag::Running)
 				break ;
-			if (self.mItemQueue.empty () == 0)
+			if (self.mItemQueue.empty ())
 				if (self.mThreadJoin.length () >= self.mThread.length ())
 					break ;
 			if (!rbx)
@@ -232,10 +232,10 @@ public:
 	}
 } ;
 
-class CalcThreadExecutingBinder final implement Fat<ExecutingHolder ,CalcThreadLayout> {
+class CalcThreadThreadProcBinder final implement Fat<ThreadProcHolder ,CalcThreadLayout> {
 public:
-	void friend_execute (CR<Index> slot) override {
-		return CalcThreadHolder::hold (self)->friend_execute (slot) ;
+	void friend_proc (CR<Index> slot) override {
+		return CalcThreadHolder::hold (self)->friend_proc (slot) ;
 	}
 } ;
 
@@ -286,14 +286,14 @@ public:
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mSuspendFlag = FALSE ;
 		self.mThreadFunc = func ;
-		const auto r1x = VFat<ExecutingHolder> (CalcThreadExecutingBinder () ,self) ;
+		const auto r1x = VFat<ThreadProcHolder> (CalcThreadThreadProcBinder () ,self) ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (Ref<Executing>::make (r1x) ,i) ;
+			self.mThread[i] = Thread (Ref<ThreadProc>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
 
-	void friend_execute (CR<Index> slot) override {
+	void friend_proc (CR<Index> slot) override {
 		try {
 			while (TRUE) {
 				search_new (slot) ;
@@ -495,10 +495,10 @@ public:
 	}
 } ;
 
-class PromiseExecutingBinder final implement Fat<ExecutingHolder ,PromiseLayout> {
+class PromiseThreadProcBinder final implement Fat<ThreadProcHolder ,PromiseLayout> {
 public:
-	void friend_execute (CR<Index> slot) override {
-		return PromiseHolder::hold (self)->friend_execute (slot) ;
+	void friend_proc (CR<Index> slot) override {
+		return PromiseHolder::hold (self)->friend_proc (slot) ;
 	}
 } ;
 
@@ -538,16 +538,16 @@ public:
 			if (self.mThread.size () > 0)
 				discard ;
 			self.mThread = Array<Thread> (1) ;
-			const auto r1x = VFat<ExecutingHolder> (PromiseExecutingBinder () ,self) ;
+			const auto r1x = VFat<ThreadProcHolder> (PromiseThreadProcBinder () ,self) ;
 			for (auto &&i : self.mThread.iter ()) {
-				self.mThread[i] = Thread (Ref<Executing>::make (r1x) ,0) ;
+				self.mThread[i] = Thread (Ref<ThreadProc>::make (r1x) ,0) ;
 				self.mThread[i].start () ;
 			}
 		}
 		rax.notify () ;
 	}
 
-	void friend_execute (CR<Index> slot) override {
+	void friend_proc (CR<Index> slot) override {
 		while (TRUE) {
 			try {
 				self.mRunningFunc = self.mThreadFunc ;
@@ -687,45 +687,206 @@ exports CFat<PromiseHolder> PromiseHolder::hold (CR<PromiseLayout> that) {
 	return CFat<PromiseHolder> (PromiseImplHolder () ,that) ;
 }
 
+struct ExecutionNode {
+	Index mFlowId ;
+	String<Str> mName ;
+	AutoRef<Pointer> mValue ;
+	Set<Index> mParent ;
+	Set<Index> mChild ;
+	Length mDepth ;
+	Function<> mOnceActor ;
+	Function<> mThenActor ;
+	Bool mPlaying ;
+	Bool mOncePlayed ;
+	Bool mThenPlayed ;
+} ;
+
+struct ExecutionFlow {
+	String<Str> mName ;
+	Set<String<Str>> mNodeName ;
+	ArrayList<Flag> mMonad ;
+	Set<String<Str>> mMonadNode ;
+} ;
+
 struct ExecutionLayout {
-	Set<Clazz> mTree ;
+	Super<Ref<ExecutionLayout>> mWeak ;
+	Path mWorkingPath ;
+	List<ExecutionNode> mNode ;
+	List<ExecutionFlow> mFlow ;
+	Set<String<Str>> mFlowName ;
+	Set<Tuple<Index ,Index>> mNodeFlowSet ;
+	Deque<Index> mStackNodeId ;
+	Index mRootNodeId ;
+	Priority<IndexPair<Length>> mPlayQueue ;
+	Deque<Index> mScanStack ;
 } ;
 
 class ExecutionImplHolder final implement Fat<ExecutionHolder ,ExecutionLayout> {
 public:
-	void initialize () override {
-		unimplemented () ;
+	void initialize (CR<String<Str>> dire) override {
+		self.mWeak.mThis = Ref<ExecutionLayout>::reference (self) ;
+		self.mWorkingPath = Path (dire) ;
+		const auto r1x = alloc_node (slice ("") ,slice ("")) ;
+		self.mRootNodeId = r1x.m2nd ;
+		self.mStackNodeId.add (self.mRootNodeId) ;
 	}
 
-	CR<Pointer> stack (CR<Clazz> name) const leftvalue override {
-		unimplemented () ;
-		return Pointer::from (name) ;
+	Path local_path () const override {
+		return self.mWorkingPath ;
 	}
 
-	CR<Pointer> maybe (CR<Clazz> name) const leftvalue override {
-		unimplemented () ;
-		return Pointer::from (name) ;
+	String<Str> local_flow () const override {
+		Index ix = self.mStackNodeId[self.mStackNodeId.tail ()] ;
+		return self.mFlow[self.mNode[ix].mFlowId].mName ;
 	}
 
-	void once (CR<Function<>> func) override {
-		unimplemented () ;
+	String<Str> local_node () const override {
+		Index ix = self.mStackNodeId[self.mStackNodeId.tail ()] ;
+		return self.mNode[ix].mName ;
 	}
 
-	void then (CR<Function<>> func) override {
-		unimplemented () ;
+	CR<Pointer> stack (CR<String<Str>> flow ,CR<String<Str>> node) leftvalue override {
+		const auto r1x = alloc_node (flow ,node) ;
+		Index ix = r1x.m2nd ;
+		Index iy = self.mStackNodeId[self.mStackNodeId.tail ()] ;
+		assume (iy != self.mRootNodeId) ;
+		if ifdo (TRUE) {
+			if (ix == iy)
+				discard ;
+			self.mNode[ix].mParent.add (iy) ;
+			self.mNode[iy].mChild.add (ix) ;
+			const auto r2x = self.mNode[iy].mDepth + 1 ;
+			self.mNode[ix].mDepth = MathProc::max_of (self.mNode[ix].mDepth ,r2x) ;
+		}
+		compile_node (ix) ;
+		return self.mNode[ix].mValue.ref ;
 	}
 
-	void monad (CR<Clazz> name) override {
-		unimplemented () ;
+	Tuple<Index ,Index> alloc_node (CR<String<Str>> flow ,CR<String<Str>> node) {
+		Index jx = self.mFlowName.map (flow) ;
+		if ifdo (TRUE) {
+			if (jx != NONE)
+				discard ;
+			jx = self.mFlow.insert () ;
+			self.mFlow[jx].mName = flow ;
+			self.mFlowName.add (self.mFlow[jx].mName ,jx) ;
+			self.mFlow[jx].mNodeName = Set<String<Str>> (32) ;
+			self.mFlow[jx].mMonadNode = Set<String<Str>> (32) ;
+		}
+		Index ix = self.mFlow[jx].mNodeName.map (node) ;
+		if ifdo (TRUE) {
+			if (ix != NONE)
+				discard ;
+			ix = self.mNode.insert () ;
+			self.mNode[ix].mFlowId = jx ;
+			self.mNode[ix].mName = node ;
+			self.mFlow[jx].mNodeName.add (self.mNode[ix].mName ,ix) ;
+			self.mNode[ix].mParent = Set<Index> (32) ;
+			self.mNode[ix].mChild = Set<Index> (32) ;
+			self.mNode[ix].mPlaying = FALSE ;
+			self.mNodeFlowSet.add ({jx ,ix}) ;
+		}
+		return Tuple<Index ,Index> ({jx ,ix}) ;
 	}
 
-	Scope until () override {
-		unimplemented () ;
-		return Scope () ;
+	void compile_node (CR<Index> curr) {
+		Index ix = curr ;
+		if (self.mNode[ix].mValue.exist ())
+			return ;
+		Index jx = self.mNode[self.mRootNodeId].mFlowId ;
+		Index kx = self.mFlow[jx].mMonadNode.map (self.mNode[ix].mName) ;
+		assume (kx != NONE) ;
+		const auto r1x = Unknown (self.mFlow[jx].mMonad[kx]) ;
+		self.mNode[ix].mValue = AutoRef<Pointer> (r1x) ;
+		self.mStackNodeId.add (ix) ;
+		const auto r2x = RFat<ReflectCompile> (r1x) ;
+		r2x->compile (self.mNode[ix].mValue.ref ,keep[TYPE<Execution>::expr] (self.mWeak)) ;
+		self.mStackNodeId.pop () ;
+	}
+
+	void once (CR<Function<>> actor) override {
+		Index ix = self.mStackNodeId[self.mStackNodeId.tail ()] ;
+		self.mNode[ix].mOnceActor = actor ;
+		self.mNode[ix].mPlaying = FALSE ;
+		self.mNode[ix].mOncePlayed = FALSE ;
+	}
+
+	void then (CR<Function<>> actor) override {
+		Index ix = self.mStackNodeId[self.mStackNodeId.tail ()] ;
+		self.mNode[ix].mThenActor = actor ;
+		self.mNode[ix].mPlaying = FALSE ;
+		self.mNode[ix].mThenPlayed = FALSE ;
+	}
+
+	void monad (CR<Unknown> holder ,CR<String<Str>> node) override {
+		Index jx = self.mNode[self.mRootNodeId].mFlowId ;
+		Index kx = self.mFlow[jx].mMonadNode.map (node) ;
+		if ifdo (TRUE) {
+			if (kx != NONE)
+				discard ;
+			kx = self.mFlow[jx].mMonad.insert () ;
+			self.mFlow[jx].mMonadNode.add (node ,kx) ;
+		}
+		self.mFlow[jx].mMonad[kx] = inline_vptr (holder) ;
+	}
+
+	void undo (CR<String<Str>> flow ,CR<String<Str>> node) override {
+		const auto r1x = alloc_node (flow ,node) ;
+		Index ix = r1x.m2nd ;
+		self.mScanStack.clear () ;
+		self.mScanStack.add (ix) ;
+		while (TRUE) {
+			if (self.mScanStack.empty ())
+				break ;
+			self.mScanStack.pop (ix) ;
+			self.mNode[ix].mOncePlayed = FALSE ;
+			self.mNode[ix].mThenPlayed = FALSE ;
+			for (auto &&i : self.mNode[ix].mParent)
+				self.mScanStack.add (i) ;
+		}
 	}
 
 	void execute () override {
-		unimplemented () ;
+		self.mPlayQueue.clear () ;
+		for (auto &&i : self.mNodeFlowSet) {
+			Index ix = i.m2nd ;
+			if (self.mNode[ix].mThenPlayed)
+				continue ;
+			const auto r1x = self.mNode[ix].mDepth ;
+			self.mPlayQueue.add ({r1x ,ix}) ;
+			self.mNode[ix].mPlaying = TRUE ;
+		}
+		while (TRUE) {
+			if (self.mPlayQueue.empty ())
+				break ;
+			Index ix = self.mPlayQueue[self.mPlayQueue.head ()].m2nd ;
+			self.mPlayQueue.take () ;
+			play_node (ix) ;
+			for (auto &&j : self.mNode[ix].mParent) {
+				if (self.mNode[j].mPlaying)
+					continue ;
+				const auto r2x = self.mNode[j].mDepth ;
+				self.mPlayQueue.add ({r2x ,j}) ;
+				self.mNode[j].mPlaying = TRUE ;
+			}
+		}
+	}
+
+	void play_node (CR<Index> curr) {
+		Index ix = curr ;
+		if ifdo (FALSE) {
+			if (self.mNode[ix].mOncePlayed)
+				discard ;
+			self.mNode[ix].mOnceActor () ;
+			self.mNode[ix].mOncePlayed = TRUE ;
+		}
+		if ifdo (TRUE) {
+			if (self.mNode[ix].mThenPlayed)
+				discard ;
+			self.mNode[ix].mThenActor () ;
+			self.mNode[ix].mThenPlayed = TRUE ;
+			self.mNode[ix].mPlaying = FALSE ;
+		}
 	}
 } ;
 

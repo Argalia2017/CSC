@@ -62,6 +62,7 @@ public:
 	}
 
 	ImageLayout make_image (CR<ImageShape> shape ,CR<Clazz> clazz ,CR<Length> channel) const override {
+		assert (channel >= 1) ;
 		auto rax = Box<UniqueRef<cv::Mat>>::make () ;
 		const auto r1x = cvmat_depth_of_clazz (clazz) ;
 		const auto r2x = CV_MAKE_TYPE (Val32 (r1x) ,Val32 (channel)) ;

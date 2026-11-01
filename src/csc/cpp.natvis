@@ -161,15 +161,6 @@
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::RefBufferLayout" Inheritable="false">
-		<Expand HideRawView="true">
-			<Item Name="[hint]">BYTE_ENDIAN</Item>
-			<Item Name="[hint]">WORD_ENDIAN</Item>
-			<Item Name="[hint]">CHAR_ENDIAN</Item>
-			<Item Name="[hint]">QUAD_ENDIAN</Item>
-		</Expand>
-	</Type>
-
 	<Type Name="CSC::RefBufferImplLayout&lt;*&gt;" Inheritable="false">
 		<Intrinsic Name="at" Expression="(($T1*)(mBuffer+i*mStep))" >
 			<Parameter Name="i" Type="__int32"/>
@@ -455,9 +446,9 @@
 		<Expand HideRawView="true">
 			<Item Name="[all]" Condition="mSize&lt;1">mStep</Item>
 			<Item Name="[one]" Condition="mSize==1">mBuffer</Item>
-			<Item Name="[offset]" Condition="mSize&lt;1">mBuffer</Item>
-			<Item Name="[size]" Condition="mSize&lt;1">mSize</Item>
-			<Item Name="[step]" Condition="mSize&lt;1">mStep</Item>
+			<Item Name="[offset]" Condition="mSize&gt;1">mBuffer</Item>
+			<Item Name="[size]" Condition="mSize&gt;1">mSize</Item>
+			<Item Name="[step]" Condition="mSize&gt;1">mStep</Item>
 		</Expand>
 	</Type>
 

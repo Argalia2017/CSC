@@ -901,8 +901,20 @@ public:
 } ;
 
 template <class A>
-struct IndexPair implement Tuple<A ,Index> {
+class IndexPair implement Tuple<A ,Index> {
 public:
+	implicit IndexPair () = default ;
+
+	implicit IndexPair (CR<A> a ,CR<Index> b) {
+		thiz.m1st = move (a) ;
+		thiz.m2nd = b ;
+	}
+
+	implicit IndexPair (RR<A> a ,CR<Index> b) {
+		thiz.m1st = move (a) ;
+		thiz.m2nd = b ;
+	}
+
 	Bool equal (CR<IndexPair> that) const {
 		return inline_equal (thiz.m1st ,that.m1st) ;
 	}

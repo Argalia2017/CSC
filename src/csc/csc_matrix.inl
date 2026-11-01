@@ -492,7 +492,7 @@ public:
 		ret[1][1] = r7x ;
 		ret[0][2] = r5x ;
 		ret[1][2] = r8x ;
-		ret[2][3] = r9x ;
+		ret[2][2] = r9x ;
 		ret[3][3] = 1 ;
 		self = move (ret) ;
 	}
@@ -1149,40 +1149,52 @@ public:
 		visitor.leave () ;
 	}
 
-	QuaternionLayout rotate (CR<Flt64> pitch ,CR<Flt64> yaw ,CR<Flt64> roll) const override {
+	QuaternionLayout rotate (CR<Flt64> yaw ,CR<Flt64> pitch ,CR<Flt64> roll) const override {
 		QuaternionLayout ret = self ;
-		if ifdo (TRUE) {
-			if (pitch == 0)
-				discard ;
-			const auto r1x = MathProc::cos (pitch / 2) ;
-			const auto r2x = MathProc::sin (pitch / 2) ;
-			ret.mQuaternion[0] = self.mQuaternion[0] * r1x - self.mQuaternion[1] * r2x ;
-			ret.mQuaternion[1] = self.mQuaternion[0] * r2x + self.mQuaternion[1] * r1x ;
-			ret.mQuaternion[2] = self.mQuaternion[2] * r1x + self.mQuaternion[3] * r2x ;
-			ret.mQuaternion[3] = self.mQuaternion[3] * r1x - self.mQuaternion[2] * r2x ;
-		}
 		if ifdo (TRUE) {
 			if (yaw == 0)
 				discard ;
-			const auto r3x = MathProc::cos (yaw / 2) ;
-			const auto r4x = MathProc::sin (yaw / 2) ;
-			ret.mQuaternion[0] = self.mQuaternion[0] * r3x - self.mQuaternion[2] * r4x ;
-			ret.mQuaternion[1] = self.mQuaternion[1] * r3x - self.mQuaternion[3] * r4x ;
-			ret.mQuaternion[2] = self.mQuaternion[0] * r4x + self.mQuaternion[2] * r3x ;
-			ret.mQuaternion[3] = self.mQuaternion[3] * r3x + self.mQuaternion[1] * r4x ;
+			const auto r1x = MathProc::cos (yaw / 2) ;
+			const auto r2x = MathProc::sin (yaw / 2) ;
+			const auto r3x = ret.mQuaternion ;
+			ret.mQuaternion[0] = r3x[0] * r1x - r3x[2] * r2x ;
+			ret.mQuaternion[1] = r3x[1] * r1x - r3x[3] * r2x ;
+			ret.mQuaternion[2] = r3x[0] * r2x + r3x[2] * r1x ;
+			ret.mQuaternion[3] = r3x[3] * r1x + r3x[1] * r2x ;
+		}
+		if ifdo (TRUE) {
+			if (pitch == 0)
+				discard ;
+			const auto r4x = MathProc::cos (pitch / 2) ;
+			const auto r5x = MathProc::sin (pitch / 2) ;
+			const auto r6x = ret.mQuaternion ;
+			ret.mQuaternion[0] = r6x[0] * r4x - r6x[1] * r5x ;
+			ret.mQuaternion[1] = r6x[0] * r5x + r6x[1] * r4x ;
+			ret.mQuaternion[2] = r6x[2] * r4x + r6x[3] * r5x ;
+			ret.mQuaternion[3] = r6x[3] * r4x - r6x[2] * r5x ;
 		}
 		if ifdo (TRUE) {
 			if (roll == 0)
 				discard ;
-			const auto r5x = MathProc::cos (roll / 2) ;
-			const auto r6x = MathProc::sin (roll / 2) ;
-			ret.mQuaternion[0] = self.mQuaternion[0] * r5x - self.mQuaternion[3] * r6x ;
-			ret.mQuaternion[1] = self.mQuaternion[1] * r5x + self.mQuaternion[2] * r6x ;
-			ret.mQuaternion[2] = self.mQuaternion[2] * r5x - self.mQuaternion[1] * r6x ;
-			ret.mQuaternion[3] = self.mQuaternion[0] * r6x + self.mQuaternion[3] * r5x ;
+			const auto r7x = MathProc::cos (roll / 2) ;
+			const auto r8x = MathProc::sin (roll / 2) ;
+			const auto r9x = ret.mQuaternion ;
+			ret.mQuaternion[0] = r9x[0] * r7x - r9x[3] * r8x ;
+			ret.mQuaternion[1] = r9x[1] * r7x + r9x[2] * r8x ;
+			ret.mQuaternion[2] = r9x[2] * r7x - r9x[1] * r8x ;
+			ret.mQuaternion[3] = r9x[0] * r8x + r9x[3] * r7x ;
 		}
 		normalized (ret) ;
 		return move (ret) ;
+	}
+
+	QuaternionLayout rotate (CR<Vector> from ,CR<Vector> into) const override {
+		const auto r1x = from.normalize () ;
+		const auto r2x = into.normalize () ;
+		const auto r3x = (r1x ^ r2x).normalize () ;
+		const auto r4x = MathProc::acos (r1x * r2x) ;
+		const auto r5x = Quaternion (r3x * r4x) ;
+		return QuaternionHolder::hold (r5x)->smul (self) ;
 	}
 
 	QuaternionLayout smul (CR<QuaternionLayout> that) const override {
@@ -1208,22 +1220,6 @@ public:
 		ret.mQuaternion[2] = -self.mQuaternion[2] ;
 		ret.mQuaternion[3] = -self.mQuaternion[3] ;
 		return move (ret) ;
-	}
-
-	QuaternionLayout clip (CR<Flt64> abs_pitch) const override {
-		const auto r1x = self.mQuaternion[0] ;
-		const auto r2x = self.mQuaternion[1] ;
-		const auto r3x = self.mQuaternion[2] ;
-		const auto r4x = self.mQuaternion[3] ;
-		const auto r5x = 2 * (r2x * r4x + r1x * r3x) ;
-		const auto r6x = 2 * (r3x * r4x - r1x * r2x) ;
-		const auto r7x = 1 - 2 * (MathProc::square (r2x) + MathProc::square (r3x)) ;
-		//@info: 限制 |pitch| <= abs_pitch 即 |z_y| <= sin(abs_pitch)
-		const auto r8x = MathProc::clamp (r6x ,-MathProc::sin (abs_pitch) ,MathProc::sin (abs_pitch)) ;
-		const auto r9x = Vector (r5x ,0 ,r7x ,0).normalize () * MathProc::sqrt (1 - MathProc::square (r8x)) ;
-		const auto r10x = Vector (r9x[0] ,r8x ,r9x[2] ,0) ;
-		const auto r11x = ViewMatrixZYX (r10x ,Vector::axis_y ()) ;
-		return Quaternion (r11x) ;
 	}
 
 	Flt64 angle () const {

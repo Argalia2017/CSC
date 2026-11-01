@@ -31,10 +31,12 @@ public:
 			return FALSE ;
 		if (self.mCY != that.mCY)
 			return FALSE ;
-		if (self.mStep != 0)
-			if (that.mStep != 0)
-				if (self.mStep != that.mStep)
-					return FALSE ;
+		if (self.mStep == 0)
+			return TRUE ;
+		if (that.mStep == 0)
+			return TRUE ;
+		if (self.mStep != that.mStep)
+			return FALSE ;
 		return TRUE ;
 	}
 
@@ -831,7 +833,7 @@ struct TensorTree {
 	Index mCheck ;
 } ;
 
-class TensorSliceLayout implement SliceLayout {} ;
+struct TensorSliceLayout implement SliceLayout {} ;
 
 class TensorImplHolder final implement Fat<TensorHolder ,TensorLayout> {
 public:
@@ -846,6 +848,25 @@ public:
 		self.mSpan = Array<Slice> (2) ;
 		self.mSpan[0] = Slice (0 ,r1x ,1) ;
 		self.mSpan[1] = Slice::one (0) ;
+	}
+
+	void initialize (RR<ImageLayout> that) override {
+		const auto r1x = ImageHolder::hold (that)->cx () ;
+		const auto r2x = ImageHolder::hold (that)->cy () ;
+		if (r1x == 0)
+			return ;
+		if (r2x == 0)
+			return ;
+		const auto r3x = ImageHolder::hold (that)->step () ;
+		initialize (r1x * r2x ,tensor_type_from_step (r3x)) ;
+		self.mSpan = Array<Slice> (3) ;
+		self.mSpan[0] = Slice (0 ,r2x ,r1x) ;
+		self.mSpan[1] = Slice (0 ,r1x ,1) ;
+		self.mSpan[2] = Slice::one (0) ;
+		for (auto &&i : range (0 ,r2x)) {
+			const auto r4x = i * r1x ;
+			inline_memcpy (Pointer::from (self.mThis->mTensor[r4x]) ,ImageHolder::hold (that)->at (0 ,i) ,r1x * r3x) ;
+		}
 	}
 
 	void initialize (CR<Length> size_ ,CR<Just<TensorType>> type_) override {
@@ -1070,8 +1091,9 @@ public:
 					discard ;
 				assume (r4x.size () <= self.mSpan[i].size ()) ;
 				const auto r6x = r4x.size () < 0 ? self.mSpan[i].size () : r4x.size () ;
-				const auto r7x = self.mSpan[i].offset (0) + rbx ;
-				const auto r8x = self.mSpan[i].step () ;
+				assume (r4x.offset (0) + r6x <= self.mSpan[i].size ()) ;
+				const auto r7x = self.mSpan[i].offset (r4x.offset (0)) + rbx ;
+				const auto r8x = r4x.size () < 0 ? self.mSpan[i].step () : self.mSpan[i].step () * r4x.step () ;
 				ret.mSpan[jx] = Slice (r7x ,r6x ,r8x) ;
 				jx++ ;
 				rax *= r6x ;

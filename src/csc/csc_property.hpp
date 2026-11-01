@@ -20,110 +20,126 @@
 #include "csc_thread.hpp"
 
 namespace CSC {
-struct PropertyTree {
-	Index mSid ;
-	String<Str> mName ;
-	Length mSize ;
-	Length mAlign ;
-	Length mChannel ;
-	FarBuffer<Pointer> mBuffer ;
-} ;
+struct PropertyTree ;
 
 struct PropertyLayout {
 	SharedRef<PropertyTree> mThis ;
-	Index mIndex ;
+	Array<Index> mChild ;
 } ;
 
 struct PropertyHolder implement Interface {
 	imports VFat<PropertyHolder> hold (VR<PropertyLayout> that) ;
 	imports CFat<PropertyHolder> hold (CR<PropertyLayout> that) ;
 
-	virtual void initialize () = 0 ;
-	virtual Index sid () const = 0 ;
-	virtual CR<String<Str>> name () const leftvalue = 0 ;
+	virtual void initialize (CR<Clazz> clazz ,RR<PropertyLayout> that) = 0 ;
 	virtual Length size () const = 0 ;
-	virtual Length align () const = 0 ;
-	virtual Length channel () const = 0 ;
-	virtual void load (VR<BoxLayout> item) const = 0 ;
-	virtual void save (CR<BoxLayout> item) const = 0 ;
-	virtual void target (CR<Index> index) = 0 ;
+	virtual VR<Index> at (CR<Index> index) leftvalue = 0 ;
+	virtual CR<Index> at (CR<Index> index) const leftvalue = 0 ;
+	virtual void fetch (VR<Pointer> item) const = 0 ;
+	virtual void store (CR<Pointer> item) const = 0 ;
 } ;
 
+template <class A>
 class Property implement PropertyLayout {
+private:
+	require (IS_TRIVIAL<A>) ;
+
+public:
+	using PropertyLayout::mThis ;
+	using PropertyLayout::mChild ;
+
 public:
 	implicit Property () = default ;
 
-	Index sid () const {
-		return PropertyHolder::hold (thiz)->sid () ;
-	}
-
-	CR<String<Str>> name () const leftvalue {
-		return PropertyHolder::hold (thiz)->name () ;
+	implicit Property (RR<PropertyLayout> that) {
+		PropertyHolder::hold (thiz)->initialize (Clazz (TYPE<A>::expr) ,move (that)) ;
 	}
 
 	Length size () const {
 		return PropertyHolder::hold (thiz)->size () ;
 	}
 
-	Length align () const {
-		return PropertyHolder::hold (thiz)->align () ;
+	VR<Index> at (CR<Index> index) leftvalue {
+		return PropertyHolder::hold (thiz)->at (index) ;
 	}
 
-	Length channel () const {
-		return PropertyHolder::hold (thiz)->channel () ;
+	forceinline VR<Index> operator[] (CR<Index> index) leftvalue {
+		return at (index) ;
 	}
 
-	template <class ARG1>
-	ARG1 parse (CR<ARG1> def) const {
-		require (IS_TRIVIAL<ARG1>) ;
-		auto rax = Box<ARG1>::make (def) ;
-		PropertyHolder::hold (thiz)->load (rax) ;
-		return move (rax.ref) ;
+	CR<Index> at (CR<Index> index) const leftvalue {
+		return PropertyHolder::hold (thiz)->at (index) ;
 	}
 
-	template <class ARG1>
-	void build (CR<ARG1> item) const {
-		require (IS_TRIVIAL<ARG1>) ;
-		auto rax = Box<ARG1>::make (item) ;
-		PropertyHolder::hold (thiz)->save (rax) ;
+	forceinline CR<Index> operator[] (CR<Index> index) const leftvalue {
+		return at (index) ;
 	}
 
-	void target (CR<Index> index) {
-		return PropertyHolder::hold (thiz)->target (index) ;
+	A fetch () const {
+		A ret ;
+		PropertyHolder::hold (thiz)->fetch (Pointer::from (ret)) ;
+		return move (ret) ;
+	}
+
+	void store (CR<A> item) const {
+		PropertyHolder::hold (thiz)->store (Pointer::from (item)) ;
 	}
 } ;
 
-struct BehaviorNode {
-	Index mSid ;
-	String<Str> mCommand ;
-	Array<Index> mParams ;
-} ;
-
-struct BehaviorTree {
-	Length mBehaviorSid ;
-	List<BehaviorNode> mTree ;
-} ;
+struct BehaviorTree ;
 
 struct BehaviorLayout {
 	SharedRef<BehaviorTree> mThis ;
-	Index mCheck ;
 } ;
 
 struct BehaviorHolder implement Interface {
 	imports VFat<BehaviorHolder> hold (VR<BehaviorLayout> that) ;
 	imports CFat<BehaviorHolder> hold (CR<BehaviorLayout> that) ;
 
-	virtual void initialize () = 0 ;
-	virtual void send (CR<String<Str>> command ,CR<Wrapper<Index>> params) = 0 ;
+	virtual void initialize (RR<BehaviorLayout> that) = 0 ;
+	virtual void send (CR<Flag> message ,CR<Format> command) = 0 ;
+	virtual void awake () = 0 ;
+	virtual Bool tick (CR<Flt64> delta_sec) = 0 ;
+	virtual void idle_tick (CR<Flt64> delta_sec) = 0 ;
+	virtual Bool alive () = 0 ;
+} ;
+
+class BehaviorCoroutineBinder final implement Fat<CoroutineHolder ,BehaviorLayout> {
+public:
+	void awake () override {
+		return BehaviorHolder::hold (self)->awake () ;
+	}
+
+	Bool tick (CR<Flt64> delta_sec) override {
+		return BehaviorHolder::hold (self)->tick (delta_sec) ;
+	}
+
+	void idle_tick (CR<Flt64> delta_sec) override {
+		return BehaviorHolder::hold (self)->idle_tick (delta_sec) ;
+	}
+
+	Bool alive () override {
+		return BehaviorHolder::hold (self)->alive () ;
+	}
 } ;
 
 class Behavior implement BehaviorLayout {
+protected:
+	using BehaviorLayout::mThis ;
+
 public:
 	implicit Behavior () = default ;
 
-	template <class...ARG1 ,class = REQUIRE<ENUM_ALL<IS_VALUE<ARG1>...>>>
-	void send (CR<String<Str>> command ,CR<ARG1>...params) {
-		return BehaviorHolder::hold (thiz)->send (command ,MakeWrapper (Index (params))...) ;
+	implicit Behavior (RR<BehaviorLayout> that) {
+		BehaviorHolder::hold (thiz)->initialize (move (that)) ;
+	}
+
+	void send (CR<Flag> message ,CR<Format> command) {
+		return BehaviorHolder::hold (thiz)->send (message ,command) ;
+	}
+
+	forceinline operator Coroutine () leftvalue {
+		return VFat<CoroutineHolder> (BehaviorCoroutineBinder () ,thiz) ;
 	}
 } ;
 
@@ -134,93 +150,61 @@ struct DataFrameHolder implement Interface {
 	imports VFat<DataFrameHolder> hold (VR<DataFrameLayout> that) ;
 	imports CFat<DataFrameHolder> hold (CR<DataFrameLayout> that) ;
 
-	virtual void initialize (CR<Length> size_) = 0 ;
-	virtual Length size () const = 0 ;
-	virtual Length length () const = 0 ;
-	virtual Index ibegin () const = 0 ;
-	virtual Index iend () const = 0 ;
-	virtual Index inext (CR<Index> index) const = 0 ;
-	virtual void claim (CR<String<Str>> name ,CR<Clazz> clazz ,RR<FarBuffer<Pointer>> buffer) = 0 ;
-	virtual Property map (CR<Index> sid ,CR<Index> index) const = 0 ;
-	virtual Property map (CR<String<Str>> name ,CR<Index> index) const = 0 ;
-	virtual Bool contain (CR<Index> sid) const = 0 ;
-	virtual Bool contain (CR<String<Str>> name) const = 0 ;
-	virtual Behavior record () = 0 ;
+	virtual void initialize (CR<Length> rank_) = 0 ;
+	virtual Length rank () const = 0 ;
+	virtual Array<Slice> shape () const = 0 ;
+	virtual Length shape (CR<Index> index) const = 0 ;
+	virtual void claim (CR<String<Str>> name ,CR<Clazz> clazz) = 0 ;
+	virtual void spawn (CR<Index> rank_ ,CR<Length> size_) = 0 ;
+	virtual PropertyLayout map (CR<String<Str>> filter) = 0 ;
+	virtual BehaviorLayout record () = 0 ;
 	virtual void submit () = 0 ;
-	virtual void spawn (CR<Index> begin_ ,CR<Index> end_) = 0 ;
-	virtual void despawn (CR<Index> begin_ ,CR<Index> end_) = 0 ;
+	virtual RefBuffer<Byte> serialize () = 0 ;
 } ;
 
 class DataFrame implement Super<SharedRef<DataFrameLayout>> {
 public:
 	implicit DataFrame () = default ;
 
-	implicit DataFrame (CR<Length> size_) {
+	implicit DataFrame (CR<Length> rank_) {
 		mThis = DataFrameHolder::create () ;
-		DataFrameHolder::hold (thiz)->initialize (size_) ;
+		DataFrameHolder::hold (thiz)->initialize (rank_) ;
 	}
 
-	Length size () const {
-		return DataFrameHolder::hold (thiz)->size () ;
+	Length rank () const {
+		return DataFrameHolder::hold (thiz)->rank () ;
 	}
 
-	Length length () const {
-		return DataFrameHolder::hold (thiz)->length () ;
+	Array<Slice> shape () const {
+		return DataFrameHolder::hold (thiz)->shape () ;
 	}
 
-	Index ibegin () const {
-		return DataFrameHolder::hold (thiz)->ibegin () ;
+	Length shape (CR<Index> index) const {
+		return DataFrameHolder::hold (thiz)->shape (index) ;
 	}
 
-	Index iend () const {
-		return DataFrameHolder::hold (thiz)->iend () ;
+	void claim (CR<String<Str>> name ,CR<Clazz> clazz) const {
+		return DataFrameHolder::hold (thiz)->claim (name ,clazz) ;
 	}
 
-	Index inext (CR<Index> index) const {
-		return DataFrameHolder::hold (thiz)->inext (index) ;
+	void spawn (CR<Index> rank_ ,CR<Length> size_) const {
+		return DataFrameHolder::hold (thiz)->spawn (rank_ ,size_) ;
 	}
 
-	ArrayRange<CR<DataFrame>> iter () const leftvalue {
-		return ArrayRange<CR<DataFrame>> (thiz) ;
+	PropertyLayout map (CR<String<Str>> filter) const {
+		return DataFrameHolder::hold (thiz)->map (filter) ;
 	}
 
-	template <class ARG1>
-	void claim (CR<String<Str>> name ,RR<FarBuffer<ARG1>> buffer) {
-		const auto r1x = Clazz (TYPE<ARG1>::expr) ;
-		auto &&rax = keep[TYPE<FarBuffer<Pointer>>::expr] (Pointer::from (buffer)) ;
-		return DataFrameHolder::hold (thiz)->claim (name ,r1x ,move (rax)) ;
-	}
-
-	Property map (CR<Index> sid ,CR<Index> index) const {
-		return DataFrameHolder::hold (thiz)->map (sid ,index) ;
-	}
-
-	Property map (CR<String<Str>> name ,CR<Index> index) const {
-		return DataFrameHolder::hold (thiz)->map (name ,index) ;
-	}
-
-	Bool contain (CR<Index> sid) const {
-		return DataFrameHolder::hold (thiz)->contain (sid) ;
-	}
-
-	Bool contain (CR<String<Str>> name) const {
-		return DataFrameHolder::hold (thiz)->contain (name) ;
-	}
-
-	Behavior record () {
+	BehaviorLayout record () const {
 		return DataFrameHolder::hold (thiz)->record () ;
 	}
 
-	void submit () {
+	void submit () const {
 		return DataFrameHolder::hold (thiz)->submit () ;
 	}
 
-	void spawn (CR<Index> begin ,CR<Index> end_) {
-		return DataFrameHolder::hold (thiz)->spawn (begin ,end_) ;
-	}
-
-	void despawn (CR<Index> begin ,CR<Index> end_) {
-		return DataFrameHolder::hold (thiz)->despawn (begin ,end_) ;
+	RefBuffer<Byte> serialize () {
+		return DataFrameHolder::hold (thiz)->serialize () ;
 	}
 } ;
 } ;

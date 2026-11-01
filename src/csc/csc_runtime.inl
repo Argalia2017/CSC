@@ -40,7 +40,7 @@ public:
 		auto rax = std::tm () ;
 		const auto r1x = Val32 (calendar_.mYear - 1900) ;
 		rax.tm_year = r1x * MathProc::step (r1x) ;
-		const auto r2x = Val32 (calendar_.mMonth) ;
+		const auto r2x = Val32 (calendar_.mMonth - 1) ;
 		rax.tm_mon = r2x * MathProc::step (r2x) ;
 		rax.tm_mday = Val32 (calendar_.mDay) ;
 		const auto r3x = Val32 (calendar_.mWDay - 1) ;
@@ -235,7 +235,7 @@ exports CFat<AtomicHolder> AtomicHolder::hold (CR<AtomicLayout> that) {
 	return CFat<AtomicHolder> (AtomicImplHolder () ,that) ;
 }
 
-struct SharedAtomicMutex implement Atomic {
+class SharedAtomicMutex implement Atomic {
 public:
 	implicit SharedAtomicMutex () = default ;
 
@@ -454,7 +454,7 @@ exports CFat<UniqueLockHolder> UniqueLockHolder::hold (CR<UniqueLockLayout> that
 }
 
 struct ThreadLayout {
-	Ref<Executing> mExecuting ;
+	Ref<ThreadProc> mThreadProc ;
 	Flag mUid ;
 	Index mSlot ;
 	Box<std::thread> mThread ;
@@ -469,8 +469,8 @@ public:
 
 class ThreadImplHolder final implement Fat<ThreadHolder ,ThreadLayout> {
 public:
-	void initialize (RR<Ref<Executing>> executing ,CR<Index> slot) override {
-		self.mExecuting = move (executing) ;
+	void initialize (RR<Ref<ThreadProc>> thread_proc ,CR<Index> slot) override {
+		self.mThreadProc = move (thread_proc) ;
 		self.mUid = ZERO ;
 		self.mSlot = slot ;
 	}
@@ -483,7 +483,7 @@ public:
 		auto &&rax = self ;
 		self.mThread = Box<std::thread>::make ([&] () {
 			rax.mUid = RuntimeProc::thread_uid () ;
-			rax.mExecuting->friend_execute (rax.mSlot) ;
+			rax.mThreadProc->friend_proc (rax.mSlot) ;
 		}) ;
 	}
 
@@ -695,7 +695,7 @@ public:
 		if ifdo (act) {
 			result.fill (Byte (0XFF)) ;
 			const auto r2x = random_shuffle (size_ - length_ ,size_) ;
-			for (auto &&i : range (length_ ,size_))
+			for (auto &&i : range (0 ,size_ - length_))
 				result.erase (r2x[i]) ;
 		}
 	}
@@ -728,7 +728,7 @@ public:
 				discard ;
 			const auto r1x = random_float () ;
 			const auto r2x = random_float () ;
-			const auto r3x = MathProc::min_of (r1x + FLT64_EPS ,Flt64 (1)) ;
+			const auto r3x = MathProc::clamp (r1x ,FLT64_EPS ,Flt64 (1)) ;
 			const auto r4x = MathProc::sqrt (Flt64 (-2) * MathProc::log (r3x)) ;
 			const auto r5x = MATH_PI * 2 * r2x ;
 			self.mNormal.mNX = r4x * MathProc::cos (r5x) ;
@@ -762,13 +762,12 @@ struct SingletonImplLayout {
 	Set<Clazz> mClazzSet ;
 
 public:
-	static VR<SingletonImplLayout> expr_m () ;
+	static CR<SingletonImplLayout> expr_m () {
+		return memorize ([&] () {
+			return SingletonImplLayout () ;
+		}) ;
+	}
 } ;
-
-inline VR<SingletonImplLayout> SingletonImplLayout::expr_m () {
-	static auto mInstance = SingletonImplLayout () ;
-	return mInstance ;
-}
 
 struct SingletonLocal {
 	Quad mReserve1 ;
@@ -817,14 +816,15 @@ exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CR<SingletonProcLay
 
 struct GlobalNode {
 	Pin<GlobalNode> mPin ;
+	String<Str> mName ;
 	Length mCheck ;
 	AutoRef<Pointer> mValue ;
 } ;
 
 struct GlobalTree {
 	Mutex mMutex ;
-	Set<Slice> mGlobalNameSet ;
 	List<GlobalNode> mGlobalList ;
+	Set<String<Str>> mGlobalName ;
 	Bool mFinalize ;
 } ;
 
@@ -837,16 +837,17 @@ public:
 		self.mIndex = NONE ;
 	}
 
-	void initialize (CR<Slice> name ,CR<Unknown> holder) override {
+	void initialize (CR<String<Str>> name ,CR<Unknown> holder) override {
 		self.mThis = Singleton<GlobalProc>::expr.mThis ;
 		Scope anonymous (self.mThis->mMutex) ;
 		assert (!self.mThis->mFinalize) ;
-		Index ix = self.mThis->mGlobalNameSet.map (name) ;
+		Index ix = self.mThis->mGlobalName.map (name) ;
 		if ifdo (TRUE) {
 			if (ix != NONE)
 				discard ;
 			ix = self.mThis->mGlobalList.insert () ;
-			self.mThis->mGlobalNameSet.add (name ,ix) ;
+			self.mThis->mGlobalList[ix].mName = name ;
+			self.mThis->mGlobalName.add (self.mThis->mGlobalList[ix].mName ,ix) ;
 			self.mThis->mGlobalList[ix].mCheck = 0 ;
 			self.mThis->mGlobalList[ix].mValue = AutoRef<Pointer> (holder) ;
 		}
@@ -866,7 +867,7 @@ public:
 		if (rax->mFinalize)
 			return ;
 		rax->mFinalize = TRUE ;
-		rax->mGlobalNameSet.clear () ;
+		rax->mGlobalName.clear () ;
 		rax->mGlobalList.clear () ;
 	}
 

@@ -745,6 +745,7 @@ struct TensorHolder implement Interface {
 	imports CFat<TensorHolder> hold (CR<TensorLayout> that) ;
 
 	virtual void initialize (RR<RefBufferLayout> that) = 0 ;
+	virtual void initialize (RR<ImageLayout> that) = 0 ;
 	virtual void initialize (CR<Length> size_ ,CR<Just<TensorType>> type_) = 0 ;
 	virtual void initialize (CR<TensorLayout> that) = 0 ;
 	virtual Length rank () const = 0 ;
@@ -771,6 +772,11 @@ public:
 
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	implicit Tensor (RR<RefBuffer<ARG1>> that) {
+		TensorHolder::hold (thiz)->initialize (move (that)) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
+	implicit Tensor (RR<Image<ARG1>> that) {
 		TensorHolder::hold (thiz)->initialize (move (that)) ;
 	}
 

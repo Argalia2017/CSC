@@ -88,13 +88,23 @@ public:
 	}
 
 	Flt32 delta (CR<Flt32> a) const override {
-		if (MathProc::abs (a) < FLT32_EPS)
+		static constexpr auto FLT32_EPS_S = FLT32_EPS * FLT32_EPS ;
+		static constexpr auto FLT32_EPS_I = 1 / FLT32_EPS_S ;
+		const auto r1x = MathProc::abs (a) ;
+		if (r1x < FLT32_EPS_S)
+			return 1 ;
+		if (r1x > FLT32_EPS_I)
 			return 1 ;
 		return 0 ;
 	}
 
 	Flt64 delta (CR<Flt64> a) const override {
-		if (MathProc::abs (a) < FLT64_EPS)
+		static constexpr auto FLT64_EPS_S = FLT64_EPS * FLT64_EPS ;
+		static constexpr auto FLT64_EPS_I = 1 / FLT64_EPS_S ;
+		const auto r1x = MathProc::abs (a) ;
+		if (r1x < FLT64_EPS_S)
+			return 1 ;
+		if (r1x > FLT64_EPS_I)
 			return 1 ;
 		return 0 ;
 	}
@@ -369,14 +379,6 @@ public:
 
 	Flt64 asin (CR<Flt64> a) const override {
 		return std::asin (a) ;
-	}
-
-	Flt32 atan (CR<Flt32> a) const override {
-		return std::atan (a) ;
-	}
-
-	Flt64 atan (CR<Flt64> a) const override {
-		return std::atan (a) ;
 	}
 
 	Flt32 atan (CR<Flt32> y ,CR<Flt32> x) const override {
@@ -749,6 +751,12 @@ public:
 				discard ;
 			rax.mExponent = 0 ;
 		}
+		if ifdo (TRUE) {
+			if (rax.mExponent < Length (2047))
+				discard ;
+			rax.mExponent = 2047 ;
+			rax.mMantissa = Quad (0X00) ;
+		}
 		const auto r2x = fexp2.mSign ? Quad (0X8000000000000000) : Quad (0X00) ;
 		const auto r3x = (Quad (rax.mExponent) << 52) & Quad (0X7FF0000000000000) ;
 		const auto r4x = rax.mMantissa & Quad (0X000FFFFFFFFFFFFF) ;
@@ -868,8 +876,10 @@ public:
 		const auto r1x = Val64 (fexp10.mDownflow << 64) / Val64 (1000000000000000000) ;
 		ret.mDownflow = Quad (r1x) ;
 		ret.mExponent = 0 ;
-		const auto r2x = FEXP2Cache::expr[fexp10.mExponent] ;
-		ret = fexp2_multiply (ret ,r2x) ;
+		//@info: exponents beyond the cache saturate to zero or infinity in encode
+		const auto r2x = MathProc::clamp (fexp10.mExponent ,Val64 (-346) ,Val64 (+346)) ;
+		const auto r3x = FEXP2Cache::expr[r2x] ;
+		ret = fexp2_multiply (ret ,r3x) ;
 		return move (ret) ;
 	}
 
@@ -1074,24 +1084,32 @@ public:
 	Byte shift (CR<Byte> high_ ,CR<Byte> low_ ,CR<Index> high_bit) const override {
 		const auto r1x = high_bit ;
 		const auto r2x = 8 - r1x ;
+		assert (r1x >= 0) ;
+		assert (r2x >= 0) ;
 		return (high_ << r2x) | (low_ >> r1x) ;
 	}
 
 	Word shift (CR<Word> high_ ,CR<Word> low_ ,CR<Index> high_bit) const override {
 		const auto r1x = high_bit ;
 		const auto r2x = 16 - r1x ;
+		assert (r1x >= 0) ;
+		assert (r2x >= 0) ;
 		return (high_ << r2x) | (low_ >> r1x) ;
 	}
 
 	Char shift (CR<Char> high_ ,CR<Char> low_ ,CR<Index> high_bit) const override {
 		const auto r1x = high_bit ;
 		const auto r2x = 32 - r1x ;
+		assert (r1x >= 0) ;
+		assert (r2x >= 0) ;
 		return (high_ << r2x) | (low_ >> r1x) ;
 	}
 
 	Quad shift (CR<Quad> high_ ,CR<Quad> low_ ,CR<Index> high_bit) const override {
 		const auto r1x = high_bit ;
 		const auto r2x = 64 - r1x ;
+		assert (r1x >= 0) ;
+		assert (r2x >= 0) ;
 		return (high_ << r2x) | (low_ >> r1x) ;
 	}
 
@@ -1747,6 +1765,7 @@ public:
 			const auto r1x = Val32 (self.mReal[ix]) + rax ;
 			rax = Val32 (Char (r1x) >> 8) ;
 			self.mReal[ix] = Byte (r1x) ;
+			ix++ ;
 		}
 		check_mask (self) ;
 	}
@@ -1763,6 +1782,7 @@ public:
 			rax = Val32 (r1x < 0) ;
 			const auto r2x = r1x + 256 * rax ;
 			self.mReal[ix] = Byte (r2x) ;
+			ix++ ;
 		}
 		check_mask (self) ;
 	}
@@ -1821,7 +1841,6 @@ struct JetNode ;
 using JetEvalFunction = Function<VR<JetNode> ,CR<Wrapper<Flt64>>> ;
 
 struct JetNode {
-	Index mCheck ;
 	Length mDepth ;
 	Flt64 mFX ;
 	Flt64 mEX ;
@@ -1839,16 +1858,16 @@ struct JetTree {
 } ;
 
 struct JetImplLayout {
+	Pin<JetImplLayout> mPin ;
 	SharedRef<JetTree> mThis ;
 
 public:
-	static VR<JetImplLayout> expr_m () ;
+	static CR<JetImplLayout> expr_m () {
+		return memorize ([&] () {
+			return JetImplLayout () ;
+		}) ;
+	}
 } ;
-
-inline VR<JetImplLayout> JetImplLayout::expr_m () {
-	static auto mInstance = JetImplLayout () ;
-	return mInstance ;
-}
 
 class JetImplHolder final implement Fat<JetHolder ,JetLayout> {
 public:
@@ -1893,7 +1912,7 @@ public:
 			return ;
 		root.mThis = SharedRef<JetTree>::make () ;
 		root.mThis->mCheck = 0 ;
-		JetImplLayout::expr.mThis = root.mThis.weak () ;
+		JetImplLayout::expr.mPin->mThis = root.mThis.weak () ;
 	}
 
 	static VR<JetNode> ptr (CR<JetLayout> that) {
@@ -2166,10 +2185,10 @@ public:
 			if ifdo (act) {
 				if (ptr (node.mP1).mFX >= 0)
 					discard ;
-				copy_node (node ,ptr (node.mP1) ,+1) ;
+				copy_node (node ,ptr (node.mP1) ,-1) ;
 			}
 			if ifdo (act) {
-				copy_node (node ,ptr (node.mP1) ,-1) ;
+				copy_node (node ,ptr (node.mP1) ,+1) ;
 			}
 		}) ;
 		ptr (ret).mP1 = self.mIndex ;
@@ -2286,8 +2305,8 @@ public:
 			node.mEX = ptr (node.mP1).mEX ;
 			const auto r1x = MathProc::square (ptr (node.mP1).mFX) + MathProc::square (ptr (node.mP2).mFX) ;
 			const auto r2x = 1 / r1x ;
-			const auto r3x = -r2x * ptr (node.mP2).mFX ;
-			const auto r4x = r2x * ptr (node.mP1).mFX ;
+			const auto r3x = r2x * ptr (node.mP2).mFX ;
+			const auto r4x = -r2x * ptr (node.mP1).mFX ;
 			for (auto &&i : range (0 ,node.mDX.size ()))
 				node.mDX[i] = r3x * ptr (node.mP1).mDX[i] + r4x * ptr (node.mP2).mDX[i] ;
 			check_fx (node) ;

@@ -23,7 +23,12 @@ public:
 	}
 
 	void pull (VR<BoxLayout> item) const override {
-		assume (exist ()) ;
+		if ifdo (TRUE) {
+			if (exist ())
+				discard ;
+			assume (BoxHolder::hold (item)->exist ()) ;
+			return ;
+		}
 		BoxHolder::hold (item)->acquire (self.mPin.ref) ;
 		BoxHolder::hold (self.mPin.ref)->release () ;
 	}
@@ -151,9 +156,9 @@ public:
 			const auto r1x = Unknown (that.mThis->mExtend) ;
 			const auto r2x = r1x.reflect (ReflectClone::expr) ;
 			assume (r2x != ZERO) ;
-			initialize (r1x) ;
 			const auto r3x = RFat<ReflectClone> (r1x) ;
 			assume (r3x->is_noexcept ()) ;
+			initialize (r1x) ;
 			r3x->clone (ref ,BoxHolder::hold (that.mThis->mValue)->ref) ;
 			BoxHolder::hold (raw ())->remake (r1x ,self.mLayout) ;
 		}

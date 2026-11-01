@@ -359,15 +359,15 @@ exports CFat<OctTreeHolder> OctTreeHolder::hold (CR<OctTreeLayout> that) {
 	return CFat<OctTreeHolder> (OctTreeImplHolder () ,that) ;
 }
 
-struct KDTreeF32 ;
-struct KDTreeF64 ;
+struct KDTreeF32Param ;
+struct KDTreeF64Param ;
 
 struct PointCloudKDTreeLayout {
 	Length mSize ;
 	Length mAlign ;
 	Length mChannel ;
-	Ref<KDTreeF32> mF32 ;
-	Ref<KDTreeF64> mF64 ;
+	Ref<KDTreeF32Param> mF32 ;
+	Ref<KDTreeF64Param> mF64 ;
 } ;
 
 exports Ref<PointCloudKDTreeLayout> PointCloudKDTreeHolder::create () {
@@ -700,8 +700,58 @@ exports CFat<VoxelGridRTreeHolder> VoxelGridRTreeHolder::hold (CR<VoxelGridRTree
 
 class VoxelGridImplHolder final implement Fat<VoxelGridHolder ,VoxelGridLayout> {
 public:
-	void initialize () override {
-		unimplemented () ;
+	void initialize (CR<Length> size_ ,CR<Flt64> epsilon) override {
+		assume (epsilon > 0) ;
+		self.mSize = size_ ;
+		self.mEpsilonInv = MathProc::inverse (epsilon) ;
+		clear () ;
+	}
+
+	void clear () override {
+		self.mChunk = Allocator<VoxelGridChunk ,AllocatorNode> () ;
+		self.mVoxelSet = HashSet<VoxelIndex> () ;
+		self.mLength = 0 ;
+	}
+
+	Length size () const override {
+		if (!self.mChunk.exist ())
+			return 0 ;
+		return self.mSize ;
+	}
+
+	Length length () const override {
+		if (!self.mChunk.exist ())
+			return 0 ;
+		return self.mLength ;
+	}
+
+	void add (CR<Vector> item) override {
+		const auto r1x = voxel_index (item) ;
+		Index ix = self.mVoxelSet.map (r1x) ;
+		if ifdo (TRUE) {
+			if (ix != NONE)
+				discard ;
+			ix = self.mChunk.alloc () ;
+			self.mVoxelSet.add (r1x ,ix) ;
+			self.mChunk[ix].mWidth = 0 ;
+			inline_memset (Pointer::from (self.mChunk[ix].mMask) ,self.mChunk[ix].mMask.size ()) ;
+		}
+		self.mChunk[ix].mWidth++ ;
+		self.mLength++ ;
+	}
+
+	void add (CR<Array<Vector>> item) override {
+		for (auto &&i : item.iter ()) {
+			add (item[i]) ;
+		}
+	}
+
+	VoxelIndex voxel_index (CR<Vector> item) const {
+		VoxelIndex ret ;
+		ret.mX = Index (MathProc::floor (item[0] * self.mEpsilonInv ,Flt64 (1))) ;
+		ret.mY = Index (MathProc::floor (item[1] * self.mEpsilonInv ,Flt64 (1))) ;
+		ret.mZ = Index (MathProc::floor (item[2] * self.mEpsilonInv ,Flt64 (1))) ;
+		return move (ret) ;
 	}
 } ;
 

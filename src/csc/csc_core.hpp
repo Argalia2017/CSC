@@ -124,7 +124,12 @@ static constexpr auto inline_memcpy = FUNCTION_inline_memcpy () ;
 
 struct FUNCTION_inline_memcmp {
 	forceinline Flag operator() (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const noexcept {
-		return __macro_memcmp (dst ,src ,size_) ;
+		const auto r1x = __macro_memcmp (dst ,src ,size_) ;
+		if (r1x < 0)
+			return NONE ;
+		if (r1x > 0)
+			return IDEN ;
+		return ZERO ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
@@ -400,24 +405,24 @@ template <class A>
 template <class ARG1 ,class ARG2>
 inline VFat<A>::VFat (CR<ARG1> holder ,VR<ARG2> that) {
 	require (IS_EXTEND<A ,ARG1>) ;
-	require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<VFat>>) ;
-	require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<VFat>>) ;
+	require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<FatLayout>>) ;
+	require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<FatLayout>>) ;
 	using R1X = typeof (nullof (ARG1).self) ;
 	require (IS_EXTEND<R1X ,ARG2>) ;
 	mHolder = inline_vptr (holder) ;
-	mLayout = address (that) ;
+	mLayout = address (keep[TYPE<R1X>::expr] (that)) ;
 }
 
 template <class A>
 template <class ARG1 ,class ARG2>
 inline CFat<A>::CFat (CR<ARG1> holder ,CR<ARG2> that) {
 	require (IS_EXTEND<A ,ARG1>) ;
-	require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<CFat>>) ;
-	require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<CFat>>) ;
+	require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<FatLayout>>) ;
+	require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<FatLayout>>) ;
 	using R1X = typeof (nullof (ARG1).self) ;
 	require (IS_EXTEND<R1X ,ARG2>) ;
 	mHolder = inline_vptr (holder) ;
-	mLayout = address (that) ;
+	mLayout = address (keep[TYPE<R1X>::expr] (that)) ;
 }
 
 template <class A>
@@ -1637,9 +1642,7 @@ public:
 } ;
 
 template <class A>
-struct ExternalImplLayout {
-	FatLayout mImpl ;
-
+struct ExternalImplLayout implement FatLayout {
 public:
 	static VR<ExternalImplLayout> expr_m () ;
 } ;
@@ -1667,7 +1670,7 @@ public:
 	}
 
 	static CR<Fat<A ,B>> expr_m () {
-		assume (ExternalImplLayout<External>::expr.mImpl.mHolder != ZERO) ;
+		assume (ExternalImplLayout<External>::expr.mHolder != ZERO) ;
 		return Pointer::from (ExternalImplLayout<External>::expr) ;
 	}
 } ;

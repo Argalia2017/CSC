@@ -147,8 +147,9 @@ public:
 
 	void set_probability (CR<Flt64> probability) override {
 		//@info: gaussion distribution: [0.6826 ,0.9544 ,0.9973]
-		const auto r1x = MathProc::clamp (probability ,Flt64 (0) ,Flt64 (1) - FLT64_EPS) ;
-		self.mProbFactor = MathProc::log (r1x + FLT64_EPS) ;
+		const auto r1x = 1 - probability ;
+		const auto r2x = MathProc::clamp (r1x ,FLT64_EPS ,Flt64 (1)) ;
+		self.mProbFactor = MathProc::log (r2x) ;
 	}
 
 	void set_iteration (CR<Length> iteration) override {
@@ -178,6 +179,7 @@ public:
 		}
 		self.mCurrInlier.clear () ;
 		self.mCurrSize = 0 ;
+		self.mIteration++ ;
 	}
 
 	CR<Pointer> peek () const leftvalue override {
@@ -196,13 +198,12 @@ public:
 			swap (self.mCurrSize ,self.mBestSize) ;
 			swap (self.mCurrInlier ,self.mBestInlier) ;
 		}
-		self.mIteration++ ;
 		const auto r1x = Flt64 (self.mBestSize) * MathProc::inverse (Flt64 (self.mSize)) ;
 		const auto r2x = 1 - MathProc::pow (r1x ,Val32 (self.mRank)) ;
-		const auto r3x = MathProc::clamp (r2x ,Flt64 (0) ,Flt64 (1) - FLT64_EPS) ;
-		const auto r4x = MathProc::log (r3x + FLT64_EPS) ;
+		const auto r3x = MathProc::clamp (r2x ,FLT64_EPS ,Flt64 (1)) ;
+		const auto r4x = MathProc::inverse (MathProc::log (r3x)) ;
 		const auto r5x = MathProc::delta (r4x) * Flt64 (self.mMaxIteration) ;
-		const auto r6x = self.mProbFactor * MathProc::inverse (r4x) + r5x ;
+		const auto r6x = self.mProbFactor * r4x + r5x ;
 		self.mMaxIteration = MathProc::clamp (Length (r6x) ,Length (1) ,self.mMaxIteration) ;
 	}
 
@@ -235,26 +236,36 @@ exports CFat<RansacHolder> RansacHolder::hold (CR<RansacLayout> that) {
 
 class KMeansImplHolder final implement Fat<KMeansHolder ,KMeansLayout> {
 public:
-	void initialize (CR<Length> rank_ ,CR<DataFrame> pool) override {
-		assert (rank_ > 0) ;
-		self.mRank = rank_ ;
-		self.mPool = pool ;
-		const auto r1x = self.mPool.size () ;
-		assert (rank_ <= r1x) ;
-		self.mCurrCenter = Array<Array<Flt64>> (self.mRank) ;
-		self.mCurrCluster = Array<BitSet> (self.mRank) ;
-		self.mNextCluster = Array<BitSet> (self.mRank) ;
-		for (auto &&i : range (0 ,self.mRank)) {
-			self.mCurrCluster[i] = BitSet (r1x) ;
-			self.mNextCluster[i] = BitSet (r1x) ;
+	void initialize (CR<Length> cluster ,CR<DataFrame> point) override {
+		assert (cluster > 0) ;
+		self.mPoint = point ;
+		self.mClusterSize = cluster ;
+		self.mPointSize = point.shape (0) ;
+		self.mPointChannel = 3 ;
+		self.mPointXYZ = Array<Property<Flt64>> (self.mPointChannel) ;
+		self.mPointXYZ[0] = point.map (slice ("point::x")) ;
+		self.mPointXYZ[1] = point.map (slice ("point::y")) ;
+		self.mPointXYZ[2] = point.map (slice ("point::z")) ;
+		self.mCurrCenter = Array<Array<Flt64>> (self.mClusterSize) ;
+		self.mCurrCluster = Array<BitSet> (self.mClusterSize) ;
+		self.mNextCluster = Array<BitSet> (self.mClusterSize) ;
+		for (auto &&i : range (0 ,self.mClusterSize)) {
+			self.mCurrCenter[i] = Array<Flt64> (self.mPointChannel) ;
+			self.mCurrCluster[i] = BitSet (self.mPointSize) ;
+			self.mNextCluster[i] = BitSet (self.mPointSize) ;
 		}
+		set_variance (1) ;
+	}
+
+	void set_variance (CR<Flt64> threshold) override {
+		self.mDistanceVariance = MathProc::max_of (threshold ,Flt64 (0)) ;
 		self.mCost.mMax = infinity ;
 		self.mCost.mAvg = infinity ;
 		self.mCost.mStd = 0 ;
 	}
 
 	Length rank () const override {
-		return self.mRank ;
+		return self.mClusterSize ;
 	}
 
 	Bool good () const override {
@@ -270,35 +281,29 @@ public:
 	}
 
 	void update_curr_center () {
-		auto rax = self.mPool.map (slice ("point") ,0) ;
-		for (auto &&i : range (0 ,self.mRank)) {
-			const auto r1x = rax.channel () ;
-			self.mCurrCenter[i] = Array<Flt64> (r1x) ;
+		for (auto &&i : range (0 ,self.mClusterSize)) {
 			self.mCurrCenter[i].fill (0) ;
 			for (auto &&j : self.mCurrCluster[i]) {
-				rax.target (j) ;
-				for (auto &&k : range (0 ,r1x)) {
-					noop (k) ;
-					//self.mCurrCenter[i][k] += rax[k] ;
+				for (auto &&k : range (0 ,self.mPointChannel)) {
+					self.mPointXYZ[k][0] = j ;
+					self.mCurrCenter[i][k] += self.mPointXYZ[k].fetch () ;
 				}
 			}
-			const auto r2x = MathProc::inverse (Flt64 (self.mCurrCluster[i].length ())) ;
-			for (auto &&k : range (0 ,r1x)) {
-				self.mCurrCenter[i][k] *= r2x ;
+			const auto r1x = MathProc::inverse (Flt64 (self.mCurrCluster[i].length ())) ;
+			for (auto &&k : range (0 ,self.mPointChannel)) {
+				self.mCurrCenter[i][k] *= r1x ;
 			}
 		}
 	}
 
 	void update_next_cluster () {
-		for (auto &&i : range (0 ,self.mRank))
+		for (auto &&i : range (0 ,self.mClusterSize))
 			self.mNextCluster[i].clear () ;
-		auto rax = self.mPool.map (slice ("point") ,0) ;
-		for (auto &&i : self.mPool.iter ()) {
-			rax.target (i) ;
+		for (auto &&i : range (0 ,self.mPointSize)) {
 			auto rbx = IndexPair<Flt64> () ;
 			rbx.m2nd = NONE ;
-			for (auto &&j : range (0 ,self.mRank)) {
-				const auto r1x = distance (self.mCurrCenter[j] ,rax) ;
+			for (auto &&j : range (0 ,self.mClusterSize)) {
+				const auto r1x = distance (self.mCurrCenter[j] ,i) ;
 				if (rbx.m2nd != NONE)
 					if (rbx.m1st <= r1x)
 						continue ;
@@ -310,25 +315,24 @@ public:
 	}
 
 	void update_curr_cluster () {
+		const auto r1x = MathProc::inverse (self.mDistanceVariance) ;
 		self.mCost = NormalError () ;
-		auto rax = self.mPool.map (slice ("point") ,0) ;
-		for (auto &&i : range (0 ,self.mRank)) {
-			const auto r1x = self.mCurrCluster[i] - self.mNextCluster[i] ;
-			for (auto &&j : r1x) {
-				rax.target (j) ;
-				const auto r2x = distance (self.mCurrCenter[i] ,rax) ;
-				const auto r3x = MathProc::pdf (r2x) ;
-				self.mCost += r3x ;
+		for (auto &&i : range (0 ,self.mClusterSize)) {
+			const auto r2x = self.mCurrCluster[i] ^ self.mNextCluster[i] ;
+			for (auto &&j : r2x) {
+				const auto r3x = distance (self.mCurrCenter[i] ,j) * r1x ;
+				const auto r4x = MathProc::pdf (r3x) ;
+				self.mCost += r4x ;
 			}
 		}
 		swap (self.mCurrCluster ,self.mNextCluster) ;
 	}
 
-	Flt64 distance (CR<Array<Flt64>> a ,CR<Property> b) const {
+	Flt64 distance (CR<Array<Flt64>> a ,CR<Index> b) {
 		Flt64 ret = 0 ;
 		for (auto &&i : a.iter ()) {
-			noop (i) ;
-			//ret += MathProc::square (a[i] - b[i]) ;
+			self.mPointXYZ[i][0] = b ;
+			ret += MathProc::square (a[i] - self.mPointXYZ[i].fetch ()) ;
 		}
 		ret = MathProc::sqrt (ret) ;
 		return move (ret) ;
@@ -999,5 +1003,64 @@ exports VFat<FFTransformHolder> FFTransformHolder::hold (VR<FFTransformLayout> t
 
 exports CFat<FFTransformHolder> FFTransformHolder::hold (CR<FFTransformLayout> that) {
 	return CFat<FFTransformHolder> (FFTransformImplHolder () ,that) ;
+}
+
+class KalmanFilterImplHolder final implement Fat<KalmanFilterHolder ,KalmanFilterLayout> {
+public:
+	void initialize (CR<Flt64> x_var ,CR<Flt64> y_var) override {
+		//@info: mVecX[0]:position;mVecX[1]:velocity;mVecX[2]:acceleration
+		self.mVecX = Vector::zero () ;
+		self.mVecY = Vector::zero () ;
+		self.mVecZ = Vector::zero () ;
+		self.mMatXVar = DiagMatrix (x_var ,1 ,1) ;
+		self.mMatYVar = DiagMatrix (y_var ,1 ,1) ;
+		self.mLastTime = infinity ;
+		self.mMatI = Matrix::iden () ;
+		self.mMatP = DiagMatrix (infinity ,1 ,1) ;
+		self.mMatJ = DiagMatrix (0 ,1 ,1) ;
+		self.mMatF = self.mMatI ;
+		self.mMatK = Matrix::zero () ;
+		self.mMatH = DiagMatrix (1 ,0 ,0) ;
+	}
+
+	Vector predict (CR<Flt64> timestamp) override {
+		const auto r1x = MathProc::is_inf (self.mLastTime) ? timestamp : self.mLastTime ;
+		const auto r2x = timestamp - r1x ;
+		self.mMatF = self.mMatI ;
+		self.mMatF[0][0] = 1 ;
+		self.mMatF[0][1] = r2x ;
+		self.mMatF[0][2] = r2x * r2x / 2 ;
+		self.mMatF[1][0] = 0 ;
+		self.mMatF[1][1] = 1 ;
+		self.mMatF[1][2] = r2x ;
+		self.mMatF[2][0] = 0 ;
+		self.mMatF[2][1] = 0 ;
+		self.mMatF[2][2] = 1 ;
+		return self.mMatF * self.mVecX ;
+	}
+
+	void update (CR<Vector> y ,CR<Flt64> timestamp) override {
+		self.mVecY = y.homogenize () ;
+		self.mVecX = predict (timestamp) ;
+		self.mLastTime = timestamp ;
+		const auto r1x = self.mMatXVar.inverse () ;
+		const auto r2x = (self.mMatJ + self.mMatF.transpose () * r1x * self.mMatF).inverse () ;
+		self.mVecZ = r1x * self.mMatF * r2x * self.mVecZ ;
+		self.mMatJ = r1x - r1x * self.mMatF * r2x * self.mMatF.transpose () * r1x ;
+		const auto r3x = self.mMatYVar.inverse () ;
+		self.mVecZ = self.mVecZ + self.mMatH.transpose () * r3x * self.mVecY ;
+		self.mMatJ = self.mMatJ + self.mMatH.transpose () * r3x * self.mMatH ;
+		self.mMatP = self.mMatJ.inverse () ;
+		self.mVecX = self.mMatP * self.mVecZ ;
+		self.mMatK = self.mMatP * self.mMatH.transpose () * r3x ;
+	}
+} ;
+
+exports VFat<KalmanFilterHolder> KalmanFilterHolder::hold (VR<KalmanFilterLayout> that) {
+	return VFat<KalmanFilterHolder> (KalmanFilterImplHolder () ,that) ;
+}
+
+exports CFat<KalmanFilterHolder> KalmanFilterHolder::hold (CR<KalmanFilterLayout> that) {
+	return CFat<KalmanFilterHolder> (KalmanFilterImplHolder () ,that) ;
 }
 } ;

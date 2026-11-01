@@ -339,6 +339,7 @@ public:
 				break ;
 			rax |= Char (rbx & Byte (0X7F)) << ix ;
 			ix += 7 ;
+			assume (ix < 32) ;
 		}
 		rax |= Char (rbx) << ix ;
 		item = Stru32 (rax) ;
@@ -542,6 +543,7 @@ public:
 			rbx.mDownflow = Quad (0X00) ;
 			rbx.mExponent = 0 ;
 			read_value (rbx ,rax) ;
+			assume (rbx.mExponent == 0) ;
 			assume (Val64 (rbx.mMantissa) >= 0) ;
 			item = Val64 (rbx.mMantissa) ;
 		}
@@ -1244,7 +1246,7 @@ public:
 		if ifdo (act) {
 			if (!MathProc::is_inf (item))
 				discard ;
-			write (slice ("infinity")) ;
+			write (slice ("inf")) ;
 		}
 		if ifdo (act) {
 			auto rax = FloatProc::decode (MathProc::abs (item)) ;
@@ -1666,8 +1668,7 @@ public:
 					const auto r1x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
 					if (!inline_mid (r1x ,0 ,self.mWrite))
 						discard ;
-					auto &&rbx = keep[TYPE<VFat<WritingHolder>>::expr] (self.mParams[r1x]) ;
-					rbx->friend_write (writer) ;
+					writer.write (Writing (keep[TYPE<CFat<WritingHolder>>::expr] (Pointer::from (self.mParams[r1x])))) ;
 				}
 				rax = Flag (0) ;
 			}
@@ -1677,8 +1678,7 @@ public:
 				if (self.mFormat[i] != Stru32 ('0'))
 					discard ;
 				for (auto &&j : range (0 ,self.mWrite)) {
-					auto &&rbx = keep[TYPE<VFat<WritingHolder>>::expr] (self.mParams[j]) ;
-					rbx->friend_write (writer) ;
+					writer.write (Writing (keep[TYPE<CFat<WritingHolder>>::expr] (Pointer::from (self.mParams[j])))) ;
 				}
 				rax = Flag (3) ;
 			}
@@ -1689,8 +1689,7 @@ public:
 					const auto r2x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
 					if (!inline_mid (r2x ,0 ,self.mWrite))
 						discard ;
-					auto &&rbx = keep[TYPE<VFat<WritingHolder>>::expr] (self.mParams[r2x]) ;
-					rbx->friend_write (writer) ;
+					writer.write (Writing (keep[TYPE<CFat<WritingHolder>>::expr] (Pointer::from (self.mParams[r2x])))) ;
 				}
 				rax = Flag (3) ;
 			}
@@ -1707,11 +1706,11 @@ public:
 		}
 	}
 
-	void once (CR<Wrapper<FatLayout>> params) const override {
+	void once (CR<Wrapper<Writing>> params) const override {
 		assert (params.rank () <= self.mParams.size ()) ;
 		Index ix = 0 ;
 		for (auto &&i : range (0 ,params.rank ())) {
-			self.mPin->mParams[ix] = params[i] ;
+			self.mPin->mParams[ix] = bitwise (params[i]) ;
 			ix++ ;
 		}
 		self.mPin->mWrite = ix ;

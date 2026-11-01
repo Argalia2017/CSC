@@ -90,8 +90,6 @@ struct MathProcHolder implement Interface {
 	virtual Flt64 acos (CR<Flt64> a) const = 0 ;
 	virtual Flt32 asin (CR<Flt32> a) const = 0 ;
 	virtual Flt64 asin (CR<Flt64> a) const = 0 ;
-	virtual Flt32 atan (CR<Flt32> a) const = 0 ;
-	virtual Flt64 atan (CR<Flt64> a) const = 0 ;
 	virtual Flt32 atan (CR<Flt32> y ,CR<Flt32> x) const = 0 ;
 	virtual Flt64 atan (CR<Flt64> y ,CR<Flt64> x) const = 0 ;
 	virtual Flt32 exp (CR<Flt32> a) const = 0 ;
@@ -249,8 +247,8 @@ public:
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
-	static ARG1 atan (CR<ARG1> a) {
-		return MathProcHolder::hold (expr)->atan (a) ;
+	static ARG1 atan (CR<ARG1> y) {
+		return MathProcHolder::hold (expr)->atan (y ,ARG1 (1)) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>

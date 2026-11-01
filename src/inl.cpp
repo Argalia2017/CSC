@@ -34,7 +34,6 @@
 #ifdef __CSC_COMPILER_MSVC__
 #ifdef __CSC_PLATFORM_X64__
 #define LIB_WITH_EIGEN
-#define LIB_WITH_CERES
 #define LIB_WITH_NANOFLANN
 
 #ifdef __CSC_VER_DEBUG__
@@ -42,6 +41,7 @@
 #endif
 
 #ifndef __CSC_VER_DEBUG__
+#define LIB_WITH_CERES
 #define LIB_WITH_OPENCV
 #endif
 #endif

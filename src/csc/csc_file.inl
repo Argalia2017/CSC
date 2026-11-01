@@ -174,8 +174,8 @@ struct BufferFileLayout {
 	Val64 mChunkStep ;
 	csc_enum_t mFileMapFlag ;
 	Box<BufferFileHeader> mHeader ;
-	Set<Val64> mCacheSet ;
 	List<BufferFileChunk> mCacheList ;
+	Set<Val64> mCacheIndex ;
 	Val64 mCacheTimer ;
 } ;
 
@@ -193,16 +193,14 @@ exports CFat<BufferFileHolder> BufferFileHolder::hold (CR<BufferFileLayout> that
 	return CFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::expr ,that) ;
 }
 
-struct UartFileCOMParams ;
-struct UartFileCOMStatus ;
+struct UartFileCOMParam ;
 
 struct UartFileLayout {
 	String<Str> mPortName ;
 	Length mPortRate ;
 	Length mPortSpeed ;
 	UniqueRef<csc_pipe_t> mPipe ;
-	Ref<UartFileCOMParams> mCOMParams ;
-	Ref<UartFileCOMStatus> mCOMStatus ;
+	Ref<UartFileCOMParam> mCOM ;
 	csc_enum_t mCOMError ;
 	RefBuffer<Byte> mRingBuffer ;
 	Index mRingRead ;

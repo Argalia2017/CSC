@@ -16,11 +16,10 @@
 
 namespace CSC {
 struct CoroutineHolder implement Interface {
-	virtual void before () = 0 ;
+	virtual void awake () = 0 ;
 	virtual Bool tick (CR<Flt64> delta_sec) = 0 ;
-	virtual Bool later_tick (CR<Flt64> delta_sec) = 0 ;
-	virtual Bool idle () = 0 ;
-	virtual void after () = 0 ;
+	virtual void idle_tick (CR<Flt64> delta_sec) = 0 ;
+	virtual Bool alive () = 0 ;
 } ;
 
 class Coroutine implement Proxy {
@@ -33,24 +32,20 @@ public:
 	template <class ARG1 ,class = REQUIRE<IS_EXTEND<CoroutineHolder ,ARG1>>>
 	implicit Coroutine (CR<VFat<ARG1>> that) :mThat (that) {}
 
-	void before () const {
-		return mThat->before () ;
+	void awake () const {
+		return mThat->awake () ;
 	}
 
 	Bool tick (CR<Flt64> delta_sec) const {
 		return mThat->tick (delta_sec) ;
 	}
 
-	Bool later_tick (CR<Flt64> delta_sec) const {
-		return mThat->later_tick (delta_sec) ;
+	void idle_tick (CR<Flt64> delta_sec) const {
+		return mThat->idle_tick (delta_sec) ;
 	}
 
-	Bool idle () const {
-		return mThat->idle () ;
-	}
-
-	void after () const {
-		return mThat->after () ;
+	Bool alive () const {
+		return mThat->alive () ;
 	}
 } ;
 
@@ -65,7 +60,7 @@ struct WorkThreadHolder implement Interface {
 	virtual void set_thread_size (CR<Length> size_) = 0 ;
 	virtual void set_queue_size (CR<Length> size_) = 0 ;
 	virtual void start (CR<Function<CR<Index>>> func) = 0 ;
-	virtual void friend_execute (CR<Index> slot) = 0 ;
+	virtual void friend_proc (CR<Index> slot) = 0 ;
 	virtual void post (CR<Index> begin_ ,CR<Index> end_) = 0 ;
 	virtual void join () = 0 ;
 	virtual Bool join (CR<Time> interval) = 0 ;
@@ -129,7 +124,7 @@ struct CalcThreadHolder implement Interface {
 	virtual void set_thread_size (CR<Length> size_) = 0 ;
 	virtual void set_start_input (CR<BitSet> input ,CR<Flt64> factor) = 0 ;
 	virtual void start (CR<Function<CR<CalcSolution> ,VR<CalcSolution>>> func) = 0 ;
-	virtual void friend_execute (CR<Index> slot) = 0 ;
+	virtual void friend_proc (CR<Index> slot) = 0 ;
 	virtual Bool ready () const = 0 ;
 	virtual CalcSolution pull () = 0 ;
 	virtual void suspend () = 0 ;
@@ -192,7 +187,7 @@ struct PromiseHolder implement Interface {
 	virtual void set_retry (CR<Bool> flag) = 0 ;
 	virtual void start () = 0 ;
 	virtual void start (CR<Function<>> func) = 0 ;
-	virtual void friend_execute (CR<Index> slot) = 0 ;
+	virtual void friend_proc (CR<Index> slot) = 0 ;
 	virtual void post (RR<AutoRef<Pointer>> item) = 0 ;
 	virtual void rethrow (CR<Exception> e) = 0 ;
 	virtual Bool ready () const = 0 ;
@@ -263,6 +258,25 @@ public:
 	}
 } ;
 
+class Execution ;
+
+struct ReflectCompile implement Interface {
+	virtual void compile (VR<Pointer> obj ,CR<Execution> exec) const = 0 ;
+
+	forceinline static consteval Flag expr_m () noexcept {
+		return 300 ;
+	}
+} ;
+
+template <class A>
+class ReflectCompileBinder final implement Fat<ReflectCompile ,void> {
+public:
+	void compile (VR<Pointer> obj ,CR<Execution> exec) const override {
+		auto &&rax = keep[TYPE<A>::expr] (obj) ;
+		rax.compile (exec) ;
+	}
+} ;
+
 struct ExecutionLayout ;
 
 struct ExecutionHolder implement Interface {
@@ -270,50 +284,78 @@ struct ExecutionHolder implement Interface {
 	imports VFat<ExecutionHolder> hold (VR<ExecutionLayout> that) ;
 	imports CFat<ExecutionHolder> hold (CR<ExecutionLayout> that) ;
 
-	virtual void initialize () = 0 ;
-	virtual CR<Pointer> stack (CR<Clazz> name) const leftvalue = 0 ;
-	virtual CR<Pointer> maybe (CR<Clazz> name) const leftvalue = 0 ;
-	virtual void once (CR<Function<>> func) = 0 ;
-	virtual void then (CR<Function<>> func) = 0 ;
-	virtual void monad (CR<Clazz> name) = 0 ;
-	virtual Scope until () = 0 ;
+	virtual void initialize (CR<String<Str>> dire) = 0 ;
+	virtual Path local_path () const = 0 ;
+	virtual String<Str> local_flow () const = 0 ;
+	virtual String<Str> local_node () const = 0 ;
+	virtual CR<Pointer> stack (CR<String<Str>> flow ,CR<String<Str>> node) leftvalue = 0 ;
+	virtual void once (CR<Function<>> actor) = 0 ;
+	virtual void then (CR<Function<>> actor) = 0 ;
+	virtual void monad (CR<Unknown> holder ,CR<String<Str>> node) = 0 ;
+	virtual void undo (CR<String<Str>> flow ,CR<String<Str>> node) = 0 ;
 	virtual void execute () = 0 ;
+} ;
+
+template <class A>
+class ExecutionUnknownBinder final implement Fat<UnknownHolder ,void> {
+public:
+	Flag reflect (CR<Flag> uuid) const override {
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_vptr (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectCreateBinder<A>::expr)
+			return inline_vptr (ReflectCreateBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_vptr (ReflectDestroyBinder<A> ()) ;
+		if (uuid == ReflectGuidBinder<A>::expr)
+			return inline_vptr (ReflectGuidBinder<A> ()) ;
+		if (uuid == ReflectNameBinder<A>::expr)
+			return inline_vptr (ReflectNameBinder<A> ()) ;
+		if (uuid == ReflectCompileBinder<A>::expr)
+			return inline_vptr (ReflectCompileBinder<A> ()) ;
+		return ZERO ;
+	}
 } ;
 
 class Execution implement Super<Ref<ExecutionLayout>> {
 public:
 	implicit Execution () = default ;
 
-	implicit Execution (CR<typeof (NULL)>) {
+	implicit Execution (CR<String<Str>> dire) {
 		mThis = ExecutionHolder::create () ;
-		ExecutionHolder::hold (thiz)->initialize () ;
+		ExecutionHolder::hold (thiz)->initialize (dire) ;
+	}
+
+	Path local_path () const {
+		return ExecutionHolder::hold (thiz)->local_path () ;
+	}
+
+	String<Str> local_flow () const {
+		return ExecutionHolder::hold (thiz)->local_flow () ;
+	}
+
+	String<Str> local_node () const {
+		return ExecutionHolder::hold (thiz)->local_node () ;
+	}
+
+	CR<Pointer> stack (CR<String<Str>> flow ,CR<String<Str>> node) const leftvalue {
+		return ExecutionHolder::hold (thiz)->stack (flow ,node) ;
+	}
+
+	void once (CR<Function<>> actor) const {
+		return ExecutionHolder::hold (thiz)->once (actor) ;
+	}
+
+	void then (CR<Function<>> actor) const {
+		return ExecutionHolder::hold (thiz)->then (actor) ;
 	}
 
 	template <class ARG1>
-	CR<ARG1> stack (TYPE<ARG1>) const leftvalue {
-		return ExecutionHolder::hold (thiz)->stack (Clazz (TYPE<ARG1>::expr)) ;
+	void monad (TYPE<ARG1> ,CR<String<Str>> node) const {
+		return ExecutionHolder::hold (thiz)->monad (ExecutionUnknownBinder<ARG1> () ,node) ;
 	}
 
-	template <class ARG1>
-	CR<ARG1> maybe (TYPE<ARG1>) const leftvalue {
-		return ExecutionHolder::hold (thiz)->maybe (Clazz (TYPE<ARG1>::expr)) ;
-	}
-
-	void once (CR<Function<>> func) const {
-		return ExecutionHolder::hold (thiz)->once (func) ;
-	}
-
-	void then (CR<Function<>> func) const {
-		return ExecutionHolder::hold (thiz)->then (func) ;
-	}
-
-	template <class ARG1>
-	void monad (TYPE<ARG1>) const {
-		return ExecutionHolder::hold (thiz)->monad (Clazz (TYPE<ARG1>::expr)) ;
-	}
-
-	Scope until () const {
-		return ExecutionHolder::hold (thiz)->until () ;
+	void undo (CR<String<Str>> flow ,CR<String<Str>> node) const {
+		return ExecutionHolder::hold (thiz)->undo (flow ,node) ;
 	}
 
 	void execute () const {

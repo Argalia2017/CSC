@@ -298,7 +298,7 @@ struct XmlParserHolder implement Interface {
 	virtual XmlParserLayout brother () const = 0 ;
 	virtual XmlParserLayout child () const = 0 ;
 	virtual XmlParserLayout child (CR<Index> index) const = 0 ;
-	virtual XmlParserLayout child (CR<Slice> name) const = 0 ;
+	virtual XmlParserLayout child (CR<Format> name) const = 0 ;
 	virtual XmlParserLayout child (CR<String<Stru>> name) const = 0 ;
 	virtual Deque<XmlParserLayout> list () const = 0 ;
 	virtual Array<XmlParserLayout> list (CR<Length> size_) const = 0 ;
@@ -363,7 +363,7 @@ public:
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
-	XmlParser child (CR<Slice> name) const {
+	XmlParser child (CR<Format> name) const {
 		XmlParserLayout ret = XmlParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
@@ -482,7 +482,7 @@ struct JsonParserHolder implement Interface {
 	virtual JsonParserLayout brother () const = 0 ;
 	virtual JsonParserLayout child () const = 0 ;
 	virtual JsonParserLayout child (CR<Index> index) const = 0 ;
-	virtual JsonParserLayout child (CR<Slice> name) const = 0 ;
+	virtual JsonParserLayout child (CR<Format> name) const = 0 ;
 	virtual JsonParserLayout child (CR<String<Stru>> name) const = 0 ;
 	virtual Deque<JsonParserLayout> list () const = 0 ;
 	virtual Array<JsonParserLayout> list (CR<Length> size_) const = 0 ;
@@ -547,7 +547,7 @@ public:
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
-	JsonParser child (CR<Slice> name) const {
+	JsonParser child (CR<Format> name) const {
 		JsonParserLayout ret = JsonParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
